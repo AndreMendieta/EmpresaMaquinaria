@@ -1,0 +1,20 @@
+{
+  "name": "empresamaquinaria-backend",
+  "version": "1.0.0",
+  "description": "API de autenticación (PostgreSQL + JWT) para la app EmpresaMaquinaria",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/db/seed.js",
+    "migrate": "node -e \"require('dotenv').config(); const fs=require('fs'); const pool=require('./src/db/pool'); pool.query(fs.readFileSync('./src/db/schema.sql','utf8')).then(()=>{console.log('Esquema aplicado.'); pool.end();}).catch(e=>{console.error(e); process.exit(1);})\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  }
+}
