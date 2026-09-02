@@ -1,18 +1,42 @@
 import React, {useState} from 'react';
-import {SafeAreaView, View, Text, StyleSheet} from 'react-native';
+import {SafeAreaView, View, Text, StyleSheet, ActivityIndicator} from 'react-native';
 
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
+import {login} from '../services/authService';
 
-const LoginScreen = () => {
+const LoginScreen = ({navigation}) => {
   const [companyCode, setCompanyCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Código de empresa:', companyCode);
-    console.log('Correo:', email);
-    console.log('Contraseña:', password);
+  const handleLogin = async () => {
+    setErrorMessage('');
+
+    if (!companyCode || !email || !password) {
+      setErrorMessage('Completa todos los campos.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await login({companyCode, email, password});
+
+      // TODO: guardar data.token de forma persistente con
+      // @react-native-async-storage/async-storage para no pedir
+      // login cada vez que se abra la app.
+      console.log('Login exitoso:', data.usuario);
+
+      // Si ya tienes navegación configurada (AppNavigator), navega
+      // a la pantalla principal, por ejemplo:
+      // navigation.replace('Home', {usuario: data.usuario});
+    } catch (error) {
+      setErrorMessage(error.message || 'No se pudo iniciar sesión.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,10 +68,18 @@ const LoginScreen = () => {
           secureTextEntry
         />
 
-        <PrimaryButton
-          title="Iniciar sesión"
-          onPress={handleLogin}
-        />
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#2563EB" style={{marginTop: 10}} />
+        ) : (
+          <PrimaryButton
+            title="Iniciar sesión"
+            onPress={handleLogin}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -78,6 +110,13 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     marginBottom: 30,
+  },
+
+  errorText: {
+    color: '#DC2626',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontSize: 14,
   },
 });
 
