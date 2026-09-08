@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HydroTech — Visor Interactivo Móvil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       HydroTech — Guía de Marca Oficial
+       Tokens: Naranja #FF6A00 · Plata #C0C0C0 · Negro #0D0D0D
+       ============================================ */
+    :root {
+      --orange: #FF6A00;
+      --orange-dim: #C75300;
+      --silver: #C0C0C0;
+      --black: #0D0D0D;
+      --surface: #161616;
+      --surface-2: #1E1E1E;
+      --border: rgba(192, 192, 192, 0.16);
+      --ink: #F3F2EF;
+      --ink-muted: #A9A9A6;
+
+      --role-admin: #FF6A00;
+      --role-supervisor: #38BDF8;
+      --role-tecnico: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    h1, h2, h3, .font-display, .brand-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    body {
+      background: var(--black);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      color: var(--ink);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Cuadrícula técnica tipo plano de ingeniería (Blueprint Grid) */
+    .blueprint-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(192, 192, 192, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(192, 192, 192, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-layout {
+      display: flex;
+      flex-direction: row;
+      gap: 36px;
+      align-items: center;
+      max-width: 1050px;
+      width: 100%;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Panel lateral de control técnico */
+    .control-panel {
+      flex: 1;
+      max-width: 380px;
+      background: rgba(22, 22, 22, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .eyebrow-bar {
+      display: inline-block;
+      padding-left: 0.75rem;
+      border-left: 3px solid var(--orange);
+      color: var(--silver);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .control-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .control-title em {
+      font-style: normal;
+      color: var(--orange);
+    }
+
+    .control-desc {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .status-online {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .quick-section {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .quick-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .quick-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quick-btn:last-child {
+      margin-bottom: 0;
+    }
+
+    .quick-btn:hover {
+      background: #252525;
+      border-color: var(--orange);
+      transform: translateY(-1px);
+    }
+
+    .badge-pill {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-admin { background: rgba(255, 106, 0, 0.2); color: var(--orange); border: 1px solid rgba(255, 106, 0, 0.4); }
+    .badge-supervisor { background: rgba(56, 189, 248, 0.2); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .badge-tecnico { background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .help-hint {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+
+    .code-tag {
+      background: var(--black);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--orange);
+      border: 1px solid var(--border);
+    }
+
+    /* Marco del Smartphone */
+    .phone-frame {
+      width: 375px;
+      height: 750px;
+      background: #000000;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9),
+                  0 0 0 1px rgba(255, 255, 255, 0.12),
+                  0 0 45px rgba(255, 106, 0, 0.15);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 24px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notch-camera {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #111;
+      border: 1px solid #222;
+    }
+
+    .screen-container {
+      width: 100%;
+      height: 100%;
+      background: var(--black);
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Barra de estado */
+    .status-bar {
+      height: 44px;
+      padding: 10px 24px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--silver);
+      z-index: 50;
+      background: transparent;
+    }
+
+    .screen-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 20px 24px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .rn-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .rn-brand-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--ink);
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .rn-brand-title em {
+      font-style: normal;
+      color: var(--orange);
+    }
+
+    .rn-brand-subtitle {
+      font-size: 13px;
+      color: var(--ink-muted);
+      text-align: center;
+      margin-top: 4px;
+      margin-bottom: 22px;
+    }
+
+    .rn-input {
+      width: 100%;
+      height: 48px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 16px;
+      font-size: 14px;
+      color: var(--ink);
+      margin-bottom: 12px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .rn-input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
+    }
+
+    .rn-input::placeholder {
+      color: #6B7280;
+    }
+
+    .rn-btn {
+      width: 100%;
+      height: 48px;
+      background: var(--orange);
+      border: none;
+      border-radius: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+      box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .rn-btn:hover {
+      background: var(--orange-dim);
+    }
+
+    .rn-btn:active {
+      transform: scale(0.98);
+    }
+
+    .rn-btn-disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .rn-error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .rn-footer-link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    .rn-link-action {
+      color: var(--orange);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Tabs de Registro */
+    .rn-tab-group {
+      display: flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .rn-tab {
+      flex: 1;
+      padding: 8px 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .rn-tab.active {
+      background: var(--orange);
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+
+    .rn-hint {
+      font-size: 12px;
+      color: var(--ink-muted);
+      text-align: center;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    /* Header de Dashboard */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      margin: -14px -20px 14px -20px;
+    }
+
+    .dash-brand {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .dash-brand em {
+      font-style: normal;
+      color: var(--orange);
+    }
+
+    .dash-company {
+      font-size: 12px;
+      color: var(--ink-muted);
+      font-weight: 500;
+    }
+
+    .dash-logout {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .user-profile-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .profile-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .profile-email {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+
+    .role-badge-lg {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      border: 1px solid currentColor;
+    }
+
+    /* Módulos de Rol */
+    .role-module-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .module-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .module-desc {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    .stat-box {
+      margin-top: 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: #10B981;
+    }
+
+    .stat-text {
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .team-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn-add-user {
+      background: var(--orange);
+      color: #FFF;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .user-row-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-row-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .user-row-email {
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .user-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .mini-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid currentColor;
+    }
+
+    .status-text {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .btn-toggle-active {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Modal emergente */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-height: 90%;
+      overflow-y: auto;
+    }
+
+    .role-pills-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .role-pill-option {
+      flex: 1;
+      padding: 6px 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--surface-2);
+      color: var(--ink-muted);
+    }
+
+    .role-pill-option.selected {
+      border-color: var(--orange);
+      background: rgba(255, 106, 0, 0.15);
+      color: var(--orange);
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #FFF;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 850px) {
+      .app-layout {
+        flex-direction: column;
+      }
+      .control-panel {
+        max-width: 375px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blueprint-grid"></div>
+
+  <div class="app-layout">
+    <!-- Panel Lateral de Control HydroTech -->
+    <div class="control-panel">
+      <div class="eyebrow-bar">GUÍA DE MARCA & IDENTIDAD</div>
+      <div class="control-title">
+        Hydro<em>Tech</em>
+      </div>
+      <p class="control-desc">
+        Identidad técnica de ingeniería de fluidos, circuitos hidráulicos y maquinaria.
+      </p>
+
+      <div id="backend-status-badge" class="status-badge status-offline">
+        <div class="status-dot"></div>
+        <span id="backend-status-text">Verificando Backend...</span>
+      </div>
+
+      <div class="quick-section">
+        <div class="quick-title">⚡ Acceso Rápido por Rol</div>
+        <button class="quick-btn" onclick="quickLogin('admin@demo.com', 'Admin123!')">
+          <span>Admin Principal</span>
+          <span class="badge-pill badge-admin">ADMIN</span>
+        </button>
+        <button class="quick-btn" onclick="quickLogin('supervisor@demo.com', 'Supervisor123!')">
+          <span>Supervisor de Flota</span>
+          <span class="badge-pill badge-supervisor">SUPERVISOR</span>
+        </button>
+        <button class="quick-btn" onclick="quickLogin('tecnico@demo.com', 'Tecnico123!')">
+          <span>Técnico de Campo</span>
+          <span class="badge-pill badge-tecnico">TÉCNICO</span>
+        </button>
+      </div>
+
+      <div class="quick-section">
+        <div class="quick-title">🔄 Navegación</div>
+        <button class="quick-btn" onclick="setView('login')">
+          <span>Iniciar Sesión</span>
+          <span>🔑</span>
+        </button>
+        <button class="quick-btn" onclick="setView('register')">
+          <span>Registrar Cuenta</span>
+          <span>📝</span>
+        </button>
+      </div>
+
+      <div class="help-hint">
+        🎨 Paleta oficial: <span style="color: var(--orange); font-weight:700;">#FF6A00 (Naranja)</span> · <span style="color: var(--silver); font-weight:700;">#C0C0C0 (Plata)</span> · <span style="color: #6B7280; font-weight:700;">#0D0D0D (Negro)</span>.
+      </div>
+    </div>
+
+    <!-- Teléfono Móvil Simulado -->
+    <div class="phone-frame">
+      <div class="phone-notch">
+        <div class="notch-camera"></div>
+      </div>
+
+      <div class="screen-container">
+        <!-- Barra superior iOS/Android -->
+        <div class="status-bar">
+          <span id="clock-time">09:41</span>
+          <span>5G • 100%</span>
+        </div>
+
+        <!-- Contenedor dinámico de pantalla -->
+        <div class="screen-content" id="screen-container">
+          <!-- Inyección dinámica -->
+        </div>
+
+        <!-- Modal para Crear Usuario (Solo Admin) -->
+        <div id="create-user-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box">
+            <h3 style="font-size: 17px; font-weight: 800; color: var(--ink); text-align: center; margin-bottom: 4px;">
+              Crear Nuevo Colaborador
+            </h3>
+            <p style="font-size: 12px; color: var(--ink-muted); text-align: center; margin-bottom: 16px;">
+              Asignación a la empresa activa.
+            </p>
+
+            <input id="modal-new-name" class="rn-input" placeholder="Nombre completo">
+            <input id="modal-new-email" class="rn-input" placeholder="Correo electrónico" type="email">
+            <input id="modal-new-pass" class="rn-input" placeholder="Contraseña temporal (mín. 6)" type="password">
+
+            <label style="font-size: 11px; font-weight: 700; color: var(--silver); display: block; margin-bottom: 6px; letter-spacing: 0.5px;">
+              ROL EN EL EQUIPO:
+            </label>
+            <div class="role-pills-row">
+              <div id="pill-tecnico" class="role-pill-option selected" onclick="selectModalRole('tecnico')">TÉCNICO</div>
+              <div id="pill-supervisor" class="role-pill-option" onclick="selectModalRole('supervisor')">SUPERVISOR</div>
+              <div id="pill-admin" class="role-pill-option" onclick="selectModalRole('admin')">ADMIN</div>
+            </div>
+
+            <div id="modal-error" class="rn-error" style="display: none;"></div>
+
+            <button id="modal-submit-btn" class="rn-btn" onclick="submitCreateUser()">Crear Usuario</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeUserModal()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let currentView = 'login'; // 'login', 'register', 'dashboard'
+    let currentUser = null;
+    let currentToken = null;
+    let registerTab = 'company'; // 'company' o 'user'
+    let selectedModalRole = 'tecnico';
+    let companyUsersList = [];
+
+    // Actualizar reloj
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock-time').innerText = `${hours}:${mins}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Comprobar estado del backend
+    async function checkBackend() {
+      const badge = document.getElementById('backend-status-badge');
+      const text = document.getElementById('backend-status-text');
+      try {
+        const res = await fetch('http://localhost:3000/health', { method: 'GET' });
+        if (res.ok) {
+          badge.className = 'status-badge status-online';
+          text.innerText = 'Backend Conectado (Port 3000)';
+        } else {
+          throw new Error();
+        }
+      } catch (e) {
+        badge.className = 'status-badge status-offline';
+        text.innerText = 'Backend Desconectado (npm run dev)';
+      }
+    }
+    checkBackend();
+    setInterval(checkBackend, 5000);
+
+    function setView(view) {
+      currentView = view;
+      render();
+    }
+
+    // Render principal según pantalla
+    function render() {
+      const container = document.getElementById('screen-container');
+
+      if (currentView === 'login') {
+        container.innerHTML = `
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="rn-card">
+              <div style="text-align: center; margin-bottom: 6px;">
+                <span class="eyebrow-bar" style="font-size: 10px;">SISTEMAS HIDRÁULICOS & FLUIDOS</span>
+              </div>
+              <h1 class="rn-brand-title">Hydro<em>Tech</em></h1>
+              <p class="rn-brand-subtitle">Gestión de maquinaria y repuestos</p>
+
+              <div id="login-error" class="rn-error" style="display: none;"></div>
+
+              <input id="login-company" class="rn-input" placeholder="Código de empresa (ej: DEMO01)" value="DEMO01">
+              <input id="login-email" class="rn-input" placeholder="Correo electrónico" type="email" value="admin@demo.com">
+              <input id="login-password" class="rn-input" placeholder="Contraseña" type="password" value="Admin123!">
+
+              <button id="login-btn" class="rn-btn" onclick="handleLogin()">
+                <span>Iniciar Sesión</span>
+              </button>
+
+              <div class="rn-footer-link">
+                <span>¿No tienes una cuenta?</span>
+                <span class="rn-link-action" onclick="setView('register')">Regístrate</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (currentView === 'register') {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column;">
+            <div class="rn-card" style="padding: 20px 18px;">
+              <div style="text-align: center; margin-bottom: 4px;">
+                <span class="eyebrow-bar" style="font-size: 10px;">ALTA DE CUENTA</span>
+              </div>
+              <h1 class="rn-brand-title" style="font-size: 24px;">Hydro<em>Tech</em></h1>
+              <p class="rn-brand-subtitle" style="margin-bottom: 12px;">Registro técnico de empresa</p>
+
+              <div class="rn-tab-group">
+                <div class="rn-tab ${registerTab === 'company' ? 'active' : ''}" onclick="setRegisterTab('company')">
+                  Nueva Empresa
+                </div>
+                <div class="rn-tab ${registerTab === 'user' ? 'active' : ''}" onclick="setRegisterTab('user')">
+                  Unirme a Empresa
+                </div>
+              </div>
+
+              <div class="rn-hint">
+                ${registerTab === 'company'
+                  ? 'Registra tu empresa y crea la cuenta Administrador principal.'
+                  : 'Únete como Técnico usando el código de tu empresa.'}
+              </div>
+
+              <div id="reg-error" class="rn-error" style="display: none;"></div>
+
+              <input id="reg-code" class="rn-input" placeholder="Código de empresa (ej: MAQ01)">
+              ${registerTab === 'company'
+                ? '<input id="reg-comp-name" class="rn-input" placeholder="Nombre de la empresa (ej: Hidráulica S.A.)">'
+                : ''}
+              <input id="reg-name" class="rn-input" placeholder="${registerTab === 'company' ? 'Nombre del Administrador' : 'Tu Nombre Completo'}">
+              <input id="reg-email" class="rn-input" placeholder="Correo electrónico" type="email">
+              <input id="reg-pass" class="rn-input" placeholder="Contraseña (mín. 6)" type="password">
+              <input id="reg-pass2" class="rn-input" placeholder="Confirmar Contraseña" type="password">
+
+              <button id="reg-btn" class="rn-btn" onclick="handleRegister()">
+                <span>${registerTab === 'company' ? 'Registrar Empresa y Admin' : 'Registrarme como Técnico'}</span>
+              </button>
+
+              <div class="rn-footer-link">
+                <span>¿Ya tienes cuenta?</span>
+                <span class="rn-link-action" onclick="setView('login')">Inicia sesión</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (currentView === 'dashboard') {
+        const roleColors = {
+          admin: { bg: 'rgba(255, 106, 0, 0.15)', text: '#FF6A00', label: 'ADMINISTRADOR' },
+          supervisor: { bg: 'rgba(56, 189, 248, 0.15)', text: '#38BDF8', label: 'SUPERVISOR' },
+          tecnico: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', label: 'TÉCNICO' },
+        };
+        const rConf = roleColors[currentUser.rol] || { bg: 'rgba(255,255,255,0.1)', text: '#FFF', label: currentUser.rol.toUpperCase() };
+
+        let roleContent = '';
+        if (currentUser.rol === 'tecnico') {
+          roleContent = `
+            <div class="role-module-card">
+              <div class="module-title">Módulo Técnico • Circuitos Hidráulicos</div>
+              <div class="module-desc">Registro de mantenimiento de mangueras, racores, bombas y maquinaria industrial.</div>
+              <div class="stat-box">
+                <div class="stat-val">0</div>
+                <div class="stat-text">Mantenimientos asignados</div>
+              </div>
+            </div>
+          `;
+        } else if (currentUser.rol === 'supervisor') {
+          roleContent = `
+            <div class="role-module-card">
+              <div class="module-title">Módulo de Supervisión</div>
+              <div class="module-desc">Monitoreo de equipos y asignación de maquinaria a los técnicos.</div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = `
+          <div class="dash-header">
+            <div>
+              <div class="dash-brand">Hydro<em>Tech</em></div>
+              <div class="dash-company">${currentUser.empresa?.nombre || 'Empresa'} (${currentUser.empresa?.codigo || '---'})</div>
+            </div>
+            <button class="dash-logout" onclick="handleLogout()">Salir</button>
+          </div>
+
+          <div class="user-profile-card">
+            <div>
+              <div class="profile-name">${currentUser.nombre}</div>
+              <div class="profile-email">${currentUser.email}</div>
+            </div>
+            <div class="role-badge-lg" style="background: ${rConf.bg}; color: ${rConf.text};">
+              ${rConf.label}
+            </div>
+          </div>
+
+          ${roleContent}
+
+          ${(currentUser.rol === 'admin' || currentUser.rol === 'supervisor') ? `
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <div class="team-header-row">
+                <span style="font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: 0.3px;">
+                  ${currentUser.rol === 'admin' ? 'GESTIÓN DE PERSONAL' : 'EQUIPO TÉCNICO'}
+                </span>
+                ${currentUser.rol === 'admin' ? `
+                  <button class="btn-add-user" onclick="openUserModal()">+ Nuevo Usuario</button>
+                ` : ''}
+              </div>
+
+              <div id="users-list-container" style="flex: 1; overflow-y: auto;">
+                <div style="text-align: center; color: var(--ink-muted); font-size: 12px; padding: 20px;">Cargando personal...</div>
+              </div>
+            </div>
+          ` : ''}
+        `;
+
+        if (currentUser.rol === 'admin' || currentUser.rol === 'supervisor') {
+          fetchUsers();
+        }
+      }
+    }
+
+    function setRegisterTab(tab) {
+      registerTab = tab;
+      render();
+    }
+
+    // Login API
+    async function handleLogin() {
+      const companyCode = document.getElementById('login-company').value.trim();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+
+      errorEl.style.display = 'none';
+
+      if (!companyCode || !email || !password) {
+        errorEl.innerText = 'Completa todos los campos.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companyCode, email, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Credenciales inválidas.');
+        }
+
+        currentUser = data.usuario;
+        currentToken = data.token;
+        setView('dashboard');
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = '<span>Iniciar Sesión</span>';
+      }
+    }
+
+    // Registro API
+    async function handleRegister() {
+      const errorEl = document.getElementById('reg-error');
+      const btn = document.getElementById('reg-btn');
+      errorEl.style.display = 'none';
+
+      const companyCode = document.getElementById('reg-code').value.trim();
+      const userName = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-pass').value;
+      const passConfirm = document.getElementById('reg-pass2').value;
+
+      let companyName = '';
+      if (registerTab === 'company') {
+        companyName = document.getElementById('reg-comp-name').value.trim();
+        if (!companyName) {
+          errorEl.innerText = 'Ingresa el nombre de la empresa.';
+          errorEl.style.display = 'block';
+          return;
+        }
+      }
+
+      if (!companyCode || !userName || !email || !password || !passConfirm) {
+        errorEl.innerText = 'Completa todos los campos.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorEl.innerText = 'La contraseña debe tener mínimo 6 caracteres.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      if (password !== passConfirm) {
+        errorEl.innerText = 'Las contraseñas no coinciden.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const endpoint = registerTab === 'company' ? '/auth/register-company' : '/auth/register-user';
+        const body = registerTab === 'company'
+          ? { companyCode, companyName, userName, email, password }
+          : { companyCode, userName, email, password };
+
+        const res = await fetch(`${API_URL}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Error en el registro.');
+        }
+
+        currentUser = data.usuario;
+        currentToken = data.token;
+        setView('dashboard');
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = `<span>${registerTab === 'company' ? 'Registrar Empresa y Admin' : 'Registrarme como Técnico'}</span>`;
+      }
+    }
+
+    // Listar usuarios en el Dashboard
+    async function fetchUsers() {
+      const listContainer = document.getElementById('users-list-container');
+      if (!listContainer) return;
+
+      try {
+        const res = await fetch(`${API_URL}/users`, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message);
+
+        companyUsersList = data.usuarios || [];
+
+        if (companyUsersList.length === 0) {
+          listContainer.innerHTML = '<div style="text-align: center; color: var(--ink-muted); font-size: 12px; padding: 20px;">No hay otros colaboradores.</div>';
+          return;
+        }
+
+        const roleBadges = {
+          admin: { bg: 'rgba(255, 106, 0, 0.15)', text: '#FF6A00', label: 'ADMIN' },
+          supervisor: { bg: 'rgba(56, 189, 248, 0.15)', text: '#38BDF8', label: 'SUPERVISOR' },
+          tecnico: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', label: 'TÉCNICO' },
+        };
+
+        listContainer.innerHTML = companyUsersList.map(u => {
+          const badge = roleBadges[u.rol] || { bg: 'rgba(255,255,255,0.1)', text: '#FFF', label: u.rol.toUpperCase() };
+          const isSelf = u.id === currentUser.id;
+          const isAdmin = currentUser.rol === 'admin';
+
+          return `
+            <div class="user-row-card">
+              <div>
+                <div class="user-row-name">${u.nombre} ${isSelf ? '<span style="color: var(--orange); font-size: 11px;">(Tú)</span>' : ''}</div>
+                <div class="user-row-email">${u.email}</div>
+                <div class="user-row-meta">
+                  <span class="mini-badge" style="background: ${badge.bg}; color: ${badge.text};">${badge.label}</span>
+                  <span class="status-text" style="color: ${u.activo ? '#10B981' : '#EF4444'};">
+                    ${u.activo ? '• Activo' : '• Inactivo'}
+                  </span>
+                </div>
+              </div>
+              ${isAdmin && !isSelf ? `
+                <button class="btn-toggle-active" onclick="toggleUserActive(${u.id}, ${u.activo})">
+                  ${u.activo ? '<span style="color: #EF4444;">Desactivar</span>' : '<span style="color: #10B981;">Activar</span>'}
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        listContainer.innerHTML = `<div style="color: #EF4444; font-size: 12px; text-align: center; padding: 10px;">${err.message}</div>`;
+      }
+    }
+
+    // Toggle activo de usuario
+    async function toggleUserActive(userId, currentStatus) {
+      try {
+        const res = await fetch(`${API_URL}/users/${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentToken}`,
+          },
+          body: JSON.stringify({ activo: !currentStatus }),
+        });
+        if (res.ok) {
+          fetchUsers();
+        }
+      } catch (e) {
+        alert('Error al actualizar estado');
+      }
+    }
+
+    // Modal de Crear Usuario
+    function openUserModal() {
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('modal-new-name').value = '';
+      document.getElementById('modal-new-email').value = '';
+      document.getElementById('modal-new-pass').value = '';
+      selectModalRole('tecnico');
+      document.getElementById('create-user-modal').style.display = 'flex';
+    }
+
+    function closeUserModal() {
+      document.getElementById('create-user-modal').style.display = 'none';
+    }
+
+    function selectModalRole(role) {
+      selectedModalRole = role;
+      ['tecnico', 'supervisor', 'admin'].forEach(r => {
+        const el = document.getElementById(`pill-${r}`);
+        if (el) el.classList.toggle('selected', r === role);
+      });
+    }
+
+    async function submitCreateUser() {
+      const nombre = document.getElementById('modal-new-name').value.trim();
+      const email = document.getElementById('modal-new-email').value.trim();
+      const password = document.getElementById('modal-new-pass').value;
+      const errorEl = document.getElementById('modal-error');
+      const submitBtn = document.getElementById('modal-submit-btn');
+
+      errorEl.style.display = 'none';
+
+      if (!nombre || !email || !password) {
+        errorEl.innerText = 'Todos los campos son obligatorios.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorEl.innerText = 'La contraseña debe tener mínimo 6 caracteres.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      submitBtn.classList.add('rn-btn-disabled');
+      submitBtn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentToken}`,
+          },
+          body: JSON.stringify({
+            nombre,
+            email,
+            password,
+            rol: selectedModalRole,
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message);
+
+        closeUserModal();
+        fetchUsers();
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        submitBtn.classList.remove('rn-btn-disabled');
+        submitBtn.innerHTML = 'Crear Usuario';
+      }
+    }
+
+    // Cierre de sesión
+    function handleLogout() {
+      currentUser = null;
+      currentToken = null;
+      setView('login');
+    }
+
+    // Acceso Rápido desde panel lateral
+    function quickLogin(email, password) {
+      setView('login');
+      setTimeout(() => {
+        document.getElementById('login-company').value = 'DEMO01';
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-password').value = password;
+        handleLogin();
+      }, 50);
+    }
+
+    // Inicializar en login
+    render();
+  </script>
+</body>
+</html>
