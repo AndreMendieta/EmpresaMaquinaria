@@ -3,17 +3,35 @@ const bcrypt = require('bcryptjs');
 const pool = require('./pool');
 
 /**
- * Crea una empresa demo y un usuario de prueba para poder
- * verificar el login desde la app.
+ * Crea una empresa demo y 3 usuarios de prueba con los roles (admin, supervisor, tecnico)
+ * para poder probar los distintos accesos y la navegación en la app.
  *
  * Uso: node src/db/seed.js
  */
 async function seed() {
   const codigoEmpresa = 'DEMO01';
-  const nombreEmpresa = 'Empresa Demo S.A.S';
-  const emailUsuario = 'admin@demo.com';
-  const passwordPlano = 'Admin123!'; // solo para pruebas, cámbiala en producción
-  const nombreUsuario = 'Administrador Demo';
+  const nombreEmpresa = 'HydroTech S.A.S.';
+
+  const usuariosDemo = [
+    {
+      nombre: 'Administrador Demo',
+      email: 'admin@demo.com',
+      password: 'Admin123!',
+      rol: 'admin',
+    },
+    {
+      nombre: 'Supervisor Demo',
+      email: 'supervisor@demo.com',
+      password: 'Supervisor123!',
+      rol: 'supervisor',
+    },
+    {
+      nombre: 'Técnico Demo',
+      email: 'tecnico@demo.com',
+      password: 'Tecnico123!',
+      rol: 'tecnico',
+    },
+  ];
 
   try {
     const empresaResult = await pool.query(
@@ -25,20 +43,21 @@ async function seed() {
     );
     const empresaId = empresaResult.rows[0].id;
 
-    const passwordHash = await bcrypt.hash(passwordPlano, 10);
+    console.log(`Empresa "${nombreEmpresa}" (${codigoEmpresa}) asegurada.`);
 
-    await pool.query(
-      `INSERT INTO usuarios (empresa_id, nombre, email, password_hash, rol)
-       VALUES ($1, $2, $3, $4, 'admin')
-       ON CONFLICT (empresa_id, email)
-       DO UPDATE SET password_hash = EXCLUDED.password_hash`,
-      [empresaId, nombreUsuario, emailUsuario, passwordHash],
-    );
+    for (const u of usuariosDemo) {
+      const passwordHash = await bcrypt.hash(u.password, 10);
+      await pool.query(
+        `INSERT INTO usuarios (empresa_id, nombre, email, password_hash, rol)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (empresa_id, email)
+         DO UPDATE SET password_hash = EXCLUDED.password_hash, rol = EXCLUDED.rol`,
+        [empresaId, u.nombre, u.email, passwordHash, u.rol],
+      );
+      console.log(`  - Rol: ${u.rol.toUpperCase().padEnd(11)} | Correo: ${u.email.padEnd(22)} | Clave: ${u.password}`);
+    }
 
-    console.log('Usuario de prueba creado con éxito:');
-    console.log('  Código de empresa:', codigoEmpresa);
-    console.log('  Email:', emailUsuario);
-    console.log('  Password:', passwordPlano);
+    console.log('\nUsuarios demo inicializados exitosamente.');
   } catch (error) {
     console.error('Error al crear el seed:', error);
   } finally {
