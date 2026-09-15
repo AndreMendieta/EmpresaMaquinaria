@@ -42,6 +42,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
   // --- Estados de Gestión de Usuarios (Admin) ---
   const [usersList, setUsersList] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState('');
   const [modalUserVisible, setModalUserVisible] = useState(false);
   const [newNombre, setNewNombre] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -55,6 +56,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
   const [searchMaquina, setSearchMaquina] = useState('');
   const [selectedMaquina, setSelectedMaquina] = useState(null);
   const [loadingMaquinas, setLoadingMaquinas] = useState(false);
+  const [maquinasError, setMaquinasError] = useState('');
 
   // Modal Crear Maquinaria (Supervisor / Admin - HU-015)
   const [modalMaquinaVisible, setModalMaquinaVisible] = useState(false);
@@ -70,6 +72,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
   const [piezasList, setPiezasList] = useState([]);
   const [searchPieza, setSearchPieza] = useState('');
   const [loadingPiezas, setLoadingPiezas] = useState(false);
+  const [piezasError, setPiezasError] = useState('');
   const [selectedPiezaModal, setSelectedPiezaModal] = useState(null);
 
   // Modal Crear Pieza (Técnico - HU-014)
@@ -89,13 +92,14 @@ const DashboardScreen = ({user, token, onLogout}) => {
   // --- Estados de Notificaciones (Supervisor) ---
   const [notificacionesList, setNotificacionesList] = useState([]);
   const [loadingNotif, setLoadingNotif] = useState(false);
+  const [notificacionesError, setNotificacionesError] = useState('');
 
-  const isRoleAdmin = user.rol === 'admin';
-  const isRoleSupervisor = user.rol === 'supervisor';
-  const isRoleTecnico = user.rol === 'tecnico';
+  const isRoleAdmin = user?.rol === 'admin';
+  const isRoleSupervisor = user?.rol === 'supervisor';
+  const isRoleTecnico = user?.rol === 'tecnico';
 
-  const roleInfo = ROLE_CONFIG[user.rol] || {
-    label: user.rol.toUpperCase(),
+  const roleInfo = ROLE_CONFIG[user?.rol] || {
+    label: user?.rol?.toUpperCase?.() || 'SIN ROL',
     color: COLORS.primary,
     bgColor: 'rgba(255, 106, 0, 0.15)',
   };
@@ -104,11 +108,12 @@ const DashboardScreen = ({user, token, onLogout}) => {
   const fetchUsers = useCallback(async () => {
     if (!isRoleAdmin && !isRoleSupervisor) return;
     setLoadingUsers(true);
+    setUsersError('');
     try {
       const res = await getUsers(token);
       if (res.ok) setUsersList(res.usuarios);
     } catch (err) {
-      console.error('Error cargando usuarios:', err);
+      setUsersError(err.message || 'No se pudo cargar la lista de usuarios.');
     } finally {
       setLoadingUsers(false);
     }
@@ -116,11 +121,12 @@ const DashboardScreen = ({user, token, onLogout}) => {
 
   const fetchMaquinas = useCallback(async (query = '') => {
     setLoadingMaquinas(true);
+    setMaquinasError('');
     try {
       const res = await getMaquinas(token, query);
       if (res.ok) setMaquinasList(res.maquinas);
     } catch (err) {
-      console.error('Error cargando máquinas:', err);
+      setMaquinasError(err.message || 'No se pudo cargar la maquinaria.');
     } finally {
       setLoadingMaquinas(false);
     }
@@ -129,11 +135,12 @@ const DashboardScreen = ({user, token, onLogout}) => {
   const fetchPiezas = useCallback(async (maquinaId, query = '') => {
     if (!maquinaId) return;
     setLoadingPiezas(true);
+    setPiezasError('');
     try {
       const res = await getPiezas(token, {maquinaId, query});
       if (res.ok) setPiezasList(res.piezas);
     } catch (err) {
-      console.error('Error cargando piezas:', err);
+      setPiezasError(err.message || 'No se pudo cargar las piezas.');
     } finally {
       setLoadingPiezas(false);
     }
@@ -142,11 +149,12 @@ const DashboardScreen = ({user, token, onLogout}) => {
   const fetchNotificaciones = useCallback(async () => {
     if (!isRoleSupervisor && !isRoleAdmin) return;
     setLoadingNotif(true);
+    setNotificacionesError('');
     try {
       const res = await getNotificaciones(token);
       if (res.ok) setNotificacionesList(res.notificaciones);
     } catch (err) {
-      console.error('Error cargando notificaciones:', err);
+      setNotificacionesError(err.message || 'No se pudo cargar las notificaciones.');
     } finally {
       setLoadingNotif(false);
     }
@@ -412,6 +420,15 @@ const DashboardScreen = ({user, token, onLogout}) => {
             />
           </View>
 
+          {maquinasError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{maquinasError}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => fetchMaquinas(searchMaquina)}>
+                <Text style={styles.retryButtonText}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           {/* Máquina actualmente seleccionada */}
           {selectedMaquina ? (
             <View style={styles.selectedMachineCard}>
@@ -508,6 +525,15 @@ const DashboardScreen = ({user, token, onLogout}) => {
               />
             </View>
 
+            {piezasError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{piezasError}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={() => fetchPiezas(selectedMaquina.id, searchPieza)}>
+                  <Text style={styles.retryButtonText}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
             {loadingPiezas ? (
               <ActivityIndicator size="small" color={COLORS.orange} style={styles.loaderMargin15} />
             ) : piezasList.length === 0 ? (
@@ -569,6 +595,15 @@ const DashboardScreen = ({user, token, onLogout}) => {
               Alertas de componentes técnicos registrados por los técnicos pendientes de aprobación.
             </Text>
 
+            {notificacionesError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{notificacionesError}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={fetchNotificaciones}>
+                  <Text style={styles.retryButtonText}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
             {loadingNotif ? (
               <ActivityIndicator size="small" color={COLORS.orange} style={styles.loaderMargin15} />
             ) : notificacionesList.length === 0 ? (
@@ -625,6 +660,15 @@ const DashboardScreen = ({user, token, onLogout}) => {
                 <Text style={styles.actionBtnText}>+ Nuevo Usuario</Text>
               </TouchableOpacity>
             </View>
+
+            {usersError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{usersError}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={fetchUsers}>
+                  <Text style={styles.retryButtonText}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
 
             {loadingUsers ? (
               <ActivityIndicator size="small" color={COLORS.orange} style={styles.loaderMargin15} />
@@ -1604,11 +1648,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 10,
   },
+  errorContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+  },
   errorText: {
     color: COLORS.danger,
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '500',
+  },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: COLORS.orange,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'center',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 12,
   },
 });
 
