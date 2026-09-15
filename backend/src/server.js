@@ -8,6 +8,12 @@ const maquinasRoutes = require('./routes/maquinas.routes');
 const piezasRoutes = require('./routes/piezas.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 
+if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
+  console.error('Faltan variables de entorno: DATABASE_URL y JWT_SECRET.');
+  console.error('Crea un archivo .env en /backend con esas variables antes de iniciar el servidor.');
+  process.exit(1);
+}
+
 const app = express();
 
 app.use(cors());
