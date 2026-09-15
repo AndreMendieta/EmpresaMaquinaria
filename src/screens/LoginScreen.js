@@ -37,7 +37,6 @@ const LoginScreen = ({onNavigateToRegister, onLoginSuccess}) => {
     setLoading(true);
     try {
       const data = await login({companyCode: cleanCode, email: cleanEmail, password});
-      console.log('Login exitoso:', data.usuario);
 
       if (onLoginSuccess) {
         onLoginSuccess(data.usuario, data.token);
