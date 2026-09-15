@@ -7,6 +7,7 @@ import ReactTestRenderer, {act} from 'react-test-renderer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../App';
 import {saveSession, getSession} from '../src/services/session';
+import {verifyToken} from '../src/services/authService';
 
 const storage = {};
 
@@ -21,6 +22,18 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     return true;
   }),
 }));
+
+jest.mock('../src/services/authService', () => ({
+  verifyToken: jest.fn(),
+  login: jest.fn(),
+  registerCompany: jest.fn(),
+  registerUser: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  Object.keys(storage).forEach((key) => delete storage[key]);
+});
 
 test('renders correctly', async () => {
   let renderer;
@@ -38,4 +51,21 @@ test('persists and restores the session', async () => {
 
   expect(AsyncStorage.setItem).toHaveBeenCalled();
   expect(session).toEqual({token: 'abc', user: {id: 1, nombre: 'Ana'}});
+});
+
+test('restores a valid session only after verifying the token', async () => {
+  const session = {token: 'valid-token', user: {id: 2, nombre: 'Luis'}};
+  await saveSession(session);
+  verifyToken.mockResolvedValue({ok: true, usuario: {...session.user, rol: 'admin'}});
+
+  let renderer;
+  await act(async () => {
+    renderer = ReactTestRenderer.create(<App />);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
+  expect(verifyToken).toHaveBeenCalledWith('valid-token');
+  expect(renderer).toBeTruthy();
 });

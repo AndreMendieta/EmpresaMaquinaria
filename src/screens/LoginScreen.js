@@ -58,19 +58,17 @@ const LoginScreen = ({onNavigateToRegister, onLoginSuccess}) => {
           keyboardShouldPersistTaps="handled">
           
           <View style={styles.card}>
-            {/* Tagline de marca HydroTech */}
             <View style={styles.eyebrowContainer}>
               <View style={styles.eyebrowBar} />
-              <Text style={styles.eyebrowText}>SISTEMAS HIDRÁULICOS & FLUIDOS</Text>
+              <Text style={styles.eyebrowText}>GESTIÓN DE MAQUINARIA</Text>
             </View>
 
-            {/* Título de Marca */}
             <Text style={styles.title}>
-              Hydro<Text style={styles.titleOrange}>Tech</Text>
+              EmpresaMaquinaria
             </Text>
 
             <Text style={styles.subtitle}>
-              Plataforma técnica de gestión de maquinaria
+              Sistema de gestión para operaciones y mantenimiento
             </Text>
 
             <CustomInput
