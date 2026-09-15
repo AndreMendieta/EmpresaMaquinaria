@@ -1,7 +1,24 @@
 // src/services/api.js
-// Ajusta esta URL cuando despliegues el backend en otra máquina o entorno.
-// Para preview/local en tu PC usa localhost; para Android emulator usa 10.0.2.2.
-const API_URL = 'http://localhost:3000/api';
+// URL dinámica según el entorno:
+// - Browsers y preview local: http://localhost:3000/api
+// - Android Emulator: http://10.0.2.2:3000/api
+// - Dispositivo real en la misma red: http://<TU_IP_LOCAL>:3000/api
+const getApiUrl = () => {
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  const isWeb = typeof window !== 'undefined' && window.location && window.location.protocol;
+
+  if (isAndroid) {
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  if (isWeb) {
+    return 'http://localhost:3000/api';
+  }
+
+  return 'http://localhost:3000/api';
+};
+
+const API_URL = getApiUrl();
 
 class ApiError extends Error {
   constructor(message, status, data = {}) {

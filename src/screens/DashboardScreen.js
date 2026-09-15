@@ -22,17 +22,17 @@ import {COLORS} from '../constants/colors';
 
 const ROLE_CONFIG = {
   admin: {
-    label: 'ADMINISTRADOR',
+    label: 'Administrador',
     color: COLORS.roleAdmin,
     bgColor: 'rgba(255, 106, 0, 0.15)',
   },
   supervisor: {
-    label: 'SUPERVISOR',
+    label: 'Supervisor de flota',
     color: COLORS.roleSupervisor,
     bgColor: 'rgba(56, 189, 248, 0.15)',
   },
   tecnico: {
-    label: 'TÉCNICO',
+    label: 'Técnico',
     color: COLORS.roleTecnico,
     bgColor: 'rgba(16, 185, 129, 0.15)',
   },
@@ -356,7 +356,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
       <View style={styles.header}>
         <View style={styles.headerBrandContainer}>
           <Text style={styles.brandTitle}>
-            Hydro<Text style={styles.titleOrange}>Tech</Text>
+            EmpresaMaquinaria
           </Text>
           <Text style={styles.empresaSubtitle}>
             {user.empresa?.nombre || 'Mi Empresa'} ({user.empresa?.codigo || '---'})
@@ -450,7 +450,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
                 <TouchableOpacity
                   style={styles.manualButton}
                   onPress={() => handleOpenManual(selectedMaquina.manual_url)}>
-                  <Text style={styles.manualButtonText}>📖 Consultar Manual Técnico en Línea</Text>
+                  <Text style={styles.manualButtonText}>Consultar manual técnico</Text>
                 </TouchableOpacity>
               ) : (
                 <Text style={styles.noManualText}>Sin manual técnico en línea enlazado.</Text>
@@ -464,7 +464,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
               ) : maquinasList.length === 0 ? (
                 // HU-014 Escenario 2: Máquina no registrada
                 <View style={styles.alertNoticeBox}>
-                  <Text style={styles.alertNoticeTitle}>⚠️ Máquina no registrada</Text>
+                  <Text style={styles.alertNoticeTitle}>Máquina no registrada</Text>
                   <Text style={styles.alertNoticeText}>
                     La máquina buscada no se encuentra en el sistema. Debe ser dada de alta previamente por un supervisor antes de registrar o intervenir piezas.
                   </Text>
@@ -797,7 +797,7 @@ const DashboardScreen = ({user, token, onLogout}) => {
 
                 <View style={styles.alreadyExistsBanner}>
                   <Text style={styles.alreadyExistsBannerText}>
-                    ℹ️ Esta pieza ya está documentada. No se permite duplicar el registro.
+                    Esta pieza ya está documentada. No se permite duplicar el registro.
                   </Text>
                 </View>
 
