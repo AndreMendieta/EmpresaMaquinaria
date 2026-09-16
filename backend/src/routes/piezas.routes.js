@@ -1,8 +1,33 @@
 const express = require('express');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const pool = require('../db/pool');
 const { verifyToken, requireRoles } = require('../middlewares/auth.middleware');
+const { registrarAuditoria } = require('../utils/audit');
 
 const router = express.Router();
+
+const uploadDirectory = path.join(__dirname, '../../uploads/piezas');
+fs.mkdirSync(uploadDirectory, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: uploadDirectory,
+    filename: (req, file, callback) => {
+      const extension = path.extname(file.originalname).toLowerCase();
+      callback(null, `${crypto.randomUUID()}${extension}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return callback(new Error('Solo se permiten archivos de imagen.'));
+    }
+    callback(null, true);
+  },
+});
 
 router.use(verifyToken);
 
@@ -14,6 +39,9 @@ router.use(verifyToken);
 router.get('/', async (req, res) => {
   try {
     const { maquinaId, query } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 20, 1), 100);
+    const offset = (page - 1) * pageSize;
     let sql = `
       SELECT p.id, p.maquina_id, p.codigo, p.nombre, p.tipo, p.medidas, p.descripcion,
              p.fotos, p.estado_validacion, p.creado_en,
@@ -36,13 +64,22 @@ router.get('/', async (req, res) => {
       sql += ` AND (p.nombre ILIKE $${params.length} OR p.codigo ILIKE $${params.length} OR p.tipo ILIKE $${params.length})`;
     }
 
-    sql += ' ORDER BY p.creado_en DESC';
+    const countSql = sql.replace(
+      /SELECT[\s\S]*?FROM piezas p/,
+      'SELECT COUNT(*)::int AS total FROM piezas p'
+    ).replace(/LEFT JOIN usuarios u ON u.id = p.creado_por\s*/, '');
+    sql += ` ORDER BY p.creado_en DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
 
-    const { rows } = await pool.query(sql, params);
+    const [partsResult, countResult] = await Promise.all([
+      pool.query(sql, [...params, pageSize, offset]),
+      pool.query(countSql, params),
+    ]);
+    const total = countResult.rows[0].total;
 
     return res.json({
       ok: true,
-      piezas: rows,
+      piezas: partsResult.rows,
+      pagination: {page, pageSize, total, totalPages: Math.ceil(total / pageSize)},
     });
   } catch (error) {
     console.error('Error en GET /api/piezas:', error);
@@ -172,6 +209,15 @@ router.post('/', async (req, res) => {
       [req.user.empresaId, nuevaPieza.id, req.user.userId, notificacionMensaje]
     );
 
+    await registrarAuditoria(client, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'crear',
+      entidad: 'pieza',
+      entidadId: nuevaPieza.id,
+      detalle: { codigo: nuevaPieza.codigo, maquinaId: nuevaPieza.maquina_id },
+    });
+
     await client.query('COMMIT');
 
     return res.status(201).json({
@@ -192,6 +238,59 @@ router.post('/', async (req, res) => {
     });
   } finally {
     client.release();
+  }
+});
+
+/**
+ * POST /api/piezas/:id/fotos
+ * Recibe una imagen en el campo multipart "foto" y la agrega a la ficha.
+ */
+router.post('/:id/fotos', upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ ok: false, message: 'Debes adjuntar una imagen en el campo "foto".' });
+    }
+
+    const piezaResult = await pool.query(
+      'SELECT id FROM piezas WHERE id = $1 AND empresa_id = $2 LIMIT 1',
+      [req.params.id, req.user.empresaId]
+    );
+
+    if (piezaResult.rows.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({ ok: false, message: 'Pieza no encontrada en esta empresa.' });
+    }
+
+    const fotoUrl = `/uploads/piezas/${req.file.filename}`;
+    const updateResult = await pool.query(
+      `UPDATE piezas
+       SET fotos = array_append(COALESCE(fotos, ARRAY[]::TEXT[]), $1)
+       WHERE id = $2 AND empresa_id = $3
+       RETURNING id, fotos`,
+      [fotoUrl, req.params.id, req.user.empresaId]
+    );
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'modificar',
+      entidad: 'pieza',
+      entidadId: req.params.id,
+      detalle: { fotoAgregada: fotoUrl },
+    });
+
+    return res.status(201).json({
+      ok: true,
+      message: 'Foto cargada correctamente.',
+      fotoUrl,
+      fotos: updateResult.rows[0].fotos,
+    });
+  } catch (error) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error('Error en POST /api/piezas/:id/fotos:', error);
+    return res.status(500).json({ ok: false, message: 'Error al cargar la foto.' });
   }
 });
 
@@ -226,6 +325,15 @@ router.patch('/:id/validar', requireRoles('supervisor', 'admin'), async (req, re
         message: 'Pieza no encontrada en esta empresa.',
       });
     }
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'modificar',
+      entidad: 'pieza',
+      entidadId: updateResult.rows[0].id,
+      detalle: { estadoValidacion: estado },
+    });
 
     return res.json({
       ok: true,

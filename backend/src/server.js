@@ -7,6 +7,8 @@ const userRoutes = require('./routes/user.routes');
 const maquinasRoutes = require('./routes/maquinas.routes');
 const piezasRoutes = require('./routes/piezas.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
+const auditoriaRoutes = require('./routes/auditoria.routes');
+const asistenteRoutes = require('./routes/asistente.routes');
 
 if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
   console.error('Faltan variables de entorno: DATABASE_URL y JWT_SECRET.');
@@ -18,6 +20,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta de salud, útil para verificar que el deploy en el hosting funciona
 app.get('/health', (req, res) => {
@@ -29,6 +32,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/maquinas', maquinasRoutes);
 app.use('/api/piezas', piezasRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/asistente', asistenteRoutes);
 
 // Servir visor interactivo HydroTech en la raíz y en /preview
 app.get('/', (req, res) => {

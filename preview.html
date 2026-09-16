@@ -1770,9 +1770,16 @@
 
     function selectPiezaTipo(tipo) {
       selectedPiezaTipo = tipo;
-      ['Manguera', 'Racor', 'Acople', 'Válvula'].forEach(t => {
-        const el = document.getElementById(`pill-tipo-${t}`);
-        if (el) el.classList.toggle('selected', t === tipo);
+      const tipoIds = {
+        Manguera: 'Manguera',
+        Racor: 'Racor',
+        Acople: 'Acople',
+        'Válvula': 'Valvula',
+      };
+
+      Object.entries(tipoIds).forEach(([tipoNombre, tipoId]) => {
+        const el = document.getElementById(`pill-tipo-${tipoId}`);
+        if (el) el.classList.toggle('selected', tipoNombre === tipo);
       });
     }
 

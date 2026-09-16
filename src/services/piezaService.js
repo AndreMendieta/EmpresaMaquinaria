@@ -27,6 +27,19 @@ export async function createPieza(token, { maquinaId, codigo, nombre, tipo, medi
   );
 }
 
+export async function uploadPiezaFoto(token, piezaId, asset) {
+  const formData = new FormData();
+  formData.append('foto', {
+    uri: asset.uri,
+    type: asset.type || 'image/jpeg',
+    name: asset.fileName || `pieza-${piezaId}.jpg`,
+  });
+
+  return api.upload(`/piezas/${piezaId}/fotos`, formData, {
+    headers: {Authorization: `Bearer ${token}`},
+  });
+}
+
 export async function validarPieza(token, id, estado) {
   return api.patch(
     `/piezas/${id}/validar`,

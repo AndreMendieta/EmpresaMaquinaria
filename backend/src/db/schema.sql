@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   password_hash TEXT NOT NULL,
   rol VARCHAR(30) NOT NULL DEFAULT 'tecnico' CHECK (rol IN ('admin', 'supervisor', 'tecnico')),
   activo BOOLEAN NOT NULL DEFAULT TRUE,
+  intentos_fallidos INTEGER NOT NULL DEFAULT 0,
+  bloqueado_hasta TIMESTAMPTZ,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   -- Un mismo correo puede repetirse en distintas empresas, pero no dentro de la misma
@@ -23,6 +25,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios (email);
+
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS intentos_fallidos INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS bloqueado_hasta TIMESTAMPTZ;
 
 -- Tabla de Maquinarias (Registradas por Supervisor / Admin - HU-015)
 CREATE TABLE IF NOT EXISTS maquinarias (
@@ -34,11 +42,26 @@ CREATE TABLE IF NOT EXISTS maquinarias (
   manual_url TEXT,
   descripcion TEXT,
   creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'inactiva')),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_maquina_codigo_empresa UNIQUE (empresa_id, codigo)
 );
 
 CREATE INDEX IF NOT EXISTS idx_maquinarias_empresa ON maquinarias (empresa_id);
+
+ALTER TABLE maquinarias
+  ADD COLUMN IF NOT EXISTS estado VARCHAR(20) NOT NULL DEFAULT 'activa';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'chk_maquinarias_estado' AND table_name = 'maquinarias'
+  ) THEN
+    ALTER TABLE maquinarias
+      ADD CONSTRAINT chk_maquinarias_estado CHECK (estado IN ('activa', 'inactiva'));
+  END IF;
+END $$;
 
 -- Tabla de Piezas / Componentes Técnicos (Registradas sobre una máquina - HU-014)
 CREATE TABLE IF NOT EXISTS piezas (
@@ -59,6 +82,19 @@ CREATE TABLE IF NOT EXISTS piezas (
 
 CREATE INDEX IF NOT EXISTS idx_piezas_maquina ON piezas (maquina_id);
 CREATE INDEX IF NOT EXISTS idx_piezas_empresa ON piezas (empresa_id);
+
+CREATE TABLE IF NOT EXISTS auditoria (
+  id SERIAL PRIMARY KEY,
+  empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+  usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+  accion VARCHAR(20) NOT NULL CHECK (accion IN ('crear', 'modificar', 'eliminar')),
+  entidad VARCHAR(40) NOT NULL,
+  entidad_id INTEGER,
+  detalle JSONB,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auditoria_empresa ON auditoria (empresa_id);
 
 -- Tabla de Notificaciones al Supervisor para Validación de Piezas
 CREATE TABLE IF NOT EXISTS notificaciones_supervisor (

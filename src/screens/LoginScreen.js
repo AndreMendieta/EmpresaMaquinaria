@@ -16,11 +16,11 @@ import PrimaryButton from '../components/PrimaryButton';
 import {login} from '../services/authService';
 import {COLORS} from '../constants/colors';
 
-const LoginScreen = ({onNavigateToRegister, onLoginSuccess}) => {
+const LoginScreen = ({onNavigateToRegister, onLoginSuccess, initialMessage = ''}) => {
   const [companyCode, setCompanyCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {

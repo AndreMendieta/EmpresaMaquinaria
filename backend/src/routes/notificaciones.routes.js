@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db/pool');
 const { verifyToken, requireRoles } = require('../middlewares/auth.middleware');
+const { registrarAuditoria } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -59,6 +60,15 @@ router.patch('/:id/leida', requireRoles('supervisor', 'admin'), async (req, res)
     if (result.rows.length === 0) {
       return res.status(404).json({ ok: false, message: 'Notificación no encontrada.' });
     }
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'modificar',
+      entidad: 'notificacion',
+      entidadId: result.rows[0].id,
+      detalle: { leida: true },
+    });
 
     return res.json({ ok: true, mensaje: 'Notificación marcada como leída.' });
   } catch (error) {

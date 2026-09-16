@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db/pool');
 const { verifyToken } = require('../middlewares/auth.middleware');
+const { registrarAuditoria } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -85,6 +86,15 @@ router.post('/register-company', async (req, res) => {
       [nuevaEmpresa.id, cleanUserName, cleanEmail, passwordHash]
     );
     const nuevoUsuario = insertUsuarioResult.rows[0];
+
+    await registrarAuditoria(client, {
+      empresaId: nuevaEmpresa.id,
+      usuarioId: nuevoUsuario.id,
+      accion: 'crear',
+      entidad: 'empresa',
+      entidadId: nuevaEmpresa.id,
+      detalle: { usuarioInicialId: nuevoUsuario.id },
+    });
 
     await client.query('COMMIT');
 
@@ -203,6 +213,15 @@ router.post('/register-user', async (req, res) => {
 
     const nuevoUsuario = insertResult.rows[0];
 
+    await registrarAuditoria(pool, {
+      empresaId: empresa.id,
+      usuarioId: nuevoUsuario.id,
+      accion: 'crear',
+      entidad: 'usuario',
+      entidadId: nuevoUsuario.id,
+      detalle: { rol: nuevoUsuario.rol, origen: 'auto-registro' },
+    });
+
     // 5. Generar JWT
     const token = jwt.sign(
       {
@@ -258,7 +277,8 @@ router.post('/login', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
 
     const query = `
-      SELECT u.id, u.nombre, u.email, u.password_hash, u.rol, u.activo,
+            SELECT u.id, u.nombre, u.email, u.password_hash, u.rol, u.activo,
+              u.intentos_fallidos, u.bloqueado_hasta,
              e.id AS empresa_id, e.codigo AS empresa_codigo, e.nombre AS empresa_nombre
       FROM usuarios u
       JOIN empresas e ON e.id = u.empresa_id
@@ -283,14 +303,40 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) > new Date()) {
+      return res.status(429).json({
+        ok: false,
+        message: 'Usuario bloqueado temporalmente por demasiados intentos fallidos. Intenta de nuevo en 15 minutos.',
+        bloqueadoHasta: usuario.bloqueado_hasta,
+      });
+    }
+
     const passwordValida = await bcrypt.compare(password, usuario.password_hash);
 
     if (!passwordValida) {
+      await pool.query(
+        `UPDATE usuarios
+         SET intentos_fallidos = intentos_fallidos + 1,
+             bloqueado_hasta = CASE
+               WHEN intentos_fallidos + 1 >= 5 THEN NOW() + INTERVAL '15 minutes'
+               ELSE NULL
+             END
+         WHERE id = $1`,
+        [usuario.id]
+      );
+
       return res.status(401).json({
         ok: false,
         message: 'Credenciales inválidas.',
       });
     }
+
+    await pool.query(
+      `UPDATE usuarios
+       SET intentos_fallidos = 0, bloqueado_hasta = NULL
+       WHERE id = $1`,
+      [usuario.id]
+    );
 
     const token = jwt.sign(
       {

@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../db/pool');
 const { verifyToken, requireRoles } = require('../middlewares/auth.middleware');
+const { registrarAuditoria } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -21,17 +22,26 @@ router.use(verifyToken);
  */
 router.get('/', requireRoles('admin', 'supervisor'), async (req, res) => {
   try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 20, 1), 100);
+    const offset = (page - 1) * pageSize;
     const query = `
       SELECT id, nombre, email, rol, activo, creado_en
       FROM usuarios
       WHERE empresa_id = $1
       ORDER BY creado_en DESC
+      LIMIT $2 OFFSET $3
     `;
-    const { rows } = await pool.query(query, [req.user.empresaId]);
+    const [usersResult, countResult] = await Promise.all([
+      pool.query(query, [req.user.empresaId, pageSize, offset]),
+      pool.query('SELECT COUNT(*)::int AS total FROM usuarios WHERE empresa_id = $1', [req.user.empresaId]),
+    ]);
+    const total = countResult.rows[0].total;
 
     return res.json({
       ok: true,
-      usuarios: rows,
+      usuarios: usersResult.rows,
+      pagination: {page, pageSize, total, totalPages: Math.ceil(total / pageSize)},
     });
   } catch (error) {
     console.error('Error en GET /api/users:', error);
@@ -107,6 +117,15 @@ router.post('/', requireRoles('admin'), async (req, res) => {
     );
 
     const nuevoUsuario = insertResult.rows[0];
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'crear',
+      entidad: 'usuario',
+      entidadId: nuevoUsuario.id,
+      detalle: { rol: nuevoUsuario.rol },
+    });
 
     return res.status(201).json({
       ok: true,
@@ -192,6 +211,15 @@ router.patch('/:id', requireRoles('admin'), async (req, res) => {
     `;
 
     const result = await pool.query(updateQuery, values);
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'modificar',
+      entidad: 'usuario',
+      entidadId: targetUserId,
+      detalle: { campos: Object.keys(req.body) },
+    });
 
     return res.json({
       ok: true,

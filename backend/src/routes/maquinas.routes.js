@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db/pool');
 const { verifyToken, requireRoles } = require('../middlewares/auth.middleware');
+const { registrarAuditoria } = require('../utils/audit');
 
 const router = express.Router();
 
@@ -10,14 +11,17 @@ router.use(verifyToken);
  * GET /api/maquinas
  * Permite buscar y listar máquinas registradas en la empresa del usuario.
  * Accesible para: técnico, supervisor, admin (HU-014 / HU-015).
- * Query params opcionales: ?query=excavadora
+ * Query params opcionales: ?query=excavadora&incluirInactivas=true
  */
 router.get('/', async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, incluirInactivas } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 20, 1), 100);
+    const offset = (page - 1) * pageSize;
     let sql = `
       SELECT m.id, m.codigo, m.nombre, m.tipo, m.manual_url, m.descripcion,
-             m.creado_en, u.nombre AS creado_por_nombre,
+             m.estado, m.creado_en, u.nombre AS creado_por_nombre,
              (SELECT COUNT(*) FROM piezas p WHERE p.maquina_id = m.id)::int AS total_piezas
       FROM maquinarias m
       LEFT JOIN usuarios u ON u.id = m.creado_por
@@ -25,18 +29,31 @@ router.get('/', async (req, res) => {
     `;
     const params = [req.user.empresaId];
 
+    if (incluirInactivas !== 'true') {
+      sql += ` AND m.estado = 'activa'`;
+    }
+
     if (query && query.trim()) {
       params.push(`%${query.trim()}%`);
       sql += ` AND (m.nombre ILIKE $${params.length} OR m.codigo ILIKE $${params.length} OR m.tipo ILIKE $${params.length})`;
     }
 
-    sql += ' ORDER BY m.creado_en DESC';
+    const countSql = sql.replace(
+      /SELECT[\s\S]*?FROM maquinarias m/,
+      'SELECT COUNT(*)::int AS total FROM maquinarias m'
+    ).replace(/LEFT JOIN usuarios u ON u.id = m.creado_por\s*/, '');
+    sql += ` ORDER BY m.creado_en DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
 
-    const { rows } = await pool.query(sql, params);
+    const [machinesResult, countResult] = await Promise.all([
+      pool.query(sql, [...params, pageSize, offset]),
+      pool.query(countSql, params),
+    ]);
+    const total = countResult.rows[0].total;
 
     return res.json({
       ok: true,
-      maquinas: rows,
+      maquinas: machinesResult.rows,
+      pagination: {page, pageSize, total, totalPages: Math.ceil(total / pageSize)},
     });
   } catch (error) {
     console.error('Error en GET /api/maquinas:', error);
@@ -55,11 +72,11 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { rows } = await pool.query(
-      `SELECT m.id, m.codigo, m.nombre, m.tipo, m.manual_url, m.descripcion,
+      `SELECT m.id, m.codigo, m.nombre, m.tipo, m.manual_url, m.descripcion, m.estado,
               m.creado_en, u.nombre AS creado_por_nombre
        FROM maquinarias m
        LEFT JOIN usuarios u ON u.id = m.creado_por
-       WHERE m.id = $1 AND m.empresa_id = $2`,
+      WHERE m.id = $1 AND m.empresa_id = $2 AND m.estado = 'activa'`,
       [id, req.user.empresaId]
     );
 
@@ -136,7 +153,7 @@ router.post('/', requireRoles('supervisor', 'admin'), async (req, res) => {
     const insertResult = await pool.query(
       `INSERT INTO maquinarias (empresa_id, codigo, nombre, tipo, manual_url, descripcion, creado_por)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, codigo, nombre, tipo, manual_url, descripcion, creado_en`,
+      RETURNING id, codigo, nombre, tipo, manual_url, descripcion, estado, creado_en`,
       [
         req.user.empresaId,
         cleanCodigo,
@@ -148,6 +165,15 @@ router.post('/', requireRoles('supervisor', 'admin'), async (req, res) => {
       ]
     );
 
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'crear',
+      entidad: 'maquinaria',
+      entidadId: insertResult.rows[0].id,
+      detalle: { codigo: cleanCodigo, nombre: cleanNombre },
+    });
+
     return res.status(201).json({
       ok: true,
       message: 'Máquina registrada exitosamente y disponible para los técnicos.',
@@ -158,6 +184,52 @@ router.post('/', requireRoles('supervisor', 'admin'), async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: 'Error al registrar la maquinaria.',
+    });
+  }
+});
+
+/**
+ * PATCH /api/maquinas/:id/baja
+ * Marca una máquina como inactiva sin eliminar su historial.
+ * Permitido exclusivamente para: supervisor, admin.
+ */
+router.patch('/:id/baja', requireRoles('supervisor', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `UPDATE maquinarias
+       SET estado = 'inactiva'
+       WHERE id = $1 AND empresa_id = $2 AND estado = 'activa'
+       RETURNING id, codigo, nombre, tipo, estado, creado_en`,
+      [id, req.user.empresaId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Máquina activa no encontrada en esta empresa.',
+      });
+    }
+
+    await registrarAuditoria(pool, {
+      empresaId: req.user.empresaId,
+      usuarioId: req.user.userId,
+      accion: 'modificar',
+      entidad: 'maquinaria',
+      entidadId: result.rows[0].id,
+      detalle: { estado: 'inactiva' },
+    });
+
+    return res.json({
+      ok: true,
+      message: 'Máquina dada de baja correctamente.',
+      maquina: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error en PATCH /api/maquinas/:id/baja:', error);
+    return res.status(500).json({
+      ok: false,
+      message: 'Error al dar de baja la maquinaria.',
     });
   }
 });

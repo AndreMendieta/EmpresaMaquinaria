@@ -1,17 +1,31 @@
 import React, {useEffect, useState} from 'react';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import DashboardScreen from '../screens/DashboardScreen';
+import MaquinariaListScreen from '../screens/MaquinariaListScreen';
+import MaquinariaDetailScreen from '../screens/MaquinariaDetailScreen';
+import PiezaFormScreen from '../screens/PiezaFormScreen';
+import NotificacionesScreen from '../screens/NotificacionesScreen';
 import {verifyToken} from '../services/authService';
 import {getSession, saveSession, clearSession} from '../services/session';
+import {setSessionExpiredHandler} from '../services/api';
 
 const AppNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState('login');
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [sessionMessage, setSessionMessage] = useState('');
+  const [selectedMaquina, setSelectedMaquina] = useState(null);
+  const [previousScreen, setPreviousScreen] = useState('maquinaria');
 
   useEffect(() => {
+    const unregisterSessionHandler = setSessionExpiredHandler(() => {
+      setCurrentUser(null);
+      setToken(null);
+      setSessionMessage('Tu sesión expiró, inicia sesión de nuevo.');
+      setCurrentScreen('login');
+    });
+
     const restoreSession = async () => {
       try {
         const session = await getSession();
@@ -26,7 +40,7 @@ const AppNavigator = () => {
         if (user) {
           setCurrentUser(user);
           setToken(session.token);
-          setCurrentScreen('dashboard');
+          setCurrentScreen('maquinaria');
         } else {
           await clearSession();
           setCurrentScreen('login');
@@ -41,19 +55,22 @@ const AppNavigator = () => {
     };
 
     restoreSession();
+    return unregisterSessionHandler;
   }, []);
 
   const handleAuthSuccess = async (userData, authToken) => {
     setCurrentUser(userData);
     setToken(authToken);
     await saveSession({user: userData, token: authToken});
-    setCurrentScreen('dashboard');
+    setSessionMessage('');
+    setCurrentScreen('maquinaria');
   };
 
   const handleLogout = async () => {
     setCurrentUser(null);
     setToken(null);
     await clearSession();
+    setSessionMessage('');
     setCurrentScreen('login');
   };
 
@@ -61,11 +78,56 @@ const AppNavigator = () => {
     return null;
   }
 
-  if (currentScreen === 'dashboard' && currentUser) {
+  if (currentUser && currentScreen === 'maquinaria') {
     return (
-      <DashboardScreen
+      <MaquinariaListScreen
         user={currentUser}
         token={token}
+        onLogout={handleLogout}
+        onSelectMaquina={(maquina) => {
+          setSelectedMaquina(maquina);
+          setCurrentScreen('detalle');
+        }}
+        onOpenNotificaciones={() => setCurrentScreen('notificaciones')}
+      />
+    );
+  }
+
+  if (currentUser && currentScreen === 'detalle') {
+    return (
+      <MaquinariaDetailScreen
+        user={currentUser}
+        token={token}
+        maquina={selectedMaquina}
+        onBack={() => setCurrentScreen(previousScreen)}
+        onLogout={handleLogout}
+        onOpenPiezaForm={() => {
+          setPreviousScreen('detalle');
+          setCurrentScreen('pieza');
+        }}
+      />
+    );
+  }
+
+  if (currentUser && currentScreen === 'pieza') {
+    return (
+      <PiezaFormScreen
+        user={currentUser}
+        token={token}
+        maquina={selectedMaquina}
+        onBack={() => setCurrentScreen('detalle')}
+        onLogout={handleLogout}
+        onSaved={() => setCurrentScreen('detalle')}
+      />
+    );
+  }
+
+  if (currentUser && currentScreen === 'notificaciones') {
+    return (
+      <NotificacionesScreen
+        user={currentUser}
+        token={token}
+        onBack={() => setCurrentScreen('maquinaria')}
         onLogout={handleLogout}
       />
     );
@@ -84,6 +146,7 @@ const AppNavigator = () => {
     <LoginScreen
       onNavigateToRegister={() => setCurrentScreen('register')}
       onLoginSuccess={handleAuthSuccess}
+      initialMessage={sessionMessage}
     />
   );
 };

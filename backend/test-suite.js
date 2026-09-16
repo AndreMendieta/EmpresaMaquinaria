@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./src/db/load-env');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -8,6 +8,8 @@ const userRoutes = require('./src/routes/user.routes');
 const maquinasRoutes = require('./src/routes/maquinas.routes');
 const piezasRoutes = require('./src/routes/piezas.routes');
 const notificacionesRoutes = require('./src/routes/notificaciones.routes');
+const auditoriaRoutes = require('./src/routes/auditoria.routes');
+const asistenteRoutes = require('./src/routes/asistente.routes');
 
 const app = express();
 app.use(cors());
@@ -17,6 +19,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/maquinas', maquinasRoutes);
 app.use('/api/piezas', piezasRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/asistente', asistenteRoutes);
 
 async function runTests() {
   const server = http.createServer(app);
@@ -37,10 +41,27 @@ async function runTests() {
     return { status: res.status, body };
   };
 
+  const requestMultipart = async (path, formData, opts = {}) => {
+    const res = await fetch(`${baseUrl}${path}`, {
+      ...opts,
+      body: formData,
+    });
+    const body = await res.json().catch(() => ({}));
+    return { status: res.status, body };
+  };
+
   const TEST_COMPANY_CODE = 'TEST_REG_01';
 
   try {
     console.log('--- Iniciando suite de pruebas de autenticación, roles, HU-014 y HU-015 ---');
+
+    const invalidCompanyRes = await request('/auth/register-company', {
+      method: 'POST',
+      body: JSON.stringify({companyCode: TEST_COMPANY_CODE}),
+    });
+    if (invalidCompanyRes.status !== 400) {
+      throw new Error(`Fallo en validación de registro de empresa: ${JSON.stringify(invalidCompanyRes)}`);
+    }
 
     // 0. Limpieza previa si existía
     await pool.query('DELETE FROM empresas WHERE codigo = $1', [TEST_COMPANY_CODE]);
@@ -64,8 +85,48 @@ async function runTests() {
     const adminToken = regCompanyRes.body.token;
     console.log('   ✅ Empresa y Administrador creados con éxito. Rol: admin');
 
+    const invalidUserRes = await request('/users', {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${adminToken}`},
+      body: JSON.stringify({nombre: 'Usuario incompleto'}),
+    });
+    if (invalidUserRes.status !== 400) {
+      throw new Error(`Fallo en validación de usuario: ${JSON.stringify(invalidUserRes)}`);
+    }
+
+    // RF-001: cinco intentos fallidos bloquean el usuario durante 15 minutos
+    console.log('2. Probando RF-001 (bloqueo tras cinco intentos fallidos)...');
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      const failedLoginRes = await request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          companyCode: TEST_COMPANY_CODE,
+          email: 'admin@prueba.com',
+          password: 'ContraseñaIncorrecta!',
+        }),
+      });
+
+      if (failedLoginRes.status !== 401) {
+        throw new Error(`Fallo en RF-001, intento ${attempt}: ${JSON.stringify(failedLoginRes)}`);
+      }
+    }
+
+    const blockedLoginRes = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        companyCode: TEST_COMPANY_CODE,
+        email: 'admin@prueba.com',
+        password: 'Password123!',
+      }),
+    });
+
+    if (blockedLoginRes.status !== 429 || !blockedLoginRes.body.bloqueadoHasta) {
+      throw new Error(`Fallo en RF-001: el usuario no quedó bloqueado: ${JSON.stringify(blockedLoginRes)}`);
+    }
+    console.log('   ✅ Usuario bloqueado después de cinco intentos fallidos');
+
     // Test 2: Auto-registro de Colaborador (Técnico)
-    console.log('2. Probando POST /auth/register-user (Auto-registro de Técnico)...');
+    console.log('3. Probando POST /auth/register-user (Auto-registro de Técnico)...');
     const regUserRes = await request('/auth/register-user', {
       method: 'POST',
       body: JSON.stringify({
@@ -83,7 +144,7 @@ async function runTests() {
     console.log('   ✅ Colaborador registrado con éxito. Rol asignado por defecto: tecnico');
 
     // Test 3: Admin crea un Supervisor
-    console.log('3. Probando POST /users (Admin crea un Supervisor)...');
+    console.log('4. Probando POST /users (Admin crea un Supervisor)...');
     const createSupervisorRes = await request('/users', {
       method: 'POST',
       headers: { Authorization: `Bearer ${adminToken}` },
@@ -111,8 +172,24 @@ async function runTests() {
     });
     const supervisorToken = supLoginRes.body.token;
 
+    const usersPageRes = await request('/users?page=1&pageSize=2', {
+      method: 'GET',
+      headers: {Authorization: `Bearer ${adminToken}`},
+    });
+    if (usersPageRes.status !== 200 || usersPageRes.body.pagination?.pageSize !== 2) {
+      throw new Error(`Fallo en paginación de usuarios: ${JSON.stringify(usersPageRes)}`);
+    }
+
     // Test 4: HU-015 Supervisor registra maquinaria
-    console.log('4. Probando POST /maquinas (HU-015 - Supervisor registra maquinaria)...');
+    console.log('5. Probando POST /maquinas (HU-015 - Supervisor registra maquinaria)...');
+    const invalidMaqRes = await request('/maquinas', {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${supervisorToken}`},
+      body: JSON.stringify({codigo: 'SIN-NOMBRE'}),
+    });
+    if (invalidMaqRes.status !== 400) {
+      throw new Error(`Fallo en validación de maquinaria: ${JSON.stringify(invalidMaqRes)}`);
+    }
     const maqRes = await request('/maquinas', {
       method: 'POST',
       headers: { Authorization: `Bearer ${supervisorToken}` },
@@ -132,7 +209,7 @@ async function runTests() {
     console.log(`   ✅ Maquinaria registrada con éxito (ID: ${maquinaId})`);
 
     // Test 5: HU-015 Criterio 2: Máquina duplicada emite advertencia
-    console.log('5. Probando POST /maquinas (HU-015 Criterio 2 - Detección de duplicado por nombre)...');
+    console.log('6. Probando POST /maquinas (HU-015 Criterio 2 - Detección de duplicado por nombre)...');
     const dupMaqRes = await request('/maquinas', {
       method: 'POST',
       headers: { Authorization: `Bearer ${supervisorToken}` },
@@ -149,7 +226,7 @@ async function runTests() {
     console.log('   ✅ Detección de nombre duplicado funciona correctamente (409)');
 
     // Test 6: Restricción de seguridad: Técnico no puede registrar maquinaria
-    console.log('6. Probando restricción de rol (Técnico intenta registrar maquinaria)...');
+    console.log('7. Probando restricción de rol (Técnico intenta registrar maquinaria)...');
     const tecMaqRes = await request('/maquinas', {
       method: 'POST',
       headers: { Authorization: `Bearer ${tecnicoToken}` },
@@ -166,19 +243,68 @@ async function runTests() {
     console.log('   ✅ Seguridad correcta: Técnico no puede crear maquinaria (403)');
 
     // Test 7: HU-014 Técnico busca y consulta la máquina registrada
-    console.log('7. Probando GET /maquinas (HU-014 - Técnico busca y consulta la máquina)...');
+    console.log('8. Probando GET /maquinas (HU-014 - Técnico busca y consulta la máquina)...');
     const searchMaqRes = await request('/maquinas?query=Excavadora', {
       method: 'GET',
       headers: { Authorization: `Bearer ${tecnicoToken}` },
     });
 
-    if (searchMaqRes.status !== 200 || searchMaqRes.body.maquinas.length === 0) {
+    if (searchMaqRes.status !== 200 || searchMaqRes.body.maquinas.length === 0 || searchMaqRes.body.pagination?.page !== 1) {
       throw new Error(`Fallo en Test 7: ${JSON.stringify(searchMaqRes)}`);
     }
     console.log(`   ✅ Técnico encontró la máquina: [${searchMaqRes.body.maquinas[0].codigo}] ${searchMaqRes.body.maquinas[0].nombre}`);
 
+    // RF-010: una máquina inactiva no aparece por defecto y solo se incluye explícitamente
+    console.log('9. Probando RF-010 (baja lógica de maquinaria)...');
+    const bajaMaqRes = await request('/maquinas', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${supervisorToken}` },
+      body: JSON.stringify({
+        codigo: 'MAQ-BAJA',
+        nombre: 'Máquina para dar de baja',
+        tipo: 'Prueba',
+      }),
+    });
+
+    if (bajaMaqRes.status !== 201 || !bajaMaqRes.body.maquina?.id) {
+      throw new Error(`Fallo en RF-010 al crear máquina de prueba: ${JSON.stringify(bajaMaqRes)}`);
+    }
+
+    const bajaId = bajaMaqRes.body.maquina.id;
+    const bajaRes = await request(`/maquinas/${bajaId}/baja`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${supervisorToken}` },
+    });
+
+    if (bajaRes.status !== 200 || bajaRes.body.maquina?.estado !== 'inactiva') {
+      throw new Error(`Fallo en RF-010 al dar de baja: ${JSON.stringify(bajaRes)}`);
+    }
+
+    const activeMaqRes = await request('/maquinas?query=MAQ-BAJA', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${tecnicoToken}` },
+    });
+    const allMaqRes = await request('/maquinas?query=MAQ-BAJA&incluirInactivas=true', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${tecnicoToken}` },
+    });
+
+    if (activeMaqRes.status !== 200 || activeMaqRes.body.maquinas.length !== 0 ||
+        allMaqRes.status !== 200 || allMaqRes.body.maquinas[0]?.estado !== 'inactiva') {
+      throw new Error(`Fallo en RF-010 al filtrar máquinas: ${JSON.stringify({ activeMaqRes, allMaqRes })}`);
+    }
+    console.log('   ✅ Baja lógica aplicada y filtro de activas funcionando');
+
     // Test 8: HU-014 Técnico registra ficha de pieza con medidas y fotos
-    console.log('8. Probando POST /piezas (HU-014 - Técnico registra pieza sobre máquina)...');
+    console.log('10. Probando POST /piezas (HU-014 - Técnico registra pieza sobre máquina)...');
+    const invalidPiezaRes = await request('/piezas', {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${tecnicoToken}`},
+      body: JSON.stringify({maquinaId}),
+    });
+    if (invalidPiezaRes.status !== 400) {
+      throw new Error(`Fallo en validación de pieza: ${JSON.stringify(invalidPiezaRes)}`);
+    }
     const piezaRes = await request('/piezas', {
       method: 'POST',
       headers: { Authorization: `Bearer ${tecnicoToken}` },
@@ -204,8 +330,22 @@ async function runTests() {
     const piezaId = piezaRes.body.pieza.id;
     console.log(`   ✅ Ficha de pieza registrada con éxito (ID: ${piezaId}, Estado: ${piezaRes.body.pieza.estado_validacion})`);
 
+    // RF-014: carga real de imagen mediante multipart/form-data
+    console.log('11. Probando RF-014 (carga de fotos de piezas)...');
+    const fotoForm = new FormData();
+    fotoForm.append('foto', new Blob(['imagen de prueba'], { type: 'image/jpeg' }), 'evidencia.jpg');
+    const fotoRes = await requestMultipart(`/piezas/${piezaId}/fotos`, fotoForm, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${tecnicoToken}` },
+    });
+
+    if (fotoRes.status !== 201 || !fotoRes.body.fotoUrl || !fotoRes.body.fotos.includes(fotoRes.body.fotoUrl)) {
+      throw new Error(`Fallo en RF-014: ${JSON.stringify(fotoRes)}`);
+    }
+    console.log('   ✅ Foto recibida, almacenada y agregada a la ficha técnica');
+
     // Test 9: Notificación automática al supervisor
-    console.log('9. Probando GET /notificaciones (Supervisor revisa alerta de pieza nueva)...');
+    console.log('12. Probando GET /notificaciones (Supervisor revisa alerta de pieza nueva)...');
     const notifRes = await request('/notificaciones', {
       method: 'GET',
       headers: { Authorization: `Bearer ${supervisorToken}` },
@@ -217,7 +357,7 @@ async function runTests() {
     console.log(`   ✅ Notificación recibida por Supervisor: "${notifRes.body.notificaciones[0].mensaje}"`);
 
     // Test 10: Supervisor valida la pieza técnica
-    console.log('10. Probando PATCH /piezas/:id/validar (Supervisor aprueba y valida la pieza)...');
+    console.log('13. Probando PATCH /piezas/:id/validar (Supervisor aprueba y valida la pieza)...');
     const validarRes = await request(`/piezas/${piezaId}/validar`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${supervisorToken}` },
@@ -230,7 +370,7 @@ async function runTests() {
     console.log('   ✅ Pieza validada y aprobada por el Supervisor');
 
     // Test 11: HU-014 Criterio 3: Intento de registro duplicado de pieza es bloqueado
-    console.log('11. Probando POST /piezas (HU-014 Criterio 3 - Bloqueo de pieza duplicada)...');
+    console.log('14. Probando POST /piezas (HU-014 Criterio 3 - Bloqueo de pieza duplicada)...');
     const dupPiezaRes = await request('/piezas', {
       method: 'POST',
       headers: { Authorization: `Bearer ${tecnicoToken}` },
@@ -248,7 +388,7 @@ async function runTests() {
     console.log(`   ✅ Bloqueo de pieza duplicada exitoso: remite a la ficha existente ID ${dupPiezaRes.body.piezaExistenteId}`);
 
     // Test 12: Consulta de ficha completa de la pieza
-    console.log('12. Probando GET /piezas/:id (Consulta de ficha completa)...');
+    console.log('15. Probando GET /piezas/:id (Consulta de ficha completa)...');
     const getPiezaRes = await request(`/piezas/${piezaId}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${tecnicoToken}` },
@@ -259,12 +399,57 @@ async function runTests() {
     }
     console.log('   ✅ Ficha técnica completa consultada con éxito');
 
+    const piecesPageRes = await request(`/piezas?maquinaId=${maquinaId}&page=1&pageSize=1`, {
+      method: 'GET',
+      headers: {Authorization: `Bearer ${tecnicoToken}`},
+    });
+    if (piecesPageRes.status !== 200 || piecesPageRes.body.pagination?.pageSize !== 1) {
+      throw new Error(`Fallo en paginación de piezas: ${JSON.stringify(piecesPageRes)}`);
+    }
+
+    // RF-013: solo el administrador puede consultar la trazabilidad
+    console.log('16. Probando RF-013 (auditoría y trazabilidad)...');
+    const auditoriaAdminRes = await request('/auditoria?limite=50', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const auditoriaSupervisorRes = await request('/auditoria', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${supervisorToken}` },
+    });
+
+    if (auditoriaAdminRes.status !== 200 || auditoriaAdminRes.body.auditoria.length < 5 ||
+        !auditoriaAdminRes.body.auditoria.some((item) => item.entidad === 'maquinaria') ||
+        auditoriaSupervisorRes.status !== 403) {
+      throw new Error(`Fallo en RF-013: ${JSON.stringify({ auditoriaAdminRes, auditoriaSupervisorRes })}`);
+    }
+    console.log('   ✅ Operaciones registradas y consulta restringida al administrador');
+
+    // RF-015: el endpoint exige configuración explícita del proveedor y no inventa respuestas
+    console.log('17. Probando RF-015 (asistente contextual)...');
+    const asistenteRes = await request('/asistente', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${tecnicoToken}` },
+      body: JSON.stringify({ pregunta: '¿Qué piezas existen para la excavadora?' }),
+    });
+
+    if (process.env.OPENAI_API_KEY) {
+      if (asistenteRes.status !== 200 || !asistenteRes.body.respuesta) {
+        throw new Error(`Fallo en RF-015 con proveedor configurado: ${JSON.stringify(asistenteRes)}`);
+      }
+      console.log('   ✅ Asistente respondió usando el proveedor configurado');
+    } else if (asistenteRes.status !== 503 || !asistenteRes.body.contexto) {
+      throw new Error(`Fallo en RF-015 sin proveedor: ${JSON.stringify(asistenteRes)}`);
+    } else {
+      console.log('   ✅ Asistente exige OPENAI_API_KEY y devuelve el contexto sin inventar respuesta');
+    }
+
     // Limpieza de datos de prueba
     await pool.query('DELETE FROM empresas WHERE codigo = $1', [TEST_COMPANY_CODE]);
     console.log('   ✅ Datos de prueba limpiados exitosamente');
 
     console.log('\n======================================================');
-    console.log('🎉 TODOS LOS TESTS (1 al 12) PASARON EXITOSAMENTE 🎉');
+    console.log('🎉 TODOS LOS TESTS DE LA FASE 1 PASARON EXITOSAMENTE 🎉');
     console.log('======================================================');
   } catch (err) {
     console.error('❌ Error en las pruebas:', err);
