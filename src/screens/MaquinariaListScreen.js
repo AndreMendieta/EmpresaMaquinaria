@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -15,6 +16,7 @@ import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import {getMaquinas, createMaquina} from '../services/maquinaService';
 import {COLORS} from '../constants/colors';
+import useDebounce from '../hooks/useDebounce';
 
 const MaquinariaListScreen = ({user, token, onLogout, onSelectMaquina, onOpenNotificaciones}) => {
   const [maquinas, setMaquinas] = useState([]);
@@ -25,6 +27,7 @@ const MaquinariaListScreen = ({user, token, onLogout, onSelectMaquina, onOpenNot
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [form, setForm] = useState({codigo: '', nombre: '', tipo: '', manualUrl: '', descripcion: ''});
+  const debouncedQuery = useDebounce(query);
 
   const canManage = user?.rol === 'admin' || user?.rol === 'supervisor';
 
@@ -46,10 +49,20 @@ const MaquinariaListScreen = ({user, token, onLogout, onSelectMaquina, onOpenNot
       setLoading(false);
       return;
     }
-    loadMaquinas();
-  }, [loadMaquinas, user?.empresa?.id]);
+    loadMaquinas(debouncedQuery);
+  }, [debouncedQuery, loadMaquinas, user?.empresa?.id]);
 
   const updateForm = (key, value) => setForm((current) => ({...current, [key]: value}));
+
+  if (!user?.empresa?.id) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.errorText}>No se pudo cargar la información de la empresa.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const saveMaquina = async (confirmarDuplicado = false) => {
     setFormError('');
@@ -90,8 +103,24 @@ const MaquinariaListScreen = ({user, token, onLogout, onSelectMaquina, onOpenNot
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.titleRow}>
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={maquinas}
+        keyExtractor={(item) => String(item.id)}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({item: maquina}) => (
+          <TouchableOpacity style={styles.machineCard} onPress={() => onSelectMaquina(maquina)}>
+            <View style={styles.headerText}>
+              <Text style={styles.code}>{maquina.codigo}</Text>
+              <Text style={styles.machineName}>{maquina.nombre}</Text>
+              <Text style={styles.meta}>{maquina.tipo} - {maquina.total_piezas || 0} piezas</Text>
+            </View>
+            <Text style={styles.arrow}>Ver equipo</Text>
+          </TouchableOpacity>
+        )}
+        ListHeaderComponent={(
+          <View>
+            <View style={styles.titleRow}>
           <View style={styles.headerText}>
             <Text style={styles.title}>Maquinaria autorizada</Text>
             <Text style={styles.subtitle}>Selecciona un equipo para consultar sus piezas.</Text>
@@ -101,48 +130,35 @@ const MaquinariaListScreen = ({user, token, onLogout, onSelectMaquina, onOpenNot
               <Text style={styles.secondaryButtonText}>Alertas</Text>
             </TouchableOpacity>
           )}
-        </View>
-
-        {canManage && (
-          <TouchableOpacity style={styles.primaryButton} onPress={() => setModalVisible(true)}>
-            <Text style={styles.primaryButtonText}>+ Nueva máquina</Text>
-          </TouchableOpacity>
-        )}
-
-        <TextInput
-          style={styles.search}
-          placeholder="Buscar por código, nombre o tipo"
-          placeholderTextColor={COLORS.textSecondary}
-          value={query}
-          onChangeText={(value) => {
-            setQuery(value);
-            loadMaquinas(value);
-          }}
-        />
-
-        {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={() => loadMaquinas(query)}>
-              <Text style={styles.retry}>Reintentar</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-        {!loading && !error && maquinas.length === 0 && (
-          <Text style={styles.empty}>No hay maquinaria activa para este criterio.</Text>
-        )}
-        {!loading && maquinas.map((maquina) => (
-          <TouchableOpacity key={maquina.id} style={styles.machineCard} onPress={() => onSelectMaquina(maquina)}>
-            <View style={styles.headerText}>
-              <Text style={styles.code}>{maquina.codigo}</Text>
-              <Text style={styles.machineName}>{maquina.nombre}</Text>
-              <Text style={styles.meta}>{maquina.tipo} - {maquina.total_piezas || 0} piezas</Text>
             </View>
-            <Text style={styles.arrow}>Ver equipo</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+
+            {canManage && (
+              <TouchableOpacity style={styles.primaryButton} onPress={() => setModalVisible(true)}>
+                <Text style={styles.primaryButtonText}>+ Nueva máquina</Text>
+              </TouchableOpacity>
+            )}
+
+            <TextInput
+              style={styles.search}
+              placeholder="Buscar por código, nombre o tipo"
+              placeholderTextColor={COLORS.textSecondary}
+              value={query}
+              onChangeText={setQuery}
+            />
+
+            {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity onPress={() => loadMaquinas(query)}>
+                  <Text style={styles.retry}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        )}
+        ListEmptyComponent={!loading && !error ? <Text style={styles.empty}>No hay maquinaria activa para este criterio.</Text> : null}
+      />
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <View style={styles.overlay}>

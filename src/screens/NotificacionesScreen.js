@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {getNotificaciones, marcarNotificacionLeida, validarPieza} from '../services/piezaService';
 import {COLORS} from '../constants/colors';
 
@@ -46,13 +46,20 @@ const NotificacionesScreen = ({user, token, onBack, onLogout}) => {
         <Text style={styles.brand}>Notificaciones</Text>
         <TouchableOpacity onPress={onLogout}><Text style={styles.logout}>Salir</Text></TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Bandeja de validación</Text>
-        <Text style={styles.subtitle}>Revisa las fichas registradas por los técnicos.</Text>
-        {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
-        {error ? <View style={styles.errorBox}><Text style={styles.error}>{error}</Text><TouchableOpacity onPress={loadNotifications}><Text style={styles.retry}>Reintentar</Text></TouchableOpacity></View> : null}
-        {!loading && !error && notificaciones.length === 0 && <Text style={styles.empty}>No hay notificaciones pendientes.</Text>}
-        {notificaciones.map((item) => {
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={notificaciones}
+        keyExtractor={(item) => String(item.id)}
+        ListHeaderComponent={(
+          <View>
+            <Text style={styles.title}>Bandeja de validación</Text>
+            <Text style={styles.subtitle}>Revisa las fichas registradas por los técnicos.</Text>
+            {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
+            {error ? <View style={styles.errorBox}><Text style={styles.error}>{error}</Text><TouchableOpacity onPress={loadNotifications}><Text style={styles.retry}>Reintentar</Text></TouchableOpacity></View> : null}
+          </View>
+        )}
+        ListEmptyComponent={!loading && !error ? <Text style={styles.empty}>No hay notificaciones pendientes.</Text> : null}
+        renderItem={({item}) => {
           const validated = item.estado_validacion === 'validada';
           return (
             <View key={item.id} style={styles.card}>
@@ -68,8 +75,8 @@ const NotificacionesScreen = ({user, token, onBack, onLogout}) => {
               </View>
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </SafeAreaView>
   );
 };

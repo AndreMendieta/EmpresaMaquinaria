@@ -2,34 +2,39 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import {getPiezas} from '../services/piezaService';
 import {COLORS} from '../constants/colors';
+import useDebounce from '../hooks/useDebounce';
 
 const MaquinariaDetailScreen = ({user, token, maquina, onBack, onLogout, onOpenPiezaForm}) => {
   const [piezas, setPiezas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query);
 
   const loadPiezas = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await getPiezas(token, {maquinaId: maquina.id});
+      const response = await getPiezas(token, {maquinaId: maquina.id, query: debouncedQuery});
       setPiezas(response.piezas || []);
     } catch (requestError) {
       setError(requestError.message || 'No se pudieron cargar las piezas.');
     } finally {
       setLoading(false);
     }
-  }, [maquina.id, token]);
+  }, [debouncedQuery, maquina.id, token]);
 
   useEffect(() => {
     loadPiezas();
@@ -54,29 +59,12 @@ const MaquinariaDetailScreen = ({user, token, maquina, onBack, onLogout, onOpenP
         <Text style={styles.brand}>Detalle de maquinaria</Text>
         <TouchableOpacity onPress={onLogout}><Text style={styles.logout}>Salir</Text></TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.code}>{maquina.codigo}</Text>
-        <Text style={styles.title}>{maquina.nombre}</Text>
-        <Text style={styles.meta}>{maquina.tipo}</Text>
-        {maquina.manual_url ? <TouchableOpacity onPress={openManual} style={styles.manual}><Text style={styles.manualText}>Consultar manual técnico</Text></TouchableOpacity> : null}
-
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Piezas asociadas</Text>
-            <Text style={styles.sectionSubtitle}>Fichas técnicas registradas para este equipo.</Text>
-          </View>
-          <TouchableOpacity onPress={onOpenPiezaForm} style={styles.addButton}>
-            <Text style={styles.addText}>+ Pieza</Text>
-          </TouchableOpacity>
-        </View>
-
-        {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
-        {error ? (
-          <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text><TouchableOpacity onPress={loadPiezas}><Text style={styles.retry}>Reintentar</Text></TouchableOpacity></View>
-        ) : null}
-        {!loading && !error && piezas.length === 0 && <Text style={styles.empty}>No hay piezas registradas para esta máquina.</Text>}
-        {piezas.map((pieza) => (
-          <View key={pieza.id} style={styles.piezaCard}>
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={piezas}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({item: pieza}) => (
+          <View style={styles.piezaCard}>
             <View style={styles.piezaInfo}>
               <Text style={styles.piezaCode}>{pieza.codigo}</Text>
               <Text style={styles.piezaName}>{pieza.nombre}</Text>
@@ -85,8 +73,40 @@ const MaquinariaDetailScreen = ({user, token, maquina, onBack, onLogout, onOpenP
             </View>
             <View style={styles.badge}><Text style={styles.badgeText}>{pieza.estado_validacion.toUpperCase()}</Text></View>
           </View>
-        ))}
-      </ScrollView>
+        )}
+        ListHeaderComponent={(
+          <View>
+            <Text style={styles.code}>{maquina.codigo}</Text>
+            <Text style={styles.title}>{maquina.nombre}</Text>
+            <Text style={styles.meta}>{maquina.tipo}</Text>
+            {maquina.manual_url ? <TouchableOpacity onPress={openManual} style={styles.manual}><Text style={styles.manualText}>Consultar manual técnico</Text></TouchableOpacity> : null}
+
+            <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Piezas asociadas</Text>
+            <Text style={styles.sectionSubtitle}>Fichas técnicas registradas para este equipo.</Text>
+          </View>
+          <TouchableOpacity onPress={onOpenPiezaForm} style={styles.addButton}>
+            <Text style={styles.addText}>+ Pieza</Text>
+          </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.search}
+              placeholder="Buscar pieza por código, nombre o tipo"
+              placeholderTextColor={COLORS.textSecondary}
+              value={query}
+              onChangeText={setQuery}
+            />
+
+            {loading && <ActivityIndicator color={COLORS.orange} style={styles.loader} />}
+            {error ? (
+              <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text><TouchableOpacity onPress={loadPiezas}><Text style={styles.retry}>Reintentar</Text></TouchableOpacity></View>
+            ) : null}
+          </View>
+        )}
+        ListEmptyComponent={!loading && !error ? <Text style={styles.empty}>No hay piezas registradas para esta máquina.</Text> : null}
+      />
     </SafeAreaView>
   );
 };
@@ -101,6 +121,7 @@ const styles = StyleSheet.create({
   code: {color: COLORS.orange, fontWeight: '800', fontSize: 12},
   title: {fontSize: 25, color: COLORS.textPrimary, fontWeight: '800', marginTop: 5},
   meta: {fontSize: 13, color: COLORS.textSecondary, marginTop: 4},
+  search: {height: 46, borderWidth: 1, borderColor: COLORS.border, borderRadius: 9, paddingHorizontal: 14, color: COLORS.textPrimary, backgroundColor: COLORS.surface, marginBottom: 12},
   manual: {borderWidth: 1, borderColor: COLORS.orange, padding: 11, borderRadius: 9, marginTop: 16, alignItems: 'center'},
   manualText: {color: COLORS.orange, fontWeight: '700'},
   sectionHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 28, marginBottom: 12},
