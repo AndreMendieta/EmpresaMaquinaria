@@ -18,7 +18,7 @@ import { COLORS } from '../constants/colors';
 
 const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) => {
   const { role } = useAuth();
-  const canCreateMachine = ['admin', 'supervisor', 'tecnico'].includes(role);
+  const canCreateMachine = role === 'admin' || role === 'supervisor';
 
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(false);

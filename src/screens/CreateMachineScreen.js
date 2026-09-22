@@ -18,7 +18,7 @@ import { COLORS } from '../constants/colors';
 
 const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany }) => {
   const { role } = useAuth();
-  const canCreateMachine = ['admin', 'supervisor', 'tecnico'].includes(role);
+  const canCreateMachine = role === 'admin' || role === 'supervisor';
 
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState(initialClientCompany?.id || null);

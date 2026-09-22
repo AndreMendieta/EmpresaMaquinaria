@@ -84,7 +84,7 @@ const LoginScreen = ({ onNavigateToRegister }) => {
               placeholder="UUID de la empresa prestadora"
               value={serviceCompanyId}
               onChangeText={setServiceCompanyId}
-              keyboardType="number-pad"
+              autoCapitalize="none"
             />
 
             <CustomInput

@@ -5,6 +5,7 @@ import { COLORS } from '../constants/colors';
 
 // 20 Pantallas de Fase 4
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ClientCompaniesScreen from '../screens/ClientCompaniesScreen';
 import ClientCompanyDetailScreen from '../screens/ClientCompanyDetailScreen';
@@ -45,6 +46,10 @@ const AppNavigator = () => {
     setNavStack([{ name, params }]);
   };
 
+  if (currentRoute.name === 'register' && (!user || !token)) {
+    return <RegisterScreen onNavigateToLogin={() => resetTo('login')} onRegisterSuccess={() => resetTo('login')} />;
+  }
+
   // 1. Cargando sesión persistente
   if (isLoading) {
     return (
@@ -56,7 +61,7 @@ const AppNavigator = () => {
 
   // 2. Si no hay sesión activa, siempre mostrar LoginScreen
   if (!user || !token) {
-    return <LoginScreen onLoginSuccess={() => resetTo('dashboard')} />;
+    return <LoginScreen onNavigateToRegister={() => resetTo('register')} onLoginSuccess={() => resetTo('dashboard')} />;
   }
 
   // 3. Renderizado de la pantalla activa
