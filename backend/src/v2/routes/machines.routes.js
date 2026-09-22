@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
   return res.json({ok: true, maquinaria: rows[0]});
 });
 
-router.post('/', requireRole('admin', 'supervisor'), async (req, res) => {
+router.post('/', requireRole('admin', 'supervisor', 'tecnico'), async (req, res) => {
   try {
     const {empresaClienteId, codigo, nombre, tipo, numeroSerie, urlManual, descripcion} = req.body;
     if (!codigo || !nombre || !tipo) return res.status(400).json({error: 'codigo, nombre y tipo son obligatorios'});

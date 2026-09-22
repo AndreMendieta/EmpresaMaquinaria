@@ -3,7 +3,7 @@ import client from './client';
 export async function login({ serviceCompanyId = 1, correo, email, password }) {
   const cleanEmail = (correo || email || '').trim().toLowerCase();
   return client.post('/auth/login', {
-    serviceCompanyId: Number(serviceCompanyId) || 1,
+    serviceCompanyId: String(serviceCompanyId).trim(),
     correo: cleanEmail,
     password,
   });

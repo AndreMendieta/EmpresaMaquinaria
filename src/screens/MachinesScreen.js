@@ -18,7 +18,7 @@ import { COLORS } from '../constants/colors';
 
 const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) => {
   const { role } = useAuth();
-  const isSupervisorOrAdmin = role === 'admin' || role === 'supervisor';
+  const canCreateMachine = ['admin', 'supervisor', 'tecnico'].includes(role);
 
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,8 +59,8 @@ const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) =>
         title="Maquinaria"
         role={role}
         onBack={onBack}
-        onRightAction={isSupervisorOrAdmin ? onNavigateCreateMachine : null}
-        rightActionLabel={isSupervisorOrAdmin ? '+ Crear Máquina' : null}
+        onRightAction={canCreateMachine ? onNavigateCreateMachine : null}
+        rightActionLabel={canCreateMachine ? '+ Crear Máquina' : null}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -88,7 +88,7 @@ const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) =>
             <Text style={styles.emptyText}>
               No se encontraron equipos registrados con este criterio.
             </Text>
-            {isSupervisorOrAdmin ? (
+            {canCreateMachine ? (
               <TouchableOpacity
                 style={styles.btnCreate}
                 onPress={onNavigateCreateMachine}>

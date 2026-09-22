@@ -17,7 +17,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormCylinder from '../components/SubtypeFormCylinder';
 import { COLORS } from '../constants/colors';
 
-const CreateCylinderScreen = ({ onBack, onCreated, initialMachine }) => {
+const CreateCylinderScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const { role } = useAuth();
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(initialMachine?.id || null);
@@ -74,7 +74,7 @@ const CreateCylinderScreen = ({ onBack, onCreated, initialMachine }) => {
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'El cilindro hidráulico ha sido guardado en borrador.');
-      if (onCreated) onCreated(res.pieza);
+      if (onPartCreated) onPartCreated(res.pieza);
     } catch (err) {
       setErrorMsg(err.message || 'Error al guardar el cilindro hidráulico.');
     } finally {

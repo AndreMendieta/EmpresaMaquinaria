@@ -1,4 +1,5 @@
 // src/api/client.js
+import { Platform } from 'react-native';
 import { getSession, clearSession } from '../auth/session';
 
 let onSessionExpiredCallback = null;
@@ -8,7 +9,7 @@ export function setOnSessionExpired(callback) {
 }
 
 const getBaseUrl = () => {
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  const isAndroid = Platform.OS === 'android';
   const isWeb = typeof window !== 'undefined' && window.location && window.location.protocol;
 
   if (isAndroid) {

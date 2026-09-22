@@ -17,7 +17,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormLathe from '../components/SubtypeFormLathe';
 import { COLORS } from '../constants/colors';
 
-const CreateLathePartScreen = ({ onBack, onCreated, initialMachine }) => {
+const CreateLathePartScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const { role } = useAuth();
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(initialMachine?.id || null);
@@ -74,7 +74,7 @@ const CreateLathePartScreen = ({ onBack, onCreated, initialMachine }) => {
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'La pieza de torno ha sido guardada en borrador.');
-      if (onCreated) onCreated(res.pieza);
+      if (onPartCreated) onPartCreated(res.pieza);
     } catch (err) {
       setErrorMsg(err.message || 'Error al guardar la pieza de torno.');
     } finally {

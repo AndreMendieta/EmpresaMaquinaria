@@ -17,7 +17,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormHose from '../components/SubtypeFormHose';
 import { COLORS } from '../constants/colors';
 
-const CreateHoseScreen = ({ onBack, onCreated, initialMachine }) => {
+const CreateHoseScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const { role } = useAuth();
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(initialMachine?.id || null);
@@ -75,7 +75,7 @@ const CreateHoseScreen = ({ onBack, onCreated, initialMachine }) => {
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'La manguera hidráulica ha sido guardada en borrador.');
-      if (onCreated) onCreated(res.pieza);
+      if (onPartCreated) onPartCreated(res.pieza);
     } catch (err) {
       setErrorMsg(err.message || 'Error al guardar la manguera.');
     } finally {

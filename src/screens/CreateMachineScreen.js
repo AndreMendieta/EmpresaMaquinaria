@@ -18,7 +18,7 @@ import { COLORS } from '../constants/colors';
 
 const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany }) => {
   const { role } = useAuth();
-  const isSupervisorOrAdmin = role === 'admin' || role === 'supervisor';
+  const canCreateMachine = ['admin', 'supervisor', 'tecnico'].includes(role);
 
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState(initialClientCompany?.id || null);
@@ -87,8 +87,8 @@ const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany })
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {!isSupervisorOrAdmin ? (
-          <ForbiddenNotice message="Solo supervisores y administradores tienen permisos para registrar maquinaria autorizada (HU-015)." />
+        {!canCreateMachine ? (
+          <ForbiddenNotice message="No tienes permisos para registrar maquinaria autorizada (HU-015)." />
         ) : null}
 
         {forbidden ? (
@@ -174,7 +174,7 @@ const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany })
             title="Registrar Maquinaria en Flota"
             onPress={handleSubmit}
             loading={loading}
-            disabled={!isSupervisorOrAdmin}
+            disabled={!canCreateMachine}
           />
         </View>
       </ScrollView>

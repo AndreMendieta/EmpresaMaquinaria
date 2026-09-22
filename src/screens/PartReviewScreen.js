@@ -15,7 +15,7 @@ import Badge from '../components/Badge';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
 
-const PartReviewScreen = ({ part, onBack, onResolved }) => {
+const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
   const { role } = useAuth();
   const isSupervisorOrAdmin = role === 'admin' || role === 'supervisor';
 
@@ -29,7 +29,7 @@ const PartReviewScreen = ({ part, onBack, onResolved }) => {
     try {
       await approvePart(part.id);
       Alert.alert('Pieza Aprobada', 'La pieza ha sido validada oficialmente.');
-      if (onResolved) onResolved();
+      if (onReviewCompleted) onReviewCompleted();
     } catch (err) {
       if (err.isForbidden) {
         setForbidden(true);
@@ -47,7 +47,7 @@ const PartReviewScreen = ({ part, onBack, onResolved }) => {
     try {
       await rejectPart(part.id);
       Alert.alert('Pieza Devuelta', 'La pieza ha sido marcada como rechazada.');
-      if (onResolved) onResolved();
+      if (onReviewCompleted) onReviewCompleted();
     } catch (err) {
       if (err.isForbidden) {
         setForbidden(true);

@@ -16,7 +16,7 @@ import { COLORS } from '../constants/colors';
 
 const LoginScreen = ({ onNavigateToRegister }) => {
   const { login } = useAuth();
-  const [serviceCompanyId, setServiceCompanyId] = useState('1');
+  const [serviceCompanyId, setServiceCompanyId] = useState('');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -25,15 +25,16 @@ const LoginScreen = ({ onNavigateToRegister }) => {
   const handleLogin = async () => {
     setErrorMessage('');
     const cleanEmail = correo.trim().toLowerCase();
-    if (!cleanEmail || !password) {
-      setErrorMessage('Por favor ingresa tu correo y contraseña.');
+    const cleanCompanyId = serviceCompanyId.trim();
+    if (!cleanCompanyId || !cleanEmail || !password) {
+      setErrorMessage('Ingresa el ID de la empresa, correo y contraseña.');
       return;
     }
 
     setLoading(true);
     try {
       await login({
-        serviceCompanyId: Number(serviceCompanyId) || 1,
+        serviceCompanyId: cleanCompanyId,
         correo: cleanEmail,
         password,
       });
@@ -47,7 +48,7 @@ const LoginScreen = ({ onNavigateToRegister }) => {
   const handleQuickFill = (emailVal, passVal) => {
     setCorreo(emailVal);
     setPassword(passVal);
-    setServiceCompanyId('1');
+    setServiceCompanyId('');
     setErrorMessage('');
   };
 
@@ -80,7 +81,7 @@ const LoginScreen = ({ onNavigateToRegister }) => {
 
             <CustomInput
               label="Empresa Prestadora (ID)"
-              placeholder="1 (HydroTech S.A.S.)"
+              placeholder="UUID de la empresa prestadora"
               value={serviceCompanyId}
               onChangeText={setServiceCompanyId}
               keyboardType="number-pad"
