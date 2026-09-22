@@ -1,154 +1,252 @@
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useAuth } from '../auth/useAuth';
+import { COLORS } from '../constants/colors';
+
+// 20 Pantallas de Fase 4
 import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import MaquinariaListScreen from '../screens/MaquinariaListScreen';
-import MaquinariaDetailScreen from '../screens/MaquinariaDetailScreen';
-import PiezaFormScreen from '../screens/PiezaFormScreen';
-import NotificacionesScreen from '../screens/NotificacionesScreen';
-import {verifyToken} from '../services/authService';
-import {getSession, saveSession, clearSession} from '../services/session';
-import {setSessionExpiredHandler} from '../services/api';
+import DashboardScreen from '../screens/DashboardScreen';
+import ClientCompaniesScreen from '../screens/ClientCompaniesScreen';
+import ClientCompanyDetailScreen from '../screens/ClientCompanyDetailScreen';
+import MachinesScreen from '../screens/MachinesScreen';
+import MachineDetailScreen from '../screens/MachineDetailScreen';
+import CreateMachineScreen from '../screens/CreateMachineScreen';
+import PartsScreen from '../screens/PartsScreen';
+import PartDetailScreen from '../screens/PartDetailScreen';
+import PartReviewScreen from '../screens/PartReviewScreen';
+import CreateHoseScreen from '../screens/CreateHoseScreen';
+import CreateLathePartScreen from '../screens/CreateLathePartScreen';
+import CreateCylinderScreen from '../screens/CreateCylinderScreen';
+import OrdersScreen from '../screens/OrdersScreen';
+import CreateOrderScreen from '../screens/CreateOrderScreen';
+import OrderDetailScreen from '../screens/OrderDetailScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import ReportsScreen from '../screens/ReportsScreen';
+import UsersScreen from '../screens/UsersScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const AppNavigator = () => {
-  const [currentScreen, setCurrentScreen] = useState('login');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loadingSession, setLoadingSession] = useState(true);
-  const [sessionMessage, setSessionMessage] = useState('');
-  const [selectedMaquina, setSelectedMaquina] = useState(null);
-  const [previousScreen, setPreviousScreen] = useState('maquinaria');
+  const { user, token, isLoading } = useAuth();
 
-  useEffect(() => {
-    const unregisterSessionHandler = setSessionExpiredHandler(() => {
-      setCurrentUser(null);
-      setToken(null);
-      setSessionMessage('Tu sesión expiró, inicia sesión de nuevo.');
-      setCurrentScreen('login');
-    });
+  // Historial de navegación tipo pila: [{ name, params }]
+  const [navStack, setNavStack] = useState([{ name: 'dashboard', params: {} }]);
 
-    const restoreSession = async () => {
-      try {
-        const session = await getSession();
+  const currentRoute = navStack[navStack.length - 1] || { name: 'dashboard', params: {} };
 
-        if (!session?.token) {
-          return;
-        }
-
-        const data = await verifyToken(session.token);
-        const user = data?.usuario || session.user;
-
-        if (user) {
-          setCurrentUser(user);
-          setToken(session.token);
-          setCurrentScreen('maquinaria');
-        } else {
-          await clearSession();
-          setCurrentScreen('login');
-        }
-      } catch (error) {
-        console.warn('No se pudo restaurar la sesión:', error);
-        await clearSession();
-        setCurrentScreen('login');
-      } finally {
-        setLoadingSession(false);
-      }
-    };
-
-    restoreSession();
-    return unregisterSessionHandler;
-  }, []);
-
-  const handleAuthSuccess = async (userData, authToken) => {
-    setCurrentUser(userData);
-    setToken(authToken);
-    await saveSession({user: userData, token: authToken});
-    setSessionMessage('');
-    setCurrentScreen('maquinaria');
+  const navigate = (name, params = {}) => {
+    setNavStack((prev) => [...prev, { name, params }]);
   };
 
-  const handleLogout = async () => {
-    setCurrentUser(null);
-    setToken(null);
-    await clearSession();
-    setSessionMessage('');
-    setCurrentScreen('login');
+  const goBack = () => {
+    setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   };
 
-  if (loadingSession) {
-    return null;
-  }
+  const resetTo = (name, params = {}) => {
+    setNavStack([{ name, params }]);
+  };
 
-  if (currentUser && currentScreen === 'maquinaria') {
+  // 1. Cargando sesión persistente
+  if (isLoading) {
     return (
-      <MaquinariaListScreen
-        user={currentUser}
-        token={token}
-        onLogout={handleLogout}
-        onSelectMaquina={(maquina) => {
-          setSelectedMaquina(maquina);
-          setCurrentScreen('detalle');
-        }}
-        onOpenNotificaciones={() => setCurrentScreen('notificaciones')}
-      />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.orange} />
+      </View>
     );
   }
 
-  if (currentUser && currentScreen === 'detalle') {
-    return (
-      <MaquinariaDetailScreen
-        user={currentUser}
-        token={token}
-        maquina={selectedMaquina}
-        onBack={() => setCurrentScreen(previousScreen)}
-        onLogout={handleLogout}
-        onOpenPiezaForm={() => {
-          setPreviousScreen('detalle');
-          setCurrentScreen('pieza');
-        }}
-      />
-    );
+  // 2. Si no hay sesión activa, siempre mostrar LoginScreen
+  if (!user || !token) {
+    return <LoginScreen onLoginSuccess={() => resetTo('dashboard')} />;
   }
 
-  if (currentUser && currentScreen === 'pieza') {
-    return (
-      <PiezaFormScreen
-        user={currentUser}
-        token={token}
-        maquina={selectedMaquina}
-        onBack={() => setCurrentScreen('detalle')}
-        onLogout={handleLogout}
-        onSaved={() => setCurrentScreen('detalle')}
-      />
-    );
-  }
+  // 3. Renderizado de la pantalla activa
+  switch (currentRoute.name) {
+    case 'dashboard':
+      return (
+        <DashboardScreen
+          onNavigate={(target) => navigate(target)}
+        />
+      );
 
-  if (currentUser && currentScreen === 'notificaciones') {
-    return (
-      <NotificacionesScreen
-        user={currentUser}
-        token={token}
-        onBack={() => setCurrentScreen('maquinaria')}
-        onLogout={handleLogout}
-      />
-    );
-  }
+    case 'client_companies':
+      return (
+        <ClientCompaniesScreen
+          onBack={goBack}
+          onSelectCompany={(company) => navigate('client_company_detail', { company })}
+        />
+      );
 
-  if (currentScreen === 'register') {
-    return (
-      <RegisterScreen
-        onNavigateToLogin={() => setCurrentScreen('login')}
-        onRegisterSuccess={handleAuthSuccess}
-      />
-    );
-  }
+    case 'client_company_detail':
+      return (
+        <ClientCompanyDetailScreen
+          company={currentRoute.params.company}
+          onBack={goBack}
+          onSelectMachine={(machine) => navigate('machine_detail', { machine })}
+        />
+      );
 
-  return (
-    <LoginScreen
-      onNavigateToRegister={() => setCurrentScreen('register')}
-      onLoginSuccess={handleAuthSuccess}
-      initialMessage={sessionMessage}
-    />
-  );
+    case 'machines':
+      return (
+        <MachinesScreen
+          onBack={goBack}
+          onSelectMachine={(machine) => navigate('machine_detail', { machine })}
+          onNavigateCreateMachine={() => navigate('create_machine')}
+        />
+      );
+
+    case 'machine_detail':
+      return (
+        <MachineDetailScreen
+          machine={currentRoute.params.machine}
+          onBack={goBack}
+          onSelectPart={(part) => navigate('part_detail', { part })}
+          onNavigateCreateHose={(machine) => navigate('create_hose', { machine })}
+          onNavigateCreateLathe={(machine) => navigate('create_lathe', { machine })}
+          onNavigateCreateCylinder={(machine) => navigate('create_cylinder', { machine })}
+        />
+      );
+
+    case 'create_machine':
+      return (
+        <CreateMachineScreen
+          onBack={goBack}
+          onMachineCreated={() => {
+            goBack();
+          }}
+        />
+      );
+
+    case 'parts':
+      return (
+        <PartsScreen
+          onBack={goBack}
+          onSelectPart={(part) => navigate('part_detail', { part })}
+          onNavigateReview={(part) => navigate('part_review', { part })}
+          onNavigateCreateHose={() => navigate('create_hose')}
+          onNavigateCreateLathe={() => navigate('create_lathe')}
+          onNavigateCreateCylinder={() => navigate('create_cylinder')}
+        />
+      );
+
+    case 'part_detail':
+      return (
+        <PartDetailScreen
+          part={currentRoute.params.part}
+          onBack={goBack}
+          onNavigateReview={(part) => navigate('part_review', { part })}
+        />
+      );
+
+    case 'part_review':
+      return (
+        <PartReviewScreen
+          part={currentRoute.params.part}
+          onBack={goBack}
+          onReviewCompleted={() => {
+            goBack();
+          }}
+        />
+      );
+
+    case 'create_hose':
+      return (
+        <CreateHoseScreen
+          initialMachine={currentRoute.params.machine}
+          onBack={goBack}
+          onPartCreated={(part) => {
+            navigate('part_detail', { part });
+          }}
+        />
+      );
+
+    case 'create_lathe':
+      return (
+        <CreateLathePartScreen
+          initialMachine={currentRoute.params.machine}
+          onBack={goBack}
+          onPartCreated={(part) => {
+            navigate('part_detail', { part });
+          }}
+        />
+      );
+
+    case 'create_cylinder':
+      return (
+        <CreateCylinderScreen
+          initialMachine={currentRoute.params.machine}
+          onBack={goBack}
+          onPartCreated={(part) => {
+            navigate('part_detail', { part });
+          }}
+        />
+      );
+
+    case 'orders':
+      return (
+        <OrdersScreen
+          onBack={goBack}
+          onSelectOrder={(order) => navigate('order_detail', { order })}
+          onNavigateCreateOrder={() => navigate('create_order')}
+        />
+      );
+
+    case 'create_order':
+      return (
+        <CreateOrderScreen
+          onBack={goBack}
+          onOrderCreated={(order) => navigate('order_detail', { order })}
+        />
+      );
+
+    case 'order_detail':
+      return (
+        <OrderDetailScreen
+          order={currentRoute.params.order}
+          onBack={goBack}
+          onOrderUpdated={(updated) => {
+            currentRoute.params.order = updated;
+          }}
+        />
+      );
+
+    case 'notifications':
+      return (
+        <NotificationsScreen
+          onBack={goBack}
+          onNavigateOrder={(ordenId) =>
+            navigate('order_detail', { order: { id: ordenId, numero_orden: `OT #${ordenId}` } })
+          }
+          onNavigatePart={(piezaId) =>
+            navigate('part_detail', { part: { id: piezaId, codigo: `PZ #${piezaId}` } })
+          }
+        />
+      );
+
+    case 'reports':
+      return <ReportsScreen onBack={goBack} />;
+
+    case 'users':
+      return <UsersScreen onBack={goBack} />;
+
+    case 'profile':
+      return <ProfileScreen onBack={goBack} />;
+
+    default:
+      return (
+        <DashboardScreen
+          onNavigate={(target) => navigate(target)}
+        />
+      );
+  }
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default AppNavigator;

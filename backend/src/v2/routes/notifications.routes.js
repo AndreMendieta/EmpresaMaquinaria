@@ -1,7 +1,6 @@
 const express = require('express');
 const pool = require('../../db/pool');
 const auth = require('../middlewares/auth');
-const requireCompanyScope = require('../middlewares/requireCompanyScope');
 
 const router = express.Router();
 router.use(auth);
