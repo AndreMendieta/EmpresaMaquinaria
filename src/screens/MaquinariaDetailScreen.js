@@ -5,7 +5,6 @@ import {
   FlatList,
   Linking,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

@@ -9,6 +9,7 @@
     "seed": "node src/db/seed.js",
     "test": "node -e \"process.env.NODE_ENV='test'; require('./test-suite')\"",
     "migrate": "node src/db/migrate.js",
+    "migrate:multitenant": "node src/db/migrate-multitenant.js",
     "migrate:test": "node -e \"process.env.NODE_ENV='test'; require('./src/db/migrate')\""
   },
   "dependencies": {
