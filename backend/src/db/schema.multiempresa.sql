@@ -107,6 +107,42 @@ CREATE TABLE IF NOT EXISTS piezas_cilindro (
     REFERENCES piezas_multiempresa (empresa_prestadora_id, id)
 );
 
+ALTER TABLE piezas_manguera
+  ADD COLUMN IF NOT EXISTS diametro VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS presion VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS terminales VARCHAR(160),
+  ADD COLUMN IF NOT EXISTS evidencia VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS adicionales TEXT;
+
+ALTER TABLE piezas_torno
+  ADD COLUMN IF NOT EXISTS planos VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS evidencia VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS adicionales TEXT;
+
+ALTER TABLE piezas_cilindro
+  ADD COLUMN IF NOT EXISTS camisa VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS vastago VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS medida_tapa VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS medida_piston VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS empaques VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS ojo VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS pasadores VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS recorrido_salida VARCHAR(80),
+  ADD COLUMN IF NOT EXISTS racores_llenado VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS adicionales TEXT;
+
+ALTER TABLE empresas_prestadoras
+  ADD COLUMN IF NOT EXISTS legacy_empresa_id INTEGER UNIQUE;
+
+ALTER TABLE usuarios_multiempresa
+  ADD COLUMN IF NOT EXISTS legacy_usuario_id INTEGER;
+
+ALTER TABLE maquinarias_multiempresa
+  ADD COLUMN IF NOT EXISTS legacy_maquina_id INTEGER;
+
+ALTER TABLE piezas_multiempresa
+  ADD COLUMN IF NOT EXISTS legacy_pieza_id INTEGER;
+
 CREATE TABLE IF NOT EXISTS ordenes_servicio (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_prestadora_id UUID NOT NULL REFERENCES empresas_prestadoras(id) ON DELETE CASCADE,

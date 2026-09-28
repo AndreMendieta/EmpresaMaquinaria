@@ -7,6 +7,7 @@ const partsRoutes = require('./routes/parts.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const notificationsRoutes = require('./routes/notifications.routes');
 const reportsRoutes = require('./routes/reports.routes');
+const auditRoutes = require('./routes/audit.routes');
 
 const app = express();
 app.use(express.json());
@@ -18,5 +19,6 @@ app.use('/parts', partsRoutes);
 app.use('/orders', ordersRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/reports', reportsRoutes);
+app.use('/audit', auditRoutes);
 
 module.exports = app;

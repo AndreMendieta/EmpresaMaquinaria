@@ -140,7 +140,9 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
           {isSupervisorOrAdmin ? (
             <TouchableOpacity
               style={styles.btnAddMachine}
-              onPress={() => onAddMachine && onAddMachine(company)}>
+              onPress={() => onAddMachine && onAddMachine(company, (machine) => {
+                setMachines((current) => [machine, ...current]);
+              })}>
               <Text style={styles.btnAddMachineText}>+ Asignar Máquina</Text>
             </TouchableOpacity>
           ) : null}

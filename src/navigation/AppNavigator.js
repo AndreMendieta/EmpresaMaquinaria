@@ -87,6 +87,11 @@ const AppNavigator = () => {
           company={currentRoute.params.company}
           onBack={goBack}
           onSelectMachine={(machine) => navigate('machine_detail', { machine })}
+          onAddMachine={(company, onCreated) => navigate('create_machine', {
+            initialClientCompany: company,
+            requireClientCompany: true,
+            onCreated,
+          })}
         />
       );
 
@@ -115,7 +120,12 @@ const AppNavigator = () => {
       return (
         <CreateMachineScreen
           onBack={goBack}
-          onMachineCreated={() => {
+          initialClientCompany={currentRoute.params.initialClientCompany}
+          requireClientCompany={currentRoute.params.requireClientCompany}
+          onMachineCreated={(machine) => {
+            if (currentRoute.params.onCreated) {
+              currentRoute.params.onCreated(machine);
+            }
             goBack();
           }}
         />

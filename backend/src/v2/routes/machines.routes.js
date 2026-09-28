@@ -31,6 +31,16 @@ router.post('/', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const {empresaClienteId, codigo, nombre, tipo, numeroSerie, urlManual, descripcion} = req.body;
     if (!codigo || !nombre || !tipo) return res.status(400).json({error: 'codigo, nombre y tipo son obligatorios'});
+    if (empresaClienteId) {
+      const clientCompany = await pool.query(
+        `SELECT id FROM empresas_clientes
+         WHERE id = $1 AND empresa_prestadora_id = $2 AND activa = TRUE`,
+        [empresaClienteId, req.user.service_company_id]
+      );
+      if (!clientCompany.rows.length) {
+        return res.status(400).json({error: 'La empresa cliente no existe, está inactiva o no pertenece a tu empresa'});
+      }
+    }
     const {rows} = await pool.query(
       `INSERT INTO maquinarias_multiempresa
        (empresa_prestadora_id, empresa_cliente_id, codigo, nombre, tipo, numero_serie, url_manual, descripcion, creado_por)
@@ -61,6 +71,23 @@ router.patch('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('ma
   if (!rows.length) return res.status(404).json({error: 'Maquinaria no encontrada'});
   await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'modificar', entidad: 'maquinaria', entidadId: rows[0].id, detalle: {campos: Object.keys(req.body)}});
   return res.json({ok: true, maquinaria: rows[0]});
+});
+
+router.delete('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('maquinaria_id'), async (req, res) => {
+  const {rows} = await pool.query(
+    `UPDATE maquinarias_multiempresa SET estado = 'inactiva', actualizado_en = NOW()
+     WHERE id = $1 AND empresa_prestadora_id = $2 RETURNING id`,
+    [req.params.id, req.user.service_company_id]
+  );
+  if (!rows.length) return res.status(404).json({error: 'Maquinaria no encontrada'});
+  await registrarAuditoria({
+    empresaPrestadoraId: req.user.service_company_id,
+    usuarioId: req.user.id,
+    accion: 'eliminar',
+    entidad: 'maquinaria',
+    entidadId: rows[0].id,
+  });
+  return res.json({ok: true, message: 'Maquinaria desactivada'});
 });
 
 module.exports = router;

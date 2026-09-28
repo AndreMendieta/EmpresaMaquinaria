@@ -6,6 +6,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "preview": "node scripts/preview-server.js",
     "start": "react-native start",
     "test": "jest"
   },

@@ -10,6 +10,7 @@ const notificacionesRoutes = require('./routes/notificaciones.routes');
 const auditoriaRoutes = require('./routes/auditoria.routes');
 const asistenteRoutes = require('./routes/asistente.routes');
 const v2App = require('./v2/app');
+const previewCompat = require('./v2/previewCompat');
 
 if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
   console.error('Faltan variables de entorno: DATABASE_URL y JWT_SECRET.');
@@ -36,6 +37,7 @@ app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/asistente', asistenteRoutes);
 app.use('/api/v2', v2App);
+app.use('/api/preview', previewCompat);
 
 // Servir visor interactivo HydroTech en la raíz y en /preview
 app.get('/', (req, res) => {

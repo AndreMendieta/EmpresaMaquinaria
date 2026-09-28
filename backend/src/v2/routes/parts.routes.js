@@ -45,9 +45,9 @@ router.post('/', async (req, res) => {
 
     const subtypeTables = {manguera: 'piezas_manguera', torno: 'piezas_torno', cilindro: 'piezas_cilindro'};
     const subtypeColumns = {
-      manguera: ['diametro_interior', 'diametro_exterior', 'longitud', 'presion_trabajo', 'tipo_conexion', 'material'],
-      torno: ['diametro', 'longitud', 'rosca', 'material', 'tolerancia'],
-      cilindro: ['diametro_camisa', 'diametro_vastago', 'carrera', 'presion_trabajo', 'tipo_sello'],
+      manguera: ['diametro', 'longitud', 'presion', 'terminales', 'evidencia', 'adicionales'],
+      torno: ['diametro', 'longitud', 'material', 'rosca', 'planos', 'evidencia', 'adicionales'],
+      cilindro: ['camisa', 'vastago', 'medida_tapa', 'medida_piston', 'empaques', 'ojo', 'pasadores', 'recorrido_salida', 'racores_llenado', 'presion_trabajo', 'adicionales'],
     };
     const columns = subtypeColumns[tipo];
     const values = [pieza.id, req.user.service_company_id, ...columns.map((column) => subtipo[column] || null)];
@@ -79,6 +79,85 @@ router.patch('/:id/submit', requireCompanyScope('pieza_id'), async (req, res) =>
   if (!rows.length) return res.status(404).json({error: 'Pieza borrador no encontrada o no pertenece al usuario'});
   await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'modificar', entidad: 'pieza', entidadId: rows[0].id, detalle: {estado: 'pendiente'}});
   return res.json({ok: true, pieza: rows[0]});
+});
+
+router.patch('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('pieza_id'), async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const {nombre, descripcion, fotos, subtipo = {}} = req.body;
+    await client.query('BEGIN');
+    const current = await client.query(
+      `SELECT id, tipo FROM piezas_multiempresa
+       WHERE id = $1 AND empresa_prestadora_id = $2`,
+      [req.params.id, req.user.service_company_id]
+    );
+    if (!current.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({error: 'Pieza no encontrada'});
+    }
+
+    const updates = [];
+    const values = [req.params.id, req.user.service_company_id];
+    if (nombre !== undefined) { values.push(nombre.trim()); updates.push(`nombre = $${values.length}`); }
+    if (descripcion !== undefined) { values.push(descripcion || null); updates.push(`descripcion = $${values.length}`); }
+    if (fotos !== undefined) { values.push(Array.isArray(fotos) ? fotos : []); updates.push(`fotos = $${values.length}`); }
+    updates.push('actualizado_en = NOW()');
+    const piece = await client.query(
+      `UPDATE piezas_multiempresa SET ${updates.join(', ')}
+       WHERE id = $1 AND empresa_prestadora_id = $2 RETURNING *`,
+      values
+    );
+
+    const subtypeTables = {manguera: 'piezas_manguera', torno: 'piezas_torno', cilindro: 'piezas_cilindro'};
+    const subtypeColumns = {
+      manguera: ['diametro', 'longitud', 'presion', 'terminales', 'evidencia', 'adicionales'],
+      torno: ['diametro', 'longitud', 'material', 'rosca', 'planos', 'evidencia', 'adicionales'],
+      cilindro: ['camisa', 'vastago', 'medida_tapa', 'medida_piston', 'empaques', 'ojo', 'pasadores', 'recorrido_salida', 'racores_llenado', 'presion_trabajo', 'adicionales'],
+    };
+    const type = current.rows[0].tipo;
+    const subtypeUpdates = [];
+    const subtypeValues = [req.params.id, req.user.service_company_id];
+    for (const column of subtypeColumns[type]) {
+      if (subtipo[column] !== undefined) {
+        subtypeValues.push(subtipo[column] || null);
+        subtypeUpdates.push(`${column} = $${subtypeValues.length}`);
+      }
+    }
+    if (subtypeUpdates.length) {
+      await client.query(
+        `UPDATE ${subtypeTables[type]} SET ${subtypeUpdates.join(', ')}
+         WHERE pieza_id = $1 AND empresa_prestadora_id = $2`,
+        subtypeValues
+      );
+    }
+    await client.query('COMMIT');
+    await registrarAuditoria({
+      empresaPrestadoraId: req.user.service_company_id,
+      usuarioId: req.user.id,
+      accion: 'modificar',
+      entidad: 'pieza',
+      entidadId: piece.rows[0].id,
+      detalle: {campos: Object.keys(req.body)},
+    });
+    return res.json({ok: true, pieza: piece.rows[0]});
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error modificando pieza v2:', error);
+    return res.status(500).json({error: 'No se pudo modificar la pieza'});
+  } finally {
+    client.release();
+  }
+});
+
+router.delete('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('pieza_id'), async (req, res) => {
+  const {rows} = await pool.query(
+    `DELETE FROM piezas_multiempresa
+     WHERE id = $1 AND empresa_prestadora_id = $2 RETURNING id`,
+    [req.params.id, req.user.service_company_id]
+  );
+  if (!rows.length) return res.status(404).json({error: 'Pieza no encontrada'});
+  await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'eliminar', entidad: 'pieza', entidadId: rows[0].id});
+  return res.json({ok: true, message: 'Pieza eliminada'});
 });
 
 async function resolverPieza(req, res, estado) {

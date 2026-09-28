@@ -10,6 +10,7 @@
     "test": "node -e \"process.env.NODE_ENV='test'; require('./test-suite')\"",
     "migrate": "node src/db/migrate.js",
     "migrate:multitenant": "node src/db/migrate-multitenant.js",
+    "migrate:legacy-v2": "node src/db/migrate-legacy-to-v2.js",
     "migrate:test": "node -e \"process.env.NODE_ENV='test'; require('./src/db/migrate')\""
   },
   "dependencies": {

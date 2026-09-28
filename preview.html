@@ -1158,6 +1158,18 @@
           </div>
         </div>
 
+        <div id="create-client-company-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box">
+            <h3 class="modal-title">Nueva Empresa Cliente</h3>
+            <p class="modal-subtitle">Empresa a la que se le prestará servicio.</p>
+            <input id="modal-client-razon" class="rn-input" placeholder="Razón social *">
+            <input id="modal-client-comercial" class="rn-input" placeholder="Nombre comercial (opcional)">
+            <div id="modal-client-error" class="rn-error" style="display: none;"></div>
+            <button id="modal-submit-client-btn" class="rn-btn" onclick="submitCreateClientCompany()">Crear Empresa Cliente</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeClientCompanyModal()">Cancelar</button>
+          </div>
+        </div>
+
         <!-- ========================================== -->
         <!-- MODAL 2: Registrar Maquinaria (HU-015)     -->
         <!-- ========================================== -->
@@ -1166,6 +1178,9 @@
             <h3 class="modal-title">Registrar Maquinaria</h3>
             <p class="modal-subtitle">Poner equipo a disposición de los técnicos.</p>
 
+            <select id="modal-maq-cliente" class="rn-input">
+              <option value="">Flota interna (sin empresa cliente)</option>
+            </select>
             <input id="modal-maq-codigo" class="rn-input" placeholder="Código de la máquina (ej: CAT-320D)">
             <input id="modal-maq-nombre" class="rn-input" placeholder="Nombre del equipo (ej: Excavadora CAT)">
             <input id="modal-maq-tipo" class="rn-input" placeholder="Tipo de máquina (ej: Excavadora, Prensa)">
@@ -1196,16 +1211,47 @@
               <div id="pill-tipo-Racor" class="role-pill-option" onclick="selectPiezaTipo('Racor')">Racor</div>
               <div id="pill-tipo-Acople" class="role-pill-option" onclick="selectPiezaTipo('Acople')">Acople</div>
               <div id="pill-tipo-Valvula" class="role-pill-option" onclick="selectPiezaTipo('Válvula')">Válvula</div>
+              <div id="pill-tipo-Torno" class="role-pill-option" onclick="selectPiezaTipo('PiezaTorno')">Pieza Torno</div>
+              <div id="pill-tipo-Cilindro" class="role-pill-option" onclick="selectPiezaTipo('CilindroHidráulico')">Cilindro Hidráulico</div>
             </div>
 
-            <label class="selector-label">MEDIDAS Y ESPECIFICACIONES:</label>
-            <input id="modal-pieza-longitud" class="rn-input" placeholder="Longitud (ej: 120 cm)">
-            <input id="modal-pieza-diametro" class="rn-input" placeholder="Diámetro Interior (ej: 3/4 pulg)">
-            <input id="modal-pieza-presion" class="rn-input" placeholder="Presión de trabajo (ej: 5000 PSI)">
-            <input id="modal-pieza-rosca" class="rn-input" placeholder="Rosca / acople (ej: JIC Macho 1-1/16)">
+            <div id="pieza-fields-hose">
+              <label class="selector-label">DATOS DE MANGUERA:</label>
+              <input id="modal-pieza-longitud" class="rn-input" placeholder="Longitud (ej: 120 cm)">
+              <input id="modal-pieza-diametro" class="rn-input" placeholder="Diámetro (ej: 3/4 pulg)">
+              <input id="modal-pieza-presion" class="rn-input" placeholder="Presión (ej: 5000 PSI)">
+              <input id="modal-pieza-terminales" class="rn-input" placeholder="Terminales (ej: JIC 3/4 hembra 90°)">
+              <input id="modal-pieza-evidencia" class="rn-input" placeholder="Evidencia (URL o referencia)">
+              <input id="modal-pieza-adicionales" class="rn-input" placeholder="Adicionales (protección, radio de curvatura...)">
+            </div>
+
+            <div id="pieza-fields-lathe" style="display: none;">
+              <label class="selector-label">DATOS DE PIEZA TORNO:</label>
+              <input id="modal-pieza-torno-longitud" class="rn-input" placeholder="Longitud (ej: 250 mm)">
+              <input id="modal-pieza-torno-diametro" class="rn-input" placeholder="Diámetro (ej: 45 mm)">
+              <input id="modal-pieza-material" class="rn-input" placeholder="Tipo de material (ej: acero SAE 4140)">
+              <input id="modal-pieza-rosca" class="rn-input" placeholder="Tipo de rosca (ej: M30 x 2.0)">
+              <input id="modal-pieza-planos" class="rn-input" placeholder="Planos (URL o referencia)">
+              <input id="modal-pieza-torno-evidencia" class="rn-input" placeholder="Evidencia (URL o referencia)">
+              <input id="modal-pieza-torno-adicionales" class="rn-input" placeholder="Adicionales (tolerancias, acabado...)">
+            </div>
+
+            <div id="pieza-fields-cylinder" style="display: none;">
+              <label class="selector-label">DATOS DE CILINDRO HIDRÁULICO:</label>
+              <input id="modal-cilindro-camisa" class="rn-input" placeholder="Medida de camisa (ej: 100 mm)">
+              <input id="modal-cilindro-vastago" class="rn-input" placeholder="Medida de vástago (ej: 50 mm)">
+              <input id="modal-cilindro-tapa" class="rn-input" placeholder="Medida de tapa (ej: 120 mm)">
+              <input id="modal-cilindro-piston" class="rn-input" placeholder="Medida de pistón (ej: 95 mm)">
+              <input id="modal-cilindro-empaques" class="rn-input" placeholder="Empaques (ej: kit de sellos NBR)">
+              <input id="modal-cilindro-ojo" class="rn-input" placeholder="Ojo (diámetro y ancho)">
+              <input id="modal-cilindro-pasadores" class="rn-input" placeholder="Pasadores (diámetro, longitud y tipo)">
+              <input id="modal-cilindro-recorrido" class="rn-input" placeholder="Recorrido de salida (ej: 800 mm)">
+              <input id="modal-cilindro-racores" class="rn-input" placeholder="Racores de llenado (ej: 1/2 NPT)">
+              <input id="modal-cilindro-adicionales" class="rn-input" placeholder="Adicionales (observaciones o daños)">
+            </div>
 
             <label class="selector-label">EVIDENCIA & DETALLES:</label>
-            <input id="modal-pieza-foto" class="rn-input" placeholder="URL de foto o evidencia técnica">
+            <input id="modal-pieza-foto" class="rn-input" placeholder="URL de fotografía">
             <input id="modal-pieza-desc" class="rn-input" placeholder="Observaciones de instalación / taller">
 
             <div id="modal-pieza-error" class="rn-error" style="display: none;"></div>
@@ -1229,7 +1275,7 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api';
+    const API_URL = 'http://localhost:3000/api/preview';
     let currentView = 'login'; // 'login', 'register', 'dashboard'
     let currentUser = null;
     let currentToken = null;
@@ -1244,6 +1290,10 @@
     let piezasList = [];
     let searchPiezaText = '';
     let notificacionesList = [];
+    let clientCompaniesList = [];
+    let auditList = [];
+    let editingMachineId = null;
+    let editingPiezaId = null;
     let companyUsersList = [];
 
     // Reloj
@@ -1400,6 +1450,22 @@
           </div>
 
           <!-- ================================================= -->
+          <!-- MÓDULO 0: EMPRESAS CLIENTES (ADMIN)                -->
+          <!-- ================================================= -->
+          ${currentUser.rol === 'admin' ? `
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <div>
+                  <div class="dash-section-title">Empresas Cliente</div>
+                  <div class="dash-section-subtitle">Clientes a los que se les presta servicio.</div>
+                </div>
+                <button class="dash-action-btn" onclick="openClientCompanyModal()">+ Nueva Empresa</button>
+              </div>
+              <div id="client-companies-render-area">${renderClientCompaniesArea()}</div>
+            </div>
+          ` : ''}
+
+          <!-- ================================================= -->
           <!-- MÓDULO 1: MAQUINARIA AUTORIZADA (HU-014 / HU-015) -->
           <!-- ================================================= -->
           <div class="dash-section">
@@ -1474,6 +1540,18 @@
             </div>
           ` : ''}
 
+          ${isSupervisorOrAdmin ? `
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <div>
+                  <div class="dash-section-title">Historial de Cambios</div>
+                  <div class="dash-section-subtitle">Registro de modificaciones y eliminaciones realizadas por el equipo.</div>
+                </div>
+              </div>
+              <div id="audit-render-area">${renderAuditArea()}</div>
+            </div>
+          ` : ''}
+
           <!-- ================================================= -->
           <!-- MÓDULO 4: GESTIÓN DE PERSONAL (SOLO ADMIN)        -->
           <!-- ================================================= -->
@@ -1519,6 +1597,9 @@
             ` : `
               <div class="no-manual-hint">Sin manual técnico en línea enlazado.</div>
             `}
+            ${['admin', 'supervisor'].includes(currentUser.rol) ? `
+              <button class="dash-action-btn" onclick="openMaquinaModal('${selectedMaquina.id}')">Modificar Máquina</button>
+            ` : ''}
           </div>
         `;
       }
@@ -1537,13 +1618,14 @@
       return `
         <div class="machine-list-grid">
           ${maquinasList.map(m => `
-            <div class="machine-item-card" onclick="selectMaquina(${m.id})">
+            <div class="machine-item-card" onclick="selectMaquina('${m.id}')">
               <div>
                 <div class="machine-item-code">${m.codigo}</div>
                 <div class="machine-item-name">${m.nombre}</div>
                 <div class="machine-item-type">${m.tipo} • ${m.total_piezas || 0} piezas registradas</div>
               </div>
               <div class="select-arrow">Seleccionar →</div>
+              ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openMaquinaModal('${m.id}')">Modificar</button>` : ''}
             </div>
           `).join('')}
         </div>
@@ -1568,7 +1650,7 @@
       return piezasList.map(p => {
         const isValid = p.estado_validacion === 'validada';
         return `
-          <div class="pieza-item-card" onclick="openPiezaDetailModal(${p.id})">
+          <div class="pieza-item-card" onclick="openPiezaDetailModal('${p.id}')">
             <div>
               <div class="pieza-header-row">
                 <span class="pieza-code">[${p.codigo}]</span>
@@ -1580,9 +1662,114 @@
               <div class="pieza-tipo">Tipo: ${p.tipo}</div>
             </div>
             <div class="view-sheet-link">Ver Ficha →</div>
+            ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openPiezaModal(${JSON.stringify(p)})">Modificar</button>` : ''}
           </div>
         `;
       }).join('');
+    }
+
+    function renderClientCompaniesArea() {
+      if (!clientCompaniesList.length) {
+        return '<div style="color: var(--ink-muted); font-size: 12px; padding: 12px;">No hay empresas cliente registradas.</div>';
+      }
+      return clientCompaniesList.map(company => `
+        <div class="user-row-card">
+          <div>
+            <div class="user-row-name">${company.razon_social}</div>
+            <div class="user-row-email">${company.nombre_comercial || company.correo || 'Sin datos adicionales'}</div>
+          </div>
+          <span class="mini-badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">${company.activa ? 'ACTIVA' : 'INACTIVA'}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderAuditArea() {
+      if (!auditList.length) return '<div style="color: var(--ink-muted); font-size: 12px; padding: 12px;">No hay cambios registrados.</div>';
+      return auditList.map(item => `
+        <div class="user-row-card">
+          <div>
+            <div class="user-row-name">${item.accion.toUpperCase()} · ${item.entidad}</div>
+            <div class="user-row-email">${item.usuario_nombre || 'Usuario'} · ${new Date(item.creado_en).toLocaleString()}</div>
+          </div>
+          <span class="mini-badge" style="background: ${item.accion === 'eliminar' ? 'rgba(239,68,68,.15)' : 'rgba(56,189,248,.15)'}; color: ${item.accion === 'eliminar' ? '#F87171' : '#38BDF8'};">${item.accion}</span>
+        </div>
+      `).join('');
+    }
+
+    async function fetchAudit() {
+      if (!currentToken || !['admin', 'supervisor'].includes(currentUser?.rol)) return;
+      try {
+        const res = await fetch(`${API_URL}/auditoria`, {headers: {Authorization: `Bearer ${currentToken}`} });
+        const data = await res.json();
+        if (!res.ok) return;
+        auditList = data.registros || [];
+        const area = document.getElementById('audit-render-area');
+        if (area) area.innerHTML = renderAuditArea();
+      } catch (error) {
+        console.error('Error cargando auditoría:', error);
+      }
+    }
+
+    async function fetchClientCompanies() {
+      if (!currentToken || currentUser?.rol !== 'admin') return;
+      try {
+        const res = await fetch(`${API_URL}/client-companies`, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+        const data = await res.json();
+        if (!res.ok) return;
+        clientCompaniesList = data.empresas_clientes || [];
+        const area = document.getElementById('client-companies-render-area');
+        if (area) area.innerHTML = renderClientCompaniesArea();
+      } catch (error) {
+        console.error('Error cargando empresas cliente:', error);
+      }
+    }
+
+    function openClientCompanyModal() {
+      document.getElementById('modal-client-razon').value = '';
+      document.getElementById('modal-client-comercial').value = '';
+      document.getElementById('modal-client-error').style.display = 'none';
+      document.getElementById('create-client-company-modal').style.display = 'flex';
+    }
+
+    function closeClientCompanyModal() {
+      document.getElementById('create-client-company-modal').style.display = 'none';
+    }
+
+    async function submitCreateClientCompany() {
+      const errorEl = document.getElementById('modal-client-error');
+      const submitBtn = document.getElementById('modal-submit-client-btn');
+      const razonSocial = document.getElementById('modal-client-razon').value.trim();
+      const nombreComercial = document.getElementById('modal-client-comercial').value.trim();
+      errorEl.style.display = 'none';
+      if (!razonSocial) {
+        errorEl.innerText = 'La razón social es obligatoria.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      submitBtn.classList.add('rn-btn-disabled');
+      submitBtn.innerHTML = '<div class="spinner"></div>';
+      const res = await fetch(`${API_URL}/client-companies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${currentToken}`,
+        },
+        body: JSON.stringify({ razonSocial, nombreComercial }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.innerText = data.message || 'No se pudo crear la empresa cliente.';
+        errorEl.style.display = 'block';
+      } else {
+        closeClientCompanyModal();
+        clientCompaniesList.unshift(data.empresa_cliente);
+        const area = document.getElementById('client-companies-render-area');
+        if (area) area.innerHTML = renderClientCompaniesArea();
+      }
+      submitBtn.classList.remove('rn-btn-disabled');
+      submitBtn.innerHTML = 'Crear Empresa Cliente';
     }
 
     // ==========================================
@@ -1745,27 +1932,51 @@
     }
 
     // Modal Crear Pieza
-    function openPiezaModal() {
+    function openPiezaModal(piece = null) {
       if (!selectedMaquina) {
         alert('Debes seleccionar una máquina primero.');
         return;
       }
+      editingPiezaId = piece?.id || null;
       document.getElementById('modal-pieza-subtitle').innerText = `Asociada a: ${selectedMaquina.nombre} [${selectedMaquina.codigo}]`;
       document.getElementById('modal-pieza-error').style.display = 'none';
-      document.getElementById('modal-pieza-codigo').value = '';
-      document.getElementById('modal-pieza-nombre').value = '';
+      document.getElementById('modal-pieza-codigo').value = piece?.codigo || '';
+      document.getElementById('modal-pieza-nombre').value = piece?.nombre || '';
       document.getElementById('modal-pieza-longitud').value = '';
       document.getElementById('modal-pieza-diametro').value = '';
       document.getElementById('modal-pieza-presion').value = '';
       document.getElementById('modal-pieza-rosca').value = '';
+      document.getElementById('modal-pieza-terminales').value = '';
+      document.getElementById('modal-pieza-evidencia').value = '';
+      document.getElementById('modal-pieza-adicionales').value = '';
+      document.getElementById('modal-pieza-torno-longitud').value = '';
+      document.getElementById('modal-pieza-torno-diametro').value = '';
+      document.getElementById('modal-pieza-material').value = '';
+      document.getElementById('modal-pieza-planos').value = '';
+      document.getElementById('modal-pieza-torno-evidencia').value = '';
+      document.getElementById('modal-pieza-torno-adicionales').value = '';
+      document.getElementById('modal-cilindro-camisa').value = '';
+      document.getElementById('modal-cilindro-vastago').value = '';
+      document.getElementById('modal-cilindro-tapa').value = '';
+      document.getElementById('modal-cilindro-piston').value = '';
+      document.getElementById('modal-cilindro-empaques').value = '';
+      document.getElementById('modal-cilindro-ojo').value = '';
+      document.getElementById('modal-cilindro-pasadores').value = '';
+      document.getElementById('modal-cilindro-recorrido').value = '';
+      document.getElementById('modal-cilindro-racores').value = '';
+      document.getElementById('modal-cilindro-adicionales').value = '';
       document.getElementById('modal-pieza-foto').value = '';
       document.getElementById('modal-pieza-desc').value = '';
-      selectPiezaTipo('Manguera');
+      const pieceType = piece?.tipo === 'torno' ? 'PiezaTorno' : piece?.tipo === 'cilindro' ? 'CilindroHidráulico' : 'Manguera';
+      selectPiezaTipo(pieceType);
+      document.getElementById('modal-pieza-desc').value = piece?.descripcion || '';
+      document.getElementById('modal-submit-pieza-btn').innerText = editingPiezaId ? 'Guardar Modificación' : 'Guardar Ficha y Notificar';
       document.getElementById('create-pieza-modal').style.display = 'flex';
     }
 
     function closePiezaModal() {
       document.getElementById('create-pieza-modal').style.display = 'none';
+      editingPiezaId = null;
     }
 
     function selectPiezaTipo(tipo) {
@@ -1775,12 +1986,18 @@
         Racor: 'Racor',
         Acople: 'Acople',
         'Válvula': 'Valvula',
+        PiezaTorno: 'Torno',
+        'CilindroHidráulico': 'Cilindro',
       };
 
       Object.entries(tipoIds).forEach(([tipoNombre, tipoId]) => {
         const el = document.getElementById(`pill-tipo-${tipoId}`);
         if (el) el.classList.toggle('selected', tipoNombre === tipo);
       });
+
+      document.getElementById('pieza-fields-hose').style.display = tipo === 'Manguera' ? 'block' : 'none';
+      document.getElementById('pieza-fields-lathe').style.display = tipo === 'PiezaTorno' ? 'block' : 'none';
+      document.getElementById('pieza-fields-cylinder').style.display = tipo === 'CilindroHidráulico' ? 'block' : 'none';
     }
 
     async function submitCreatePieza() {
@@ -1790,10 +2007,6 @@
 
       const codigo = document.getElementById('modal-pieza-codigo').value.trim();
       const nombre = document.getElementById('modal-pieza-nombre').value.trim();
-      const longitud = document.getElementById('modal-pieza-longitud').value.trim();
-      const diametro = document.getElementById('modal-pieza-diametro').value.trim();
-      const presion = document.getElementById('modal-pieza-presion').value.trim();
-      const rosca = document.getElementById('modal-pieza-rosca').value.trim();
       const foto = document.getElementById('modal-pieza-foto').value.trim();
       const descripcion = document.getElementById('modal-pieza-desc').value.trim();
 
@@ -1804,10 +2017,38 @@
       }
 
       const medidas = {};
-      if (longitud) medidas.longitud = longitud;
-      if (diametro) medidas.diametro = diametro;
-      if (presion) medidas.presion_psi = presion;
-      if (rosca) medidas.rosca = rosca;
+      const addMeasure = (key, id) => {
+        const value = document.getElementById(id).value.trim();
+        if (value) medidas[key] = value;
+      };
+
+      if (selectedPiezaTipo === 'Manguera') {
+        addMeasure('longitud', 'modal-pieza-longitud');
+        addMeasure('presion', 'modal-pieza-presion');
+        addMeasure('diametro', 'modal-pieza-diametro');
+        addMeasure('terminales', 'modal-pieza-terminales');
+        addMeasure('evidencia', 'modal-pieza-evidencia');
+        addMeasure('adicionales', 'modal-pieza-adicionales');
+      } else if (selectedPiezaTipo === 'PiezaTorno') {
+        addMeasure('longitud', 'modal-pieza-torno-longitud');
+        addMeasure('diametro', 'modal-pieza-torno-diametro');
+        addMeasure('material', 'modal-pieza-material');
+        addMeasure('rosca', 'modal-pieza-rosca');
+        addMeasure('planos', 'modal-pieza-planos');
+        addMeasure('evidencia', 'modal-pieza-torno-evidencia');
+        addMeasure('adicionales', 'modal-pieza-torno-adicionales');
+      } else if (selectedPiezaTipo === 'CilindroHidráulico') {
+        addMeasure('camisa', 'modal-cilindro-camisa');
+        addMeasure('vastago', 'modal-cilindro-vastago');
+        addMeasure('tapa', 'modal-cilindro-tapa');
+        addMeasure('piston', 'modal-cilindro-piston');
+        addMeasure('empaques', 'modal-cilindro-empaques');
+        addMeasure('ojo', 'modal-cilindro-ojo');
+        addMeasure('pasadores', 'modal-cilindro-pasadores');
+        addMeasure('recorrido_salida', 'modal-cilindro-recorrido');
+        addMeasure('racores_llenado', 'modal-cilindro-racores');
+        addMeasure('adicionales', 'modal-cilindro-adicionales');
+      }
 
       const fotos = foto ? [foto] : [];
 
@@ -1815,15 +2056,14 @@
       submitBtn.innerHTML = '<div class="spinner"></div>';
 
       try {
-        const res = await fetch(`${API_URL}/piezas`, {
-          method: 'POST',
+        const res = await fetch(`${API_URL}/piezas${editingPiezaId ? `/${editingPiezaId}` : ''}`, {
+          method: editingPiezaId ? 'PATCH' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${currentToken}`,
           },
           body: JSON.stringify({
-            maquinaId: selectedMaquina.id,
-            codigo,
+            ...(editingPiezaId ? {} : {maquinaId: selectedMaquina.id, codigo}),
             nombre,
             tipo: selectedPiezaTipo,
             medidas,
@@ -1842,7 +2082,7 @@
           throw new Error(data.message || 'Error al guardar pieza.');
         }
 
-        alert('Ficha registrada exitosamente. Se notificó al supervisor para su validación.');
+        alert(editingPiezaId ? 'Pieza modificada correctamente.' : 'Ficha registrada exitosamente. Se notificó al supervisor para su validación.');
         closePiezaModal();
         fetchPiezas(selectedMaquina.id);
         fetchNotificaciones();
@@ -1947,13 +2187,17 @@
     // ==========================================
     // ACCIONES DE SUPERVISOR (HU-015)
     // ==========================================
-    function openMaquinaModal() {
+    function openMaquinaModal(machineId = null) {
+      editingMachineId = machineId;
+      const machine = machineId ? maquinasList.find(item => item.id === machineId) : null;
       document.getElementById('modal-maq-error').style.display = 'none';
-      document.getElementById('modal-maq-codigo').value = '';
-      document.getElementById('modal-maq-nombre').value = '';
-      document.getElementById('modal-maq-tipo').value = '';
-      document.getElementById('modal-maq-manual').value = '';
-      document.getElementById('modal-maq-desc').value = '';
+      document.getElementById('modal-maq-codigo').value = machine?.codigo || '';
+      document.getElementById('modal-maq-nombre').value = machine?.nombre || '';
+      document.getElementById('modal-maq-tipo').value = machine?.tipo || '';
+      document.getElementById('modal-maq-manual').value = machine?.url_manual || '';
+      document.getElementById('modal-maq-desc').value = machine?.descripcion || '';
+      const clientSelect = document.getElementById('modal-maq-cliente');
+      clientSelect.innerHTML = '<option value="">Flota interna (sin empresa cliente)</option>' + clientCompaniesList.map(company => `<option value="${company.id}">${company.razon_social}</option>`).join('');
       document.getElementById('create-maquina-modal').style.display = 'flex';
     }
 
@@ -1971,6 +2215,7 @@
       const tipo = document.getElementById('modal-maq-tipo').value.trim();
       const manualUrl = document.getElementById('modal-maq-manual').value.trim();
       const descripcion = document.getElementById('modal-maq-desc').value.trim();
+      const empresaClienteId = document.getElementById('modal-maq-cliente').value || null;
 
       if (!codigo || !nombre || !tipo) {
         errorEl.innerText = 'Código, nombre y tipo de máquina son obligatorios.';
@@ -1982,8 +2227,8 @@
       submitBtn.innerHTML = '<div class="spinner"></div>';
 
       try {
-        const res = await fetch(`${API_URL}/maquinas`, {
-          method: 'POST',
+        const res = await fetch(`${API_URL}/maquinas${editingMachineId ? `/${editingMachineId}` : ''}`, {
+          method: editingMachineId ? 'PATCH' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${currentToken}`,
@@ -1994,6 +2239,7 @@
             tipo,
             manualUrl,
             descripcion,
+            ...(editingMachineId ? {} : {empresaClienteId}),
             confirmarDuplicado,
           }),
         });
@@ -2012,8 +2258,9 @@
           throw new Error(data.message || 'Error al registrar máquina.');
         }
 
-        alert('Maquinaria registrada y disponible para los técnicos.');
+        alert(editingMachineId ? 'Maquinaria modificada correctamente.' : 'Maquinaria registrada y disponible para los técnicos.');
         closeMaquinaModal();
+        editingMachineId = null;
         fetchMaquinas();
       } catch (err) {
         errorEl.innerText = err.message;
@@ -2103,6 +2350,8 @@
         fetchMaquinas();
         fetchNotificaciones();
         if (currentUser.rol === 'admin') fetchUsers();
+        if (currentUser.rol === 'admin') fetchClientCompanies();
+        if (currentUser.rol === 'admin' || currentUser.rol === 'supervisor') fetchAudit();
       } catch (err) {
         errorEl.innerText = err.message;
         errorEl.style.display = 'block';

@@ -10,40 +10,40 @@ const SubtypeFormHose = ({ data, onChange }) => {
   return (
     <View style={styles.container}>
       <CustomInput
-        label="Diámetro Interior"
+        label="Diámetro"
         placeholder="ej: 3/4 pulg (19 mm)"
-        value={data.diametro_interior || ''}
-        onChangeText={(text) => handleChange('diametro_interior', text)}
+        value={data.diametro || data.diametro_interior || ''}
+        onChangeText={(text) => handleChange('diametro', text)}
       />
       <CustomInput
-        label="Diámetro Exterior"
-        placeholder="ej: 1.15 pulg (29 mm)"
-        value={data.diametro_exterior || ''}
-        onChangeText={(text) => handleChange('diametro_exterior', text)}
-      />
-      <CustomInput
-        label="Longitud Total"
+        label="Longitud"
         placeholder="ej: 1200 mm"
         value={data.longitud || ''}
         onChangeText={(text) => handleChange('longitud', text)}
       />
       <CustomInput
-        label="Presión de Trabajo (PSI / Bar)"
+        label="Presión"
         placeholder="ej: 5000 PSI (345 bar)"
-        value={data.presion_trabajo || ''}
-        onChangeText={(text) => handleChange('presion_trabajo', text)}
+        value={data.presion || data.presion_trabajo || ''}
+        onChangeText={(text) => handleChange('presion', text)}
       />
       <CustomInput
-        label="Tipo de Conexión / Terminales"
+        label="Terminales"
         placeholder="ej: JIC 3/4 Hembra Giratoria 90°"
-        value={data.tipo_conexion || ''}
-        onChangeText={(text) => handleChange('tipo_conexion', text)}
+        value={data.terminales || data.tipo_conexion || ''}
+        onChangeText={(text) => handleChange('terminales', text)}
       />
       <CustomInput
-        label="Material / Mallas de Refuerzo"
-        placeholder="ej: 4SP (4 espirales de acero)"
-        value={data.material || ''}
-        onChangeText={(text) => handleChange('material', text)}
+        label="Evidencia"
+        placeholder="URL o referencia de la evidencia"
+        value={data.evidencia || ''}
+        onChangeText={(text) => handleChange('evidencia', text)}
+      />
+      <CustomInput
+        label="Adicionales"
+        placeholder="ej: protección, radio de curvatura, observaciones"
+        value={data.adicionales || ''}
+        onChangeText={(text) => handleChange('adicionales', text)}
       />
     </View>
   );

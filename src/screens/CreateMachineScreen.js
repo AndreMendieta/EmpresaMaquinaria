@@ -16,7 +16,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
 
-const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany }) => {
+const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany, requireClientCompany = false }) => {
   const { role } = useAuth();
   const canCreateMachine = role === 'admin' || role === 'supervisor';
 
@@ -50,6 +50,10 @@ const CreateMachineScreen = ({ onBack, onMachineCreated, initialClientCompany })
 
     if (!codigo.trim() || !nombre.trim() || !tipo.trim()) {
       setErrorMsg('El código, nombre y tipo de maquinaria son obligatorios.');
+      return;
+    }
+    if (requireClientCompany && !selectedCompanyId) {
+      setErrorMsg('Selecciona la empresa cliente a la que pertenece esta maquinaria.');
       return;
     }
 

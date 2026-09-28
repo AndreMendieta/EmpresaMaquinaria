@@ -10,34 +10,46 @@ const SubtypeFormLathe = ({ data, onChange }) => {
   return (
     <View style={styles.container}>
       <CustomInput
-        label="Diámetro Exterior / Mecanizado"
+        label="Diámetro"
         placeholder="ej: 45 mm"
         value={data.diametro || ''}
         onChangeText={(text) => handleChange('diametro', text)}
       />
       <CustomInput
-        label="Longitud Total"
+        label="Longitud"
         placeholder="ej: 250 mm"
         value={data.longitud || ''}
         onChangeText={(text) => handleChange('longitud', text)}
       />
       <CustomInput
-        label="Paso / Tipo de Rosca"
+        label="Tipo de Rosca"
         placeholder="ej: M30 x 2.0 / 1-1/4 NPT"
         value={data.rosca || ''}
         onChangeText={(text) => handleChange('rosca', text)}
       />
       <CustomInput
-        label="Material del Metal"
+        label="Tipo de Material"
         placeholder="ej: Acero SAE 4140 Bonificado / Bronce SAE 64"
         value={data.material || ''}
         onChangeText={(text) => handleChange('material', text)}
       />
       <CustomInput
-        label="Tolerancia Mecánica"
-        placeholder="ej: h7 (+0 / -0.025 mm)"
-        value={data.tolerancia || ''}
-        onChangeText={(text) => handleChange('tolerancia', text)}
+        label="Planos"
+        placeholder="URL o referencia del plano técnico"
+        value={data.planos || ''}
+        onChangeText={(text) => handleChange('planos', text)}
+      />
+      <CustomInput
+        label="Evidencia"
+        placeholder="URL o referencia de la evidencia"
+        value={data.evidencia || ''}
+        onChangeText={(text) => handleChange('evidencia', text)}
+      />
+      <CustomInput
+        label="Adicionales"
+        placeholder="ej: tolerancias, acabado, tratamiento térmico"
+        value={data.adicionales || ''}
+        onChangeText={(text) => handleChange('adicionales', text)}
       />
     </View>
   );
