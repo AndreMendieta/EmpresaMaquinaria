@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS ordenes_servicio (
   numero_orden VARCHAR(80) NOT NULL, titulo VARCHAR(180) NOT NULL, descripcion TEXT,
   estado VARCHAR(20) NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta','en_progreso','completada','cancelada')),
   prioridad VARCHAR(20) NOT NULL DEFAULT 'normal' CHECK (prioridad IN ('baja','normal','alta','urgente')),
+  evidencias JSONB NOT NULL DEFAULT '[]'::jsonb,
   programada_en TIMESTAMPTZ, completada_en TIMESTAMPTZ,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(), actualizado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_orden_id UNIQUE (empresa_prestadora_id, id),
@@ -163,6 +164,9 @@ CREATE TABLE IF NOT EXISTS ordenes_servicio (
   CONSTRAINT fk_orden_asignado FOREIGN KEY (empresa_prestadora_id, asignada_a)
     REFERENCES usuarios_multiempresa (empresa_prestadora_id, id)
 );
+
+ALTER TABLE ordenes_servicio
+  ADD COLUMN IF NOT EXISTS evidencias JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS notificaciones_multiempresa (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

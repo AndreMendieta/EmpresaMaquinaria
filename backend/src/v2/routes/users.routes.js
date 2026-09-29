@@ -8,13 +8,24 @@ const {registrarAuditoria} = require('../utils/audit');
 const router = express.Router();
 router.use(auth);
 
-router.get('/', requireRole('admin'), async (req, res) => {
+router.get('/', requireRole('admin', 'supervisor'), async (req, res) => {
   const {rows} = await pool.query(
     `SELECT id, empresa_prestadora_id, empresa_cliente_id, nombre_completo, correo, rol, activo, creado_en
      FROM usuarios_multiempresa WHERE empresa_prestadora_id = $1 ORDER BY creado_en DESC`,
     [req.user.service_company_id]
   );
   return res.json({ok: true, usuarios: rows});
+});
+
+router.get('/technicians', async (req, res) => {
+  const {rows} = await pool.query(
+    `SELECT id, nombre_completo, correo, rol, activo
+     FROM usuarios_multiempresa 
+     WHERE empresa_prestadora_id = $1 AND rol = 'tecnico' AND activo = true
+     ORDER BY nombre_completo ASC`,
+    [req.user.service_company_id]
+  );
+  return res.json({ok: true, tecnicos: rows});
 });
 
 router.post('/', requireRole('admin'), async (req, res) => {

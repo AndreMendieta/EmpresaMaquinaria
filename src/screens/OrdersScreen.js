@@ -18,7 +18,7 @@ import { COLORS } from '../constants/colors';
 
 const FILTERS = [
   { key: 'todas', label: 'Todas' },
-  { key: 'pendiente', label: 'Pendientes' },
+  { key: 'abierta', label: 'Abiertas' },
   { key: 'en_progreso', label: 'En Progreso' },
   { key: 'completada', label: 'Completadas' },
 ];
@@ -57,12 +57,14 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
   }, [loadOrders]);
 
   const filtered = orders.filter((o) => {
+    const estadoActual = (o.estado || 'abierta').toLowerCase();
     const matchesFilter =
       activeFilter === 'todas' ||
-      (o.estado || 'pendiente').toLowerCase() === activeFilter.toLowerCase();
+      (activeFilter === 'abierta' && (estadoActual === 'abierta' || estadoActual === 'pendiente')) ||
+      estadoActual === activeFilter.toLowerCase();
 
     const matchesSearch =
-      (o.numero_orden + ' ' + (o.titulo || '') + ' ' + (o.descripcion || ''))
+      (o.numero_orden + ' ' + (o.titulo || '') + ' ' + (o.descripcion || '') + ' ' + (o.cliente_nombre || '') + ' ' + (o.maquina_nombre || '') + ' ' + (o.tecnico_nombre || ''))
         .toLowerCase()
         .includes(search.trim().toLowerCase());
 
@@ -75,8 +77,8 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
         title="Órdenes de Trabajo"
         role={role}
         onBack={onBack}
-        onRightAction={isSupervisorOrAdmin ? onNavigateCreateOrder : null}
-        rightActionLabel={isSupervisorOrAdmin ? '+ Nueva Orden' : null}
+        onRightAction={isSupervisorOrAdmin ? onNavigateCreateOrder : loadOrders}
+        rightActionLabel={isSupervisorOrAdmin ? '+ Nueva Orden' : 'Refrescar'}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -91,7 +93,7 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
         ) : null}
 
         <CustomInput
-          placeholder="Buscar por OT-000, título o descripción..."
+          placeholder="Buscar por código OT, cliente, máquina, técnico..."
           value={search}
           onChangeText={setSearch}
         />
@@ -125,7 +127,7 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
               <TouchableOpacity
                 style={styles.btnCreate}
                 onPress={onNavigateCreateOrder}>
-                <Text style={styles.btnCreateText}>+ Crear Primera Orden</Text>
+                <Text style={styles.btnCreateText}>+ Crear Orden de Trabajo</Text>
               </TouchableOpacity>
             ) : null}
           </View>
@@ -133,6 +135,8 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
           <View style={styles.listContainer}>
             {filtered.map((item) => {
               const isAssignedToMe = item.asignada_a && user && String(item.asignada_a) === String(user.id);
+              const numEvidencias = Array.isArray(item.evidencias) ? item.evidencias.length : 0;
+
               return (
                 <TouchableOpacity
                   key={item.id}
@@ -144,7 +148,11 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
                       <View style={styles.codeRow}>
                         <Text style={styles.otCode}>[{item.numero_orden}]</Text>
                         {item.prioridad && item.prioridad !== 'normal' ? (
-                          <View style={styles.prioTag}>
+                          <View
+                            style={[
+                              styles.prioTag,
+                              item.prioridad === 'urgente' ? styles.prioTagUrgente : styles.prioTagAlta,
+                            ]}>
                             <Text style={styles.prioText}>{item.prioridad.toUpperCase()}</Text>
                           </View>
                         ) : null}
@@ -156,7 +164,37 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
                       </View>
                       <Text style={styles.orderTitle}>{item.titulo}</Text>
                     </View>
-                    <Badge status={item.estado || 'pendiente'} />
+                    <Badge status={item.estado || 'abierta'} />
+                  </View>
+
+                  {/* Metadatos principales de la orden */}
+                  <View style={styles.metaContainer}>
+                    {item.cliente_nombre ? (
+                      <Text style={styles.metaLine}>
+                        🏢 <Text style={styles.metaLabel}>Cliente:</Text> {item.cliente_nombre}
+                      </Text>
+                    ) : null}
+
+                    {item.maquina_nombre ? (
+                      <Text style={styles.metaLine}>
+                        🚜 <Text style={styles.metaLabel}>Equipo:</Text> [{item.maquina_codigo || 'S/C'}] {item.maquina_nombre}
+                      </Text>
+                    ) : null}
+
+                    <Text style={styles.metaLine}>
+                      👷 <Text style={styles.metaLabel}>Técnico:</Text>{' '}
+                      <Text style={item.tecnico_nombre ? styles.metaTechName : styles.metaUnassigned}>
+                        {item.tecnico_nombre || 'Sin técnico asignado'}
+                      </Text>
+                    </Text>
+
+                    {numEvidencias > 0 ? (
+                      <View style={styles.evidenciasBadge}>
+                        <Text style={styles.evidenciasBadgeText}>
+                          📷 {numEvidencias} evidencia(s) técnica(s)
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
 
                   {item.descripcion ? (
@@ -169,7 +207,7 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
                     <Text style={styles.dateText}>
                       Fecha: {item.creado_en ? new Date(item.creado_en).toLocaleDateString('es-CO') : 'Reciente'}
                     </Text>
-                    <Text style={styles.viewDetailText}>Ver Orden →</Text>
+                    <Text style={styles.viewDetailText}>Gestionar Orden →</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -301,10 +339,15 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   prioTag: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  prioTagAlta: {
+    backgroundColor: 'rgba(255, 106, 0, 0.15)',
+  },
+  prioTagUrgente: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
   },
   prioText: {
     color: COLORS.danger,
@@ -327,6 +370,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginTop: 4,
+  },
+  metaContainer: {
+    marginTop: 8,
+    gap: 3,
+    paddingVertical: 4,
+  },
+  metaLine: {
+    fontSize: 12,
+    color: COLORS.textPrimary,
+  },
+  metaLabel: {
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  metaTechName: {
+    color: COLORS.orange,
+    fontWeight: '700',
+  },
+  metaUnassigned: {
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
+  },
+  evidenciasBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  evidenciasBadgeText: {
+    fontSize: 10,
+    color: '#38BDF8',
+    fontWeight: '700',
   },
   descText: {
     fontSize: 12,

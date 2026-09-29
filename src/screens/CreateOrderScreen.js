@@ -12,6 +12,7 @@ import { useAuth } from '../auth/useAuth';
 import { createOrder } from '../api/ordersApi';
 import { getClientCompanies } from '../api/clientCompaniesApi';
 import { getMachines } from '../api/machinesApi';
+import { getTechnicians } from '../api/usersApi';
 import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
@@ -31,13 +32,22 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
 
   const [companies, setCompanies] = useState([]);
   const [machines, setMachines] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
+  // Form Fields principales
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [selectedMachineId, setSelectedMachineId] = useState(null);
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState('normal');
-  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
-  const [selectedMachineId, setSelectedMachineId] = useState(null);
+  const [selectedTechId, setSelectedTechId] = useState(null);
+
+  // Evidencias iniciales
+  const [evidencias, setEvidencias] = useState([]);
+  const [evidenciaUrl, setEvidenciaUrl] = useState('');
+  const [evidenciaDesc, setEvidenciaDesc] = useState('');
+  const [evidenciaEtapa, setEvidenciaEtapa] = useState('antes');
 
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -52,17 +62,19 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
     const loadData = async () => {
       setLoadingOptions(true);
       try {
-        const [compRes, machRes] = await Promise.all([
+        const [compRes, machRes, techRes] = await Promise.all([
           getClientCompanies(),
           getMachines(),
+          getTechnicians().catch(() => ({ tecnicos: [] })),
         ]);
         setCompanies(compRes.empresas || []);
         setMachines(machRes.maquinas || []);
+        setTechnicians(techRes.tecnicos || []);
       } catch (err) {
         if (err.isForbidden) {
           setForbidden(true);
         } else {
-          setErrorMsg('Error al cargar clientes y máquinas de apoyo.');
+          setErrorMsg('Error al cargar datos auxiliares del taller.');
         }
       } finally {
         setLoadingOptions(false);
@@ -72,9 +84,29 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
     loadData();
   }, [isSupervisorOrAdmin]);
 
+  const handleAddEvidencia = () => {
+    if (!evidenciaDesc.trim() && !evidenciaUrl.trim()) return;
+
+    const nueva = {
+      id: `evi_${Date.now()}`,
+      url: evidenciaUrl.trim() || null,
+      descripcion: evidenciaDesc.trim(),
+      etapa: evidenciaEtapa,
+      creado_en: new Date().toISOString(),
+    };
+
+    setEvidencias((prev) => [...prev, nueva]);
+    setEvidenciaUrl('');
+    setEvidenciaDesc('');
+  };
+
+  const handleRemoveEvidencia = (id) => {
+    setEvidencias((prev) => prev.filter((e) => e.id !== id));
+  };
+
   const handleSave = async () => {
     if (!titulo.trim()) {
-      setErrorMsg('El título de la orden es obligatorio.');
+      setErrorMsg('El título o labor de la orden es obligatorio.');
       return;
     }
 
@@ -87,6 +119,8 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
         titulo,
         descripcion,
         prioridad,
+        asignadaA: selectedTechId,
+        evidencias,
       });
 
       if (onOrderCreated) {
@@ -105,11 +139,16 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
     }
   };
 
+  // Filtrar máquinas por la empresa cliente seleccionada (si aplica)
+  const filteredMachines = selectedCompanyId
+    ? machines.filter((m) => m.empresa_cliente_id === selectedCompanyId)
+    : machines;
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderBar title="Nueva Orden de Trabajo" role={role} onBack={onBack} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {forbidden ? (
           <ForbiddenNotice message="Solo supervisores y administradores pueden crear órdenes de servicio." />
         ) : null}
@@ -121,24 +160,88 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
         ) : null}
 
         <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>1. Información del Servicio</Text>
+          {/* 1. Empresa Cliente */}
+          <Text style={styles.sectionTitle}>1. Empresa Cliente</Text>
+          <Text style={styles.fieldHint}>Selecciona el cliente solicitante del servicio:</Text>
+
+          {loadingOptions ? (
+            <ActivityIndicator size="small" color={COLORS.orange} style={styles.mv12} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+              <TouchableOpacity
+                style={[styles.chip, !selectedCompanyId && styles.chipSelected]}
+                onPress={() => setSelectedCompanyId(null)}>
+                <Text style={[styles.chipText, !selectedCompanyId && styles.chipTextSelected]}>
+                  Sin Cliente Directo
+                </Text>
+              </TouchableOpacity>
+              {companies.map((c) => {
+                const isSel = selectedCompanyId === c.id;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={[styles.chip, isSel && styles.chipSelected]}
+                    onPress={() => setSelectedCompanyId(c.id)}>
+                    <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
+                      🏢 {c.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {/* 2. Máquina Asociada */}
+          <Text style={[styles.sectionTitle, styles.mt16]}>2. Máquina Asociada</Text>
+          <Text style={styles.fieldHint}>Equipo sobre el cual se ejecutará la orden:</Text>
+
+          {loadingOptions ? (
+            <ActivityIndicator size="small" color={COLORS.orange} style={styles.mv12} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+              <TouchableOpacity
+                style={[styles.chip, !selectedMachineId && styles.chipSelected]}
+                onPress={() => setSelectedMachineId(null)}>
+                <Text style={[styles.chipText, !selectedMachineId && styles.chipTextSelected]}>
+                  Sin máquina asociada
+                </Text>
+              </TouchableOpacity>
+              {(filteredMachines.length > 0 ? filteredMachines : machines).map((m) => {
+                const isSel = selectedMachineId === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    style={[styles.chip, isSel && styles.chipSelected]}
+                    onPress={() => setSelectedMachineId(m.id)}>
+                    <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
+                      🚜 [{m.codigo}] {m.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {/* 3. Descripción del Trabajo */}
+          <Text style={[styles.sectionTitle, styles.mt16]}>3. Descripción del Trabajo</Text>
 
           <CustomInput
             label="Título de la Orden *"
-            placeholder="Ej: Mantenimiento Mayor Bomba Hidráulica"
+            placeholder="Ej: Cambio de Sellos y Empaquetadura Cilindro Levante"
             value={titulo}
             onChangeText={setTitulo}
           />
 
           <CustomInput
-            label="Descripción del Requerimiento"
-            placeholder="Detalles del síntoma o trabajo solicitado..."
+            label="Descripción Detallada del Trabajo"
+            placeholder="Especifica síntomas de falla, medidas, repuestos a fabricar o procedimientos requeridos..."
             value={descripcion}
             onChangeText={setDescripcion}
             multiline
             numberOfLines={4}
           />
 
+          {/* 4. Prioridad */}
           <Text style={styles.fieldLabel}>Prioridad de Atención</Text>
           <View style={styles.prioRow}>
             {PRIORITIES.map((p) => {
@@ -156,65 +259,107 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
             })}
           </View>
 
-          <Text style={[styles.sectionTitle, styles.mt16]}>2. Vinculación de Equipo y Cliente</Text>
+          {/* 5. Técnico Asignado */}
+          <Text style={[styles.sectionTitle, styles.mt16]}>5. Técnico Asignado</Text>
+          <Text style={styles.fieldHint}>Responsable técnico que ejecutará la labor:</Text>
 
           {loadingOptions ? (
             <ActivityIndicator size="small" color={COLORS.orange} style={styles.mv12} />
           ) : (
-            <>
-              <Text style={styles.fieldLabel}>Empresa Cliente</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                <TouchableOpacity
-                  style={[styles.chip, !selectedCompanyId && styles.chipSelected]}
-                  onPress={() => setSelectedCompanyId(null)}>
-                  <Text style={[styles.chipText, !selectedCompanyId && styles.chipTextSelected]}>
-                    Ninguno
-                  </Text>
-                </TouchableOpacity>
-                {companies.map((c) => {
-                  const isSel = selectedCompanyId === c.id;
-                  return (
-                    <TouchableOpacity
-                      key={c.id}
-                      style={[styles.chip, isSel && styles.chipSelected]}
-                      onPress={() => setSelectedCompanyId(c.id)}>
-                      <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                        {c.nombre}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-
-              <Text style={styles.fieldLabel}>Máquina Involucrada</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                <TouchableOpacity
-                  style={[styles.chip, !selectedMachineId && styles.chipSelected]}
-                  onPress={() => setSelectedMachineId(null)}>
-                  <Text style={[styles.chipText, !selectedMachineId && styles.chipTextSelected]}>
-                    Sin máquina
-                  </Text>
-                </TouchableOpacity>
-                {machines.map((m) => {
-                  const isSel = selectedMachineId === m.id;
-                  return (
-                    <TouchableOpacity
-                      key={m.id}
-                      style={[styles.chip, isSel && styles.chipSelected]}
-                      onPress={() => setSelectedMachineId(m.id)}>
-                      <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                        [{m.codigo}] {m.nombre}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+              <TouchableOpacity
+                style={[styles.chip, !selectedTechId && styles.chipSelected]}
+                onPress={() => setSelectedTechId(null)}>
+                <Text style={[styles.chipText, !selectedTechId && styles.chipTextSelected]}>
+                  Por Asignar (Pendiente)
+                </Text>
+              </TouchableOpacity>
+              {technicians.map((t) => {
+                const isSel = selectedTechId === t.id;
+                return (
+                  <TouchableOpacity
+                    key={t.id}
+                    style={[styles.chip, isSel && styles.chipSelected]}
+                    onPress={() => setSelectedTechId(t.id)}>
+                    <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
+                      👷 {t.nombre_completo}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
 
+          {/* 6. Evidencias del Trabajo (Iniciales) */}
+          <Text style={[styles.sectionTitle, styles.mt16]}>6. Evidencias del Trabajo Realizado (Iniciales)</Text>
+          <Text style={styles.fieldHint}>
+            Adjunta fotos o notas del estado de recepción o falla inicial:
+          </Text>
+
+          {/* Listado de evidencias añadidas */}
+          {evidencias.length > 0 ? (
+            <View style={styles.evidenciasList}>
+              {evidencias.map((item, index) => (
+                <View key={item.id || index} style={styles.evidenciaCard}>
+                  <View style={styles.evidenciaHeader}>
+                    <Text style={styles.evidenciaEtapa}>
+                      {item.etapa === 'antes' ? '🟡 Estado Inicial / Recepción' : '🔵 Proceso'}
+                    </Text>
+                    <TouchableOpacity onPress={() => handleRemoveEvidencia(item.id)}>
+                      <Text style={styles.evidenciaRemove}>✕ Eliminar</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {item.url ? (
+                    <Text style={styles.evidenciaUrl} numberOfLines={1}>
+                      🔗 {item.url}
+                    </Text>
+                  ) : null}
+                  <Text style={styles.evidenciaDesc}>{item.descripcion}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {/* Formulario rápido para agregar evidencia */}
+          <View style={styles.newEvidenciaBox}>
+            <View style={styles.etapaRow}>
+              <TouchableOpacity
+                style={[styles.etapaChip, evidenciaEtapa === 'antes' && styles.etapaChipActive]}
+                onPress={() => setEvidenciaEtapa('antes')}>
+                <Text style={[styles.etapaText, evidenciaEtapa === 'antes' && styles.etapaTextActive]}>
+                  Antes (Falla)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.etapaChip, evidenciaEtapa === 'durante' && styles.etapaChipActive]}
+                onPress={() => setEvidenciaEtapa('durante')}>
+                <Text style={[styles.etapaText, evidenciaEtapa === 'durante' && styles.etapaTextActive]}>
+                  Durante (Trabajo)
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <CustomInput
+              placeholder="Enlace o URL de foto de evidencia (opcional)..."
+              value={evidenciaUrl}
+              onChangeText={setEvidenciaUrl}
+              autoCapitalize="none"
+            />
+            <CustomInput
+              placeholder="Descripción de la evidencia o condición encontrada..."
+              value={evidenciaDesc}
+              onChangeText={setEvidenciaDesc}
+            />
+
+            <TouchableOpacity style={styles.btnAddEvidencia} onPress={handleAddEvidencia}>
+              <Text style={styles.btnAddEvidenciaText}>+ Adjuntar Evidencia</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Botón Guardar */}
           <View style={styles.actionButtons}>
             <CustomButton
-              title={saving ? 'Creando Orden...' : 'Crear Orden de Servicio'}
+              title={saving ? 'Creando Orden...' : 'Crear y Publicar Orden de Trabajo'}
               onPress={handleSave}
               loading={saving}
               disabled={forbidden || saving}
@@ -260,7 +405,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: COLORS.orange,
-    marginBottom: 12,
+    marginBottom: 4,
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginBottom: 8,
   },
   fieldLabel: {
     fontSize: 12,
@@ -301,7 +451,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chip: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: COLORS.background,
@@ -319,6 +469,91 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: COLORS.orange,
+    fontWeight: '700',
+  },
+  evidenciasList: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  evidenciaCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 10,
+  },
+  evidenciaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  evidenciaEtapa: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.orange,
+  },
+  evidenciaRemove: {
+    fontSize: 11,
+    color: COLORS.danger,
+    fontWeight: '600',
+  },
+  evidenciaUrl: {
+    fontSize: 11,
+    color: '#38BDF8',
+    marginBottom: 4,
+  },
+  evidenciaDesc: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    lineHeight: 16,
+  },
+  newEvidenciaBox: {
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 10,
+    marginTop: 4,
+  },
+  etapaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  etapaChip: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  },
+  etapaChipActive: {
+    borderColor: COLORS.orange,
+    backgroundColor: 'rgba(255, 106, 0, 0.15)',
+  },
+  etapaText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  etapaTextActive: {
+    color: COLORS.orange,
+    fontWeight: '700',
+  },
+  btnAddEvidencia: {
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 106, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: COLORS.orange,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  btnAddEvidenciaText: {
+    color: COLORS.orange,
+    fontSize: 12,
     fontWeight: '700',
   },
   actionButtons: {

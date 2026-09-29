@@ -4,6 +4,10 @@ export async function getUsers() {
   return client.get('/users');
 }
 
+export async function getTechnicians() {
+  return client.get('/users/technicians');
+}
+
 export async function createUser({
   empresaClienteId,
   nombreCompleto,
