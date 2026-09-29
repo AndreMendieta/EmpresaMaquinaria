@@ -145,6 +145,36 @@ router.post('/', requireRole('admin', 'supervisor'), async (req, res) => {
   }
 });
 
+// Modificar los datos generales de una orden para admin y supervisor.
+router.patch('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('orden_id'), async (req, res) => {
+  try {
+    const fields = {titulo: 'titulo', descripcion: 'descripcion', prioridad: 'prioridad', empresaClienteId: 'empresa_cliente_id', maquinariaId: 'maquinaria_id'};
+    const updates = [];
+    const values = [req.params.id, req.user.service_company_id];
+    const validPriorities = ['baja', 'normal', 'alta', 'urgente'];
+    for (const [input, column] of Object.entries(fields)) {
+      if (req.body[input] === undefined) continue;
+      if (input === 'prioridad' && !validPriorities.includes(req.body[input])) return res.status(400).json({error: 'Prioridad inválida'});
+      values.push(input === 'titulo' ? String(req.body[input]).trim() : req.body[input] || null);
+      updates.push(`${column} = $${values.length}`);
+    }
+    if (!updates.length) return res.status(400).json({error: 'No hay campos para actualizar'});
+    updates.push('actualizado_en = NOW()');
+    const {rows} = await pool.query(
+      `UPDATE ordenes_servicio SET ${updates.join(', ')}
+       WHERE id = $1 AND empresa_prestadora_id = $2 RETURNING id`,
+      values
+    );
+    if (!rows.length) return res.status(404).json({error: 'Orden no encontrada'});
+    await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'modificar', entidad: 'orden', entidadId: rows[0].id, detalle: {campos: Object.keys(req.body)}});
+    const fullOrder = await pool.query(`${BASE_ORDER_QUERY} WHERE o.id = $1 AND o.empresa_prestadora_id = $2`, [rows[0].id, req.user.service_company_id]);
+    return res.json({ok: true, orden: fullOrder.rows[0]});
+  } catch (error) {
+    console.error('Error modificando orden:', error);
+    return res.status(500).json({error: 'No se pudo modificar la orden'});
+  }
+});
+
 // Asignar o reasignar técnico
 router.patch('/:id/assign', requireRole('admin', 'supervisor'), requireCompanyScope('orden_id'), async (req, res) => {
   try {

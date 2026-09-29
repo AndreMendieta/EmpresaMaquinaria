@@ -14,6 +14,7 @@ import {
   getOrderById,
   assignOrder,
   updateOrderProgress,
+  updateOrder,
   addOrderEvidence,
 } from '../api/ordersApi';
 import { getTechnicians } from '../api/usersApi';
@@ -43,6 +44,10 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
   // Lista de técnicos para asignación (supervisores/admin)
   const [technicians, setTechnicians] = useState([]);
   const [modalAssignVisible, setModalAssignVisible] = useState(false);
+  const [modalEditVisible, setModalEditVisible] = useState(false);
+  const [editTitle, setEditTitle] = useState(order?.titulo || '');
+  const [editDescription, setEditDescription] = useState(order?.descripcion || '');
+  const [editPriority, setEditPriority] = useState(order?.prioridad || 'normal');
 
   // Modal para agregar evidencia técnica
   const [modalEvidenceVisible, setModalEvidenceVisible] = useState(false);
@@ -78,6 +83,30 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
     currentOrder.asignada_a &&
     user &&
     String(currentOrder.asignada_a) === String(user.id);
+
+  const handleEditOrder = async () => {
+    if (!editTitle.trim()) {
+      setErrorMsg('El título de la orden es obligatorio.');
+      return;
+    }
+    setLoadingAction(true);
+    setErrorMsg('');
+    try {
+      const res = await updateOrder(currentOrder.id, {
+        titulo: editTitle,
+        descripcion: editDescription,
+        prioridad: editPriority,
+      });
+      setCurrentOrder(res.orden);
+      setModalEditVisible(false);
+      setSuccessMsg('Orden modificada correctamente.');
+      if (onOrderUpdated) onOrderUpdated(res.orden);
+    } catch (err) {
+      setErrorMsg(err.message || 'No se pudo modificar la orden.');
+    } finally {
+      setLoadingAction(false);
+    }
+  };
 
   // 1. Cambio de estado de la orden
   const handleProgress = async (nuevoEstado) => {
@@ -281,6 +310,18 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
               <Text style={styles.descContent}>{currentOrder.descripcion}</Text>
             </View>
           ) : null}
+          {isSupervisorOrAdmin ? (
+            <TouchableOpacity
+              style={styles.btnAddEvidenceTrigger}
+              onPress={() => {
+                setEditTitle(currentOrder.titulo || '');
+                setEditDescription(currentOrder.descripcion || '');
+                setEditPriority(currentOrder.prioridad || 'normal');
+                setModalEditVisible(true);
+              }}>
+              <Text style={styles.btnAddEvidenceTriggerText}>Modificar orden</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* ======================================================== */}
@@ -439,6 +480,30 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
           ) : null}
         </View>
       </ScrollView>
+
+      <Modal visible={modalEditVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Modificar Orden</Text>
+            <CustomInput label="Título" value={editTitle} onChangeText={setEditTitle} />
+            <CustomInput label="Descripción" value={editDescription} onChangeText={setEditDescription} multiline numberOfLines={3} />
+            <Text style={styles.modalSubtitle}>Prioridad</Text>
+            <View style={styles.modalStageRow}>
+              {['baja', 'normal', 'alta', 'urgente'].map((priority) => (
+                <TouchableOpacity key={priority} style={[styles.modalEtapaChip, editPriority === priority && styles.modalEtapaChipSelected]} onPress={() => setEditPriority(priority)}>
+                  <Text style={styles.modalEtapaChipText}>{priority.toUpperCase()}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.btnModalCancel} onPress={() => setModalEditVisible(false)}>
+                <Text style={styles.btnModalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <CustomButton title="Guardar" onPress={handleEditOrder} loading={loadingAction} />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* ======================================================== */}
       {/* MODAL: AGREGAR EVIDENCIA DEL TRABAJO REALIZADO           */}

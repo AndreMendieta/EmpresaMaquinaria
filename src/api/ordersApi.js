@@ -8,6 +8,10 @@ export async function getOrderById(id) {
   return client.get(`/orders/${id}`);
 }
 
+export async function updateOrder(id, data) {
+  return client.patch(`/orders/${id}`, data);
+}
+
 export async function createOrder({
   empresaClienteId,
   maquinariaId,

@@ -1170,6 +1170,24 @@
           </div>
         </div>
 
+        <div id="create-order-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box">
+            <h3 class="modal-title">Nueva Orden de Trabajo</h3>
+            <p class="modal-subtitle">Registra y asigna una labor de mantenimiento.</p>
+            <input id="modal-order-title" class="rn-input" placeholder="Título de la orden *">
+            <input id="modal-order-description" class="rn-input" placeholder="Descripción del trabajo">
+            <select id="modal-order-priority" class="rn-input">
+              <option value="normal">Prioridad normal</option>
+              <option value="baja">Prioridad baja</option>
+              <option value="alta">Prioridad alta</option>
+              <option value="urgente">Prioridad urgente</option>
+            </select>
+            <div id="modal-order-error" class="rn-error" style="display: none;"></div>
+            <button id="modal-submit-order-btn" class="rn-btn" onclick="submitCreateOrder()">Crear Orden</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeOrderModal()">Cancelar</button>
+          </div>
+        </div>
+
         <!-- ========================================== -->
         <!-- MODAL 2: Registrar Maquinaria (HU-015)     -->
         <!-- ========================================== -->
@@ -1292,9 +1310,20 @@
     let notificacionesList = [];
     let clientCompaniesList = [];
     let auditList = [];
+    let ordersList = [];
+    let editingOrderId = null;
     let editingMachineId = null;
     let editingPiezaId = null;
     let companyUsersList = [];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     // Reloj
     function updateClock() {
@@ -1465,6 +1494,19 @@
             </div>
           ` : ''}
 
+          ${isSupervisorOrAdmin || currentUser.rol === 'tecnico' ? `
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <div>
+                  <div class="dash-section-title">${currentUser.rol === 'tecnico' ? 'Avisos de Trabajo' : 'Órdenes de Trabajo'}</div>
+                  <div class="dash-section-subtitle">${currentUser.rol === 'tecnico' ? 'Órdenes asignadas para atender y cerrar.' : 'Crea y modifica órdenes de mantenimiento.'}</div>
+                </div>
+                ${isSupervisorOrAdmin ? '<button class="dash-action-btn" onclick="openOrderModal()">+ Nueva Orden</button>' : ''}
+              </div>
+              <div id="orders-render-area">${renderOrdersArea()}</div>
+            </div>
+          ` : ''}
+
           <!-- ================================================= -->
           <!-- MÓDULO 1: MAQUINARIA AUTORIZADA (HU-014 / HU-015) -->
           <!-- ================================================= -->
@@ -1583,9 +1625,9 @@
           <div class="selected-machine-card">
             <div class="selected-machine-top">
               <div>
-                <div class="selected-machine-code">[${selectedMaquina.codigo}]</div>
-                <div class="selected-machine-name">${selectedMaquina.nombre}</div>
-                <div class="selected-machine-type">${selectedMaquina.tipo}</div>
+                <div class="selected-machine-code">[${escapeHtml(selectedMaquina.codigo)}]</div>
+                <div class="selected-machine-name">${escapeHtml(selectedMaquina.nombre)}</div>
+                <div class="selected-machine-type">${escapeHtml(selectedMaquina.tipo)}</div>
               </div>
               <button class="btn-change-maq" onclick="deselectMaquina()">Cambiar</button>
             </div>
@@ -1620,9 +1662,9 @@
           ${maquinasList.map(m => `
             <div class="machine-item-card" onclick="selectMaquina('${m.id}')">
               <div>
-                <div class="machine-item-code">${m.codigo}</div>
-                <div class="machine-item-name">${m.nombre}</div>
-                <div class="machine-item-type">${m.tipo} • ${m.total_piezas || 0} piezas registradas</div>
+                <div class="machine-item-code">${escapeHtml(m.codigo)}</div>
+                <div class="machine-item-name">${escapeHtml(m.nombre)}</div>
+                <div class="machine-item-type">${escapeHtml(m.tipo)} • ${Number(m.total_piezas) || 0} piezas registradas</div>
               </div>
               <div class="select-arrow">Seleccionar →</div>
               ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openMaquinaModal('${m.id}')">Modificar</button>` : ''}
@@ -1653,16 +1695,16 @@
           <div class="pieza-item-card" onclick="openPiezaDetailModal('${p.id}')">
             <div>
               <div class="pieza-header-row">
-                <span class="pieza-code">[${p.codigo}]</span>
+                <span class="pieza-code">[${escapeHtml(p.codigo)}]</span>
                 <span class="val-badge ${isValid ? 'val-validada' : 'val-pendiente'}">
                   ${isValid ? 'VALIDADA' : 'PENDIENTE'}
                 </span>
               </div>
-              <div class="pieza-name">${p.nombre}</div>
-              <div class="pieza-tipo">Tipo: ${p.tipo}</div>
+              <div class="pieza-name">${escapeHtml(p.nombre)}</div>
+              <div class="pieza-tipo">Tipo: ${escapeHtml(p.tipo)}</div>
             </div>
             <div class="view-sheet-link">Ver Ficha →</div>
-            ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openPiezaModal(${JSON.stringify(p)})">Modificar</button>` : ''}
+            ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openPiezaModalById('${p.id}')">Modificar</button>` : ''}
           </div>
         `;
       }).join('');
@@ -1675,8 +1717,8 @@
       return clientCompaniesList.map(company => `
         <div class="user-row-card">
           <div>
-            <div class="user-row-name">${company.razon_social}</div>
-            <div class="user-row-email">${company.nombre_comercial || company.correo || 'Sin datos adicionales'}</div>
+            <div class="user-row-name">${escapeHtml(company.razon_social)}</div>
+            <div class="user-row-email">${escapeHtml(company.nombre_comercial || company.correo || 'Sin datos adicionales')}</div>
           </div>
           <span class="mini-badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">${company.activa ? 'ACTIVA' : 'INACTIVA'}</span>
         </div>
@@ -1688,12 +1730,112 @@
       return auditList.map(item => `
         <div class="user-row-card">
           <div>
-            <div class="user-row-name">${item.accion.toUpperCase()} · ${item.entidad}</div>
-            <div class="user-row-email">${item.usuario_nombre || 'Usuario'} · ${new Date(item.creado_en).toLocaleString()}</div>
+            <div class="user-row-name">${escapeHtml(item.accion.toUpperCase())} · ${escapeHtml(item.entidad)}</div>
+            <div class="user-row-email">${escapeHtml(item.usuario_nombre || 'Usuario')} · ${escapeHtml(new Date(item.creado_en).toLocaleString())}</div>
           </div>
           <span class="mini-badge" style="background: ${item.accion === 'eliminar' ? 'rgba(239,68,68,.15)' : 'rgba(56,189,248,.15)'}; color: ${item.accion === 'eliminar' ? '#F87171' : '#38BDF8'};">${item.accion}</span>
         </div>
       `).join('');
+    }
+
+    function renderOrdersArea() {
+      const visibleOrders = currentUser?.rol === 'tecnico'
+        ? ordersList.filter(order => String(order.asignada_a) === String(currentUser.id))
+        : ordersList;
+      if (!visibleOrders.length) return '<div style="color: var(--ink-muted); font-size: 12px; padding: 12px;">No tienes avisos de trabajo asignados.</div>';
+      return visibleOrders.map(order => `
+        <div class="user-row-card">
+          <div>
+            <div class="user-row-name">[${escapeHtml(order.numero_orden)}] ${escapeHtml(order.titulo)}</div>
+            <div class="user-row-email">${escapeHtml(order.cliente_nombre || 'Sin cliente')} · ${escapeHtml(order.maquina_nombre || 'Sin máquina')} · ${escapeHtml(String(order.estado || 'abierta').toUpperCase())}</div>
+          </div>
+          ${currentUser?.rol === 'tecnico' ? `
+            <div>
+              ${order.estado !== 'en_progreso' && order.estado !== 'completada' ? `<button class="btn-toggle-active" onclick="updateOrderProgressPreview('${order.id}', 'en_progreso')">En proceso</button>` : ''}
+              ${order.estado !== 'completada' ? `<button class="btn-toggle-active" onclick="updateOrderProgressPreview('${order.id}', 'completada')">Terminada</button>` : ''}
+            </div>
+          ` : `<button class="btn-toggle-active" onclick="openOrderModal('${order.id}')">Modificar</button>`}
+        </div>
+      `).join('');
+    }
+
+    async function fetchOrders() {
+      if (!currentToken || !['admin', 'supervisor', 'tecnico'].includes(currentUser?.rol)) return;
+      try {
+        const res = await fetch(`${API_URL}/orders`, {headers: {Authorization: `Bearer ${currentToken}`} });
+        const data = await res.json();
+        if (!res.ok) return;
+        ordersList = data.ordenes || [];
+        const area = document.getElementById('orders-render-area');
+        if (area) area.innerHTML = renderOrdersArea();
+      } catch (error) {
+        console.error('Error cargando órdenes:', error);
+      }
+    }
+
+    async function updateOrderProgressPreview(orderId, estado) {
+      const res = await fetch(`${API_URL}/orders/${orderId}/progress`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${currentToken}`},
+        body: JSON.stringify({estado}),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.message || 'No se pudo actualizar la orden.');
+      await fetchOrders();
+      await fetchNotifications();
+    }
+
+    async function fetchNotifications() {
+      if (!currentToken) return;
+      try {
+        const res = await fetch(`${API_URL}/notifications`, {headers: {Authorization: `Bearer ${currentToken}`} });
+        const data = await res.json();
+        notificacionesList = data.notificaciones || [];
+      } catch (error) {
+        console.error('Error cargando avisos:', error);
+      }
+    }
+
+    function openOrderModal(orderId = null) {
+      editingOrderId = orderId;
+      const order = orderId ? ordersList.find(item => item.id === orderId) : null;
+      document.getElementById('modal-order-title').value = order?.titulo || '';
+      document.getElementById('modal-order-description').value = order?.descripcion || '';
+      document.getElementById('modal-order-priority').value = order?.prioridad || 'normal';
+      document.getElementById('modal-order-error').style.display = 'none';
+      document.getElementById('modal-submit-order-btn').innerText = orderId ? 'Guardar Cambios' : 'Crear Orden';
+      document.getElementById('create-order-modal').style.display = 'flex';
+    }
+
+    function closeOrderModal() {
+      document.getElementById('create-order-modal').style.display = 'none';
+      editingOrderId = null;
+    }
+
+    async function submitCreateOrder() {
+      const errorEl = document.getElementById('modal-order-error');
+      const title = document.getElementById('modal-order-title').value.trim();
+      const description = document.getElementById('modal-order-description').value.trim();
+      const priority = document.getElementById('modal-order-priority').value;
+      if (!title) {
+        errorEl.innerText = 'El título de la orden es obligatorio.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      const res = await fetch(`${API_URL}/orders${editingOrderId ? `/${editingOrderId}` : ''}`, {
+        method: editingOrderId ? 'PATCH' : 'POST',
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${currentToken}`},
+        body: JSON.stringify({titulo: title, descripcion: description, prioridad: priority}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.innerText = data.message || data.error || 'No se pudo guardar la orden.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      closeOrderModal();
+      fetchOrders();
+      fetchAudit();
     }
 
     async function fetchAudit() {
@@ -1972,6 +2114,11 @@
       document.getElementById('modal-pieza-desc').value = piece?.descripcion || '';
       document.getElementById('modal-submit-pieza-btn').innerText = editingPiezaId ? 'Guardar Modificación' : 'Guardar Ficha y Notificar';
       document.getElementById('create-pieza-modal').style.display = 'flex';
+    }
+
+    function openPiezaModalById(pieceId) {
+      const piece = piezasList.find(item => String(item.id) === String(pieceId));
+      openPiezaModal(piece);
     }
 
     function closePiezaModal() {
@@ -2352,6 +2499,8 @@
         if (currentUser.rol === 'admin') fetchUsers();
         if (currentUser.rol === 'admin') fetchClientCompanies();
         if (currentUser.rol === 'admin' || currentUser.rol === 'supervisor') fetchAudit();
+        if (currentUser.rol === 'admin' || currentUser.rol === 'supervisor') fetchOrders();
+        if (currentUser.rol === 'tecnico') { fetchOrders(); fetchNotifications(); }
       } catch (err) {
         errorEl.innerText = err.message;
         errorEl.style.display = 'block';

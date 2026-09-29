@@ -5,6 +5,7 @@ const pool = require('../db/pool');
 const auth = require('./middlewares/auth');
 const requireRole = require('./middlewares/requireRole');
 const {registrarAuditoria} = require('./utils/audit');
+const {crearNotificacion} = require('./utils/notifications');
 
 const router = express.Router();
 
@@ -334,6 +335,91 @@ router.get('/auditoria', requireRole('admin', 'supervisor'), async (req, res) =>
     [req.user.service_company_id]
   );
   return res.json({ok: true, registros: rows});
+});
+
+router.get('/orders', async (req, res) => {
+  const {rows} = await pool.query(
+    `SELECT o.*, ec.razon_social AS cliente_nombre,
+            m.nombre AS maquina_nombre, m.codigo AS maquina_codigo,
+            u.nombre_completo AS tecnico_nombre
+     FROM ordenes_servicio o
+     LEFT JOIN empresas_clientes ec ON ec.id = o.empresa_cliente_id AND ec.empresa_prestadora_id = o.empresa_prestadora_id
+     LEFT JOIN maquinarias_multiempresa m ON m.id = o.maquinaria_id AND m.empresa_prestadora_id = o.empresa_prestadora_id
+     LEFT JOIN usuarios_multiempresa u ON u.id = o.asignada_a AND u.empresa_prestadora_id = o.empresa_prestadora_id
+     WHERE o.empresa_prestadora_id = $1 ORDER BY o.creado_en DESC`,
+    [req.user.service_company_id]
+  );
+  return res.json({ok: true, ordenes: rows});
+});
+
+router.post('/orders', requireRole('admin', 'supervisor'), async (req, res) => {
+  const {empresaClienteId, maquinariaId, titulo, descripcion, prioridad = 'normal', asignadaA} = req.body;
+  if (!titulo || !titulo.trim()) return res.status(400).json({message: 'El título de la orden es obligatorio.'});
+  const numeroOrden = `OT-${Date.now().toString().slice(-6)}`;
+  const {rows} = await pool.query(
+    `INSERT INTO ordenes_servicio
+      (empresa_prestadora_id, empresa_cliente_id, maquinaria_id, solicitada_por, asignada_a, numero_orden, titulo, descripcion, prioridad)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [req.user.service_company_id, empresaClienteId || null, maquinariaId || null, req.user.id, asignadaA || null, numeroOrden, titulo.trim(), descripcion || null, prioridad]
+  );
+  await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'crear', entidad: 'orden', entidadId: rows[0].id, detalle: {numeroOrden}});
+  if (asignadaA) {
+    await crearNotificacion({
+      empresaPrestadoraId: req.user.service_company_id,
+      usuarioId: asignadaA,
+      ordenId: rows[0].id,
+      titulo: 'Nueva orden de trabajo',
+      mensaje: `Se te asignó la orden ${numeroOrden}: "${titulo.trim()}".`,
+    });
+  }
+  return res.status(201).json({ok: true, orden: rows[0]});
+});
+
+router.patch('/orders/:id', requireRole('admin', 'supervisor'), async (req, res) => {
+  const updates = [];
+  const values = [req.params.id, req.user.service_company_id];
+  for (const [input, column] of Object.entries({titulo: 'titulo', descripcion: 'descripcion', prioridad: 'prioridad'})) {
+    if (req.body[input] !== undefined) {
+      values.push(input === 'titulo' ? String(req.body[input]).trim() : req.body[input] || null);
+      updates.push(`${column} = $${values.length}`);
+    }
+  }
+  if (!updates.length) return res.status(400).json({message: 'No hay campos para modificar.'});
+  updates.push('actualizado_en = NOW()');
+  const {rows} = await pool.query(`UPDATE ordenes_servicio SET ${updates.join(', ')} WHERE id = $1 AND empresa_prestadora_id = $2 RETURNING *`, values);
+  if (!rows.length) return res.status(404).json({message: 'Orden no encontrada.'});
+  await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'modificar', entidad: 'orden', entidadId: rows[0].id, detalle: {campos: Object.keys(req.body)}});
+  return res.json({ok: true, orden: rows[0]});
+});
+
+router.patch('/orders/:id/progress', async (req, res) => {
+  const {estado} = req.body;
+  if (!['abierta', 'en_progreso', 'completada', 'cancelada'].includes(estado)) {
+    return res.status(400).json({message: 'Estado inválido.'});
+  }
+  const supervisor = ['admin', 'supervisor'].includes(req.user.role);
+  const params = [estado, req.params.id, req.user.service_company_id];
+  const assignedClause = supervisor ? '' : ' AND asignada_a = $4';
+  if (!supervisor) params.push(req.user.id);
+  const {rows} = await pool.query(
+     `UPDATE ordenes_servicio SET estado = $1::varchar, actualizado_en = NOW(),
+       completada_en = CASE WHEN $1::text = 'completada' THEN NOW() ELSE completada_en END
+     WHERE id = $2 AND empresa_prestadora_id = $3${assignedClause} RETURNING *`,
+    params
+  );
+  if (!rows.length) return res.status(403).json({message: 'Solo el técnico asignado puede actualizar esta orden.'});
+  await registrarAuditoria({empresaPrestadoraId: req.user.service_company_id, usuarioId: req.user.id, accion: 'modificar', entidad: 'orden', entidadId: rows[0].id, detalle: {estado}});
+  return res.json({ok: true, orden: rows[0]});
+});
+
+router.get('/notifications', async (req, res) => {
+  const {rows} = await pool.query(
+    `SELECT * FROM notificaciones_multiempresa
+     WHERE empresa_prestadora_id = $1 AND (usuario_id IS NULL OR usuario_id = $2)
+     ORDER BY creado_en DESC LIMIT 50`,
+    [req.user.service_company_id, req.user.id]
+  );
+  return res.json({ok: true, notificaciones: rows});
 });
 
 module.exports = router;

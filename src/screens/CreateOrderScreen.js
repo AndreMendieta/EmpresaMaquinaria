@@ -67,7 +67,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
           getMachines(),
           getTechnicians().catch(() => ({ tecnicos: [] })),
         ]);
-        setCompanies(compRes.empresas || []);
+        setCompanies(compRes.empresas_clientes || []);
         setMachines(machRes.maquinas || []);
         setTechnicians(techRes.tecnicos || []);
       } catch (err) {
@@ -183,7 +183,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                     style={[styles.chip, isSel && styles.chipSelected]}
                     onPress={() => setSelectedCompanyId(c.id)}>
                     <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                      🏢 {c.nombre}
+                      🏢 {c.razon_social || c.nombre_comercial || c.nombre}
                     </Text>
                   </TouchableOpacity>
                 );
