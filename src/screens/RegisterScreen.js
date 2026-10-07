@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
-import {registerCompany, registerUser} from '../services/authService';
+import {register as registerCompany} from '../api/authApi';
 import {COLORS} from '../constants/colors';
 
 const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
@@ -20,7 +20,6 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
   const [tab, setTab] = useState('company');
 
   // Campos
-  const [companyCode, setCompanyCode] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,16 +32,20 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
   const handleRegister = async () => {
     setErrorMessage('');
 
-    const cleanCode = companyCode.trim();
     const cleanEmail = email.trim();
     const cleanUserName = userName.trim();
 
-    if (!cleanCode || !cleanUserName || !cleanEmail || !password || !confirmPassword) {
+    if (tab !== 'company') {
+      setErrorMessage('El registro para unirse a una empresa se habilitará en la API v2 próximamente.');
+      return;
+    }
+
+    if (!cleanUserName || !cleanEmail || !password || !confirmPassword) {
       setErrorMessage('Por favor completa todos los campos.');
       return;
     }
 
-    if (tab === 'company' && !companyName.trim()) {
+    if (!companyName.trim()) {
       setErrorMessage('Ingresa el nombre de la empresa.');
       return;
     }
@@ -60,22 +63,12 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
     setLoading(true);
     try {
       let data;
-      if (tab === 'company') {
-        data = await registerCompany({
-          companyCode: cleanCode,
-          companyName: companyName.trim(),
-          userName: cleanUserName,
-          email: cleanEmail,
-          password,
-        });
-      } else {
-        data = await registerUser({
-          companyCode: cleanCode,
-          userName: cleanUserName,
-          email: cleanEmail,
-          password,
-        });
-      }
+      data = await registerCompany({
+        razonSocialEmpresa: companyName.trim(),
+        nombreCompleto: cleanUserName,
+        correo: cleanEmail,
+        password,
+      });
 
       if (onRegisterSuccess) {
         onRegisterSuccess(data.usuario, data.token);
@@ -148,12 +141,6 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
             </Text>
 
             {/* Formulario */}
-            <CustomInput
-              placeholder="Código de empresa (ej: MAQ01)"
-              value={companyCode}
-              onChangeText={setCompanyCode}
-            />
-
             {tab === 'company' && (
               <CustomInput
                 placeholder="Nombre de la empresa (ej: Maquinaria S.A.)"
