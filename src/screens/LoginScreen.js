@@ -14,7 +14,12 @@ import PrimaryButton from '../components/PrimaryButton';
 import { useAuth } from '../auth/useAuth';
 import { COLORS } from '../constants/colors';
 
-const LoginScreen = ({ onNavigateToRegister }) => {
+const LoginScreen = ({
+  onNavigateToRegister,
+  onNavigateToForgotPassword,
+  onRequireVerification,
+  onLoginSuccess,
+}) => {
   const { login } = useAuth();
   const [serviceCompanyId, setServiceCompanyId] = useState('');
   const [correo, setCorreo] = useState('');
@@ -38,7 +43,20 @@ const LoginScreen = ({ onNavigateToRegister }) => {
         correo: cleanEmail,
         password,
       });
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
     } catch (error) {
+      if (error?.data?.requiereVerificacion) {
+        if (onRequireVerification) {
+          onRequireVerification({
+            email: error.data.correo || cleanEmail,
+            companyId: error.data.serviceCompanyId || cleanCompanyId,
+            devCode: error.data.devCode,
+          });
+          return;
+        }
+      }
       setErrorMessage(error.message || 'Error al iniciar sesión.');
     } finally {
       setLoading(false);
@@ -103,6 +121,14 @@ const LoginScreen = ({ onNavigateToRegister }) => {
               onChangeText={setPassword}
               secureTextEntry
             />
+
+            {onNavigateToForgotPassword ? (
+              <TouchableOpacity
+                style={styles.forgotContainer}
+                onPress={() => onNavigateToForgotPassword(correo)}>
+                <Text style={styles.forgotText}>¿Olvidaste tu contraseña o ID de empresa?</Text>
+              </TouchableOpacity>
+            ) : null}
 
             <PrimaryButton
               title="Iniciar Sesión"
@@ -261,6 +287,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: COLORS.textPrimary,
+  },
+  forgotContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+    marginTop: -4,
+    paddingVertical: 4,
+  },
+  forgotText: {
+    fontSize: 11,
+    color: COLORS.silver,
+    fontWeight: '600',
   },
   footerLink: {
     flexDirection: 'row',

@@ -1099,6 +1099,14 @@
           <span>Registrar Cuenta</span>
           <span>📝</span>
         </button>
+        <button class="quick-btn" onclick="setView('verify_email')">
+          <span>Verificar Correo (6 Dígitos)</span>
+          <span>✉️</span>
+        </button>
+        <button class="quick-btn" onclick="setView('forgot_password')">
+          <span>Recuperar Clave / Empresa</span>
+          <span>🔒</span>
+        </button>
       </div>
 
       <div class="guide-card">
@@ -1294,12 +1302,22 @@
 
   <script>
     const API_URL = 'http://localhost:3000/api/preview';
-    let currentView = 'login'; // 'login', 'register', 'dashboard'
+    let currentView = 'login'; // 'login', 'register', 'verify_email', 'forgot_password', 'dashboard'
     let currentUser = null;
     let currentToken = null;
     let registerTab = 'company';
     let selectedModalRole = 'tecnico';
     let selectedPiezaTipo = 'Manguera';
+
+    // Estados de autenticación y verificación
+    let verifyTargetEmail = '';
+    let verifyDevCode = '';
+    let verifyNoticeMsg = '';
+    let forgotTab = 'password'; // 'password' | 'user'
+    let forgotStep = 1; // 1 | 2
+    let forgotEmail = '';
+    let forgotCompanyCode = '';
+    let forgotDevCode = '';
 
     // Estados de dominio
     let maquinasList = [];
@@ -1392,9 +1410,119 @@
                 <span>Iniciar Sesión</span>
               </button>
 
+              <div style="text-align: right; margin-top: 6px; margin-bottom: 12px;">
+                <span class="rn-link-action" style="font-size: 11px; color: var(--silver); text-decoration: underline;" onclick="setView('forgot_password')">¿Olvidaste tu contraseña o ID de empresa?</span>
+              </div>
+
               <div class="rn-footer-link">
                 <span>¿No tienes una cuenta?</span>
                 <span class="rn-link-action" onclick="setView('register')">Regístrate</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (currentView === 'verify_email') {
+        container.innerHTML = `
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="rn-card" style="padding: 22px 18px; text-align: center;">
+              <div style="width: 56px; height: 56px; border-radius: 28px; background: rgba(255, 106, 0, 0.12); border: 1px solid rgba(255, 106, 0, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-size: 24px;">
+                ✉️
+              </div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">Verifica tu Correo</h2>
+              <p style="font-size: 12px; color: var(--ink-muted); line-height: 1.4; margin-bottom: 14px;">
+                Hemos enviado un código de 6 dígitos para activar tu cuenta en la plataforma HydroTech.
+              </p>
+
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px;">
+                <div style="font-size: 10px; color: var(--ink-muted);">Código enviado a:</div>
+                <div id="verify-email-display" style="font-size: 12px; font-weight: 700; color: var(--orange); margin-top: 2px;">
+                  ${escapeHtml(verifyTargetEmail || 'tu correo')}
+                </div>
+              </div>
+
+              ${verifyNoticeMsg ? `<div class="alert-notice-box" style="margin-bottom: 12px; font-size: 11px; color: #34D399; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);">${escapeHtml(verifyNoticeMsg)}</div>` : ''}
+
+              <div id="verify-error" class="rn-error" style="display: none;"></div>
+
+              <div style="text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</div>
+              <input id="verify-code-input" class="rn-input" placeholder="000000" maxlength="6" value="${escapeHtml(verifyDevCode || '')}" style="text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 6px; font-family: monospace;">
+
+              <button id="verify-btn" class="rn-btn" onclick="handleVerifyEmail()">
+                <span>Confirmar y Activar Cuenta</span>
+              </button>
+
+              <div style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-muted);">
+                <span>¿No recibiste el correo?</span>
+                <span class="rn-link-action" style="color: var(--orange); font-weight: 700;" onclick="handleResendVerification()">Reenviar código</span>
+              </div>
+
+              <div class="rn-footer-link" style="margin-top: 14px;">
+                <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (currentView === 'forgot_password') {
+        container.innerHTML = `
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="rn-card" style="padding: 22px 18px;">
+              <div style="width: 56px; height: 56px; border-radius: 28px; background: rgba(255, 106, 0, 0.12); border: 1px solid rgba(255, 106, 0, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; font-size: 24px;">
+                ${forgotTab === 'password' ? '🔑' : '🏢'}
+              </div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--ink); text-align: center; margin-bottom: 4px;">
+                ${forgotTab === 'password' ? 'Recuperar Contraseña' : 'Recordar ID de Empresa'}
+              </h2>
+              <p style="font-size: 11px; color: var(--ink-muted); text-align: center; line-height: 1.4; margin-bottom: 14px;">
+                ${forgotTab === 'password' ? 'Te enviaremos un código de seguridad para crear una nueva clave.' : '¿Olvidaste tu ID de empresa o usuario? Te enviamos tus accesos.'}
+              </p>
+
+              <div class="rn-tab-group" style="margin-bottom: 14px;">
+                <div class="rn-tab ${forgotTab === 'password' ? 'active' : ''}" onclick="setForgotTab('password')">
+                  Restablecer Clave
+                </div>
+                <div class="rn-tab ${forgotTab === 'user' ? 'active' : ''}" onclick="setForgotTab('user')">
+                  Recuperar Empresa / ID
+                </div>
+              </div>
+
+              <div id="forgot-error" class="rn-error" style="display: none;"></div>
+              <div id="forgot-success" class="alert-notice-box" style="display: none; margin-bottom: 12px; font-size: 11px; color: #34D399; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);"></div>
+
+              ${forgotTab === 'password' ? `
+                ${forgotStep === 1 ? `
+                  <input id="forgot-email" class="rn-input" placeholder="Correo electrónico registrado" type="email" value="${escapeHtml(forgotEmail || '')}">
+                  <input id="forgot-company-code" class="rn-input" placeholder="Código de empresa (opcional)" value="${escapeHtml(forgotCompanyCode || '')}">
+                  <button id="forgot-request-btn" class="rn-btn" onclick="handleRequestResetCode()">
+                    <span>Enviar Código de Recuperación</span>
+                  </button>
+                ` : `
+                  <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; margin-bottom: 12px; font-size: 11px; text-align: center;">
+                    <div style="color: var(--ink-muted);">Código enviado a:</div>
+                    <div style="color: var(--orange); font-weight: 700;">${escapeHtml(forgotEmail)}</div>
+                  </div>
+                  <div style="text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</div>
+                  <input id="reset-code-input" class="rn-input" placeholder="000000" maxlength="6" value="${escapeHtml(forgotDevCode || '')}" style="text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 5px; font-family: monospace;">
+                  <input id="reset-new-pass" class="rn-input" placeholder="Nueva Contraseña (mín. 6)" type="password">
+                  <input id="reset-confirm-pass" class="rn-input" placeholder="Confirmar Nueva Contraseña" type="password">
+                  <button id="reset-confirm-btn" class="rn-btn" onclick="handleConfirmResetPassword()">
+                    <span>Actualizar Contraseña</span>
+                  </button>
+                  <div style="text-align: center; margin-top: 10px;">
+                    <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setForgotStep(1)">← Solicitar nuevo código</span>
+                  </div>
+                `}
+              ` : `
+                <div style="font-size: 11px; color: var(--ink-muted); margin-bottom: 12px; line-height: 1.4; text-align: center;">
+                  Ingresa tu correo y te enviaremos la lista de tus empresas e identificadores registrados.
+                </div>
+                <input id="recover-user-email" class="rn-input" placeholder="Correo electrónico" type="email" value="${escapeHtml(forgotEmail || '')}">
+                <button id="recover-user-btn" class="rn-btn" onclick="handleRecoverUser()">
+                  <span>Enviar Datos a mi Correo</span>
+                </button>
+              `}
+
+              <div class="rn-footer-link" style="margin-top: 16px;">
+                <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</span>
               </div>
             </div>
           </div>
@@ -2487,6 +2615,13 @@
         const data = await res.json();
 
         if (!res.ok) {
+          if (res.status === 403 && data.requiereVerificacion) {
+            verifyTargetEmail = data.email || email;
+            verifyDevCode = data.devCode || '';
+            verifyNoticeMsg = data.message || 'Código de 6 dígitos enviado para activar tu cuenta.';
+            setView('verify_email');
+            return;
+          }
           throw new Error(data.message || 'Credenciales inválidas.');
         }
 
@@ -2569,6 +2704,14 @@
           throw new Error(data.message || 'Error en el registro.');
         }
 
+        if (data.requiereVerificacion) {
+          verifyTargetEmail = email;
+          verifyDevCode = data.devCode || '';
+          verifyNoticeMsg = data.message || 'Código de 6 dígitos enviado para activar tu cuenta.';
+          setView('verify_email');
+          return;
+        }
+
         currentUser = data.usuario;
         currentToken = data.token;
         selectedMaquina = null;
@@ -2582,6 +2725,200 @@
       } finally {
         btn.classList.remove('rn-btn-disabled');
         btn.innerHTML = `<span>${registerTab === 'company' ? 'Registrar Empresa y Admin' : 'Registrarme como Técnico'}</span>`;
+      }
+    }
+
+    function setForgotTab(tab) {
+      forgotTab = tab;
+      render();
+    }
+
+    function setForgotStep(step) {
+      forgotStep = step;
+      render();
+    }
+
+    async function handleVerifyEmail() {
+      const codigo = document.getElementById('verify-code-input').value.trim();
+      const errorEl = document.getElementById('verify-error');
+      const btn = document.getElementById('verify-btn');
+      errorEl.style.display = 'none';
+
+      if (!codigo || codigo.length < 6) {
+        errorEl.innerText = 'Ingresa el código completo de 6 dígitos.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/verify-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifyTargetEmail, codigo }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Código incorrecto o expirado.');
+
+        currentUser = data.usuario;
+        currentToken = data.token;
+        selectedMaquina = null;
+        alert('¡Correo verificado con éxito! Cuenta activada.');
+        setView('dashboard');
+        fetchMaquinas();
+        fetchNotificaciones();
+        if (currentUser.rol === 'admin') fetchUsers();
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = '<span>Confirmar y Activar Cuenta</span>';
+      }
+    }
+
+    async function handleResendVerification() {
+      const errorEl = document.getElementById('verify-error');
+      errorEl.style.display = 'none';
+      try {
+        const res = await fetch(`${API_URL}/auth/resend-verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifyTargetEmail }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'No se pudo reenviar el código.');
+        if (data.devCode) {
+          verifyDevCode = data.devCode;
+        }
+        verifyNoticeMsg = 'Nuevo código enviado a tu correo.';
+        render();
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function handleRequestResetCode() {
+      const email = document.getElementById('forgot-email').value.trim();
+      const companyCode = document.getElementById('forgot-company-code').value.trim();
+      const errorEl = document.getElementById('forgot-error');
+      const btn = document.getElementById('forgot-request-btn');
+      errorEl.style.display = 'none';
+
+      if (!email) {
+        errorEl.innerText = 'Ingresa tu correo electrónico.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, companyCode }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Error solicitando código.');
+
+        forgotEmail = email;
+        forgotCompanyCode = companyCode || data.companyCode || '';
+        forgotDevCode = data.devCode || '';
+        forgotStep = 2;
+        render();
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = '<span>Enviar Código de Recuperación</span>';
+      }
+    }
+
+    async function handleConfirmResetPassword() {
+      const codigo = document.getElementById('reset-code-input').value.trim();
+      const nuevaPassword = document.getElementById('reset-new-pass').value;
+      const confirmPass = document.getElementById('reset-confirm-pass').value;
+      const errorEl = document.getElementById('forgot-error');
+      const btn = document.getElementById('reset-confirm-btn');
+      errorEl.style.display = 'none';
+
+      if (!codigo || codigo.length < 6) {
+        errorEl.innerText = 'Ingresa el código de 6 dígitos.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (!nuevaPassword || nuevaPassword.length < 6) {
+        errorEl.innerText = 'La contraseña debe tener al menos 6 caracteres.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (nuevaPassword !== confirmPass) {
+        errorEl.innerText = 'Las contraseñas no coinciden.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: forgotEmail, codigo, nuevaPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Error actualizando contraseña.');
+
+        alert('¡Contraseña restablecida exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.');
+        setView('login');
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = '<span>Actualizar Contraseña</span>';
+      }
+    }
+
+    async function handleRecoverUser() {
+      const email = document.getElementById('recover-user-email').value.trim();
+      const errorEl = document.getElementById('forgot-error');
+      const btn = document.getElementById('recover-user-btn');
+      errorEl.style.display = 'none';
+
+      if (!email) {
+        errorEl.innerText = 'Ingresa tu correo electrónico.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.classList.add('rn-btn-disabled');
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/recover-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Error al procesar.');
+
+        alert(data.message || 'Datos de tus empresas enviados a tu correo.');
+        setView('login');
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.classList.remove('rn-btn-disabled');
+        btn.innerHTML = '<span>Enviar Datos a mi Correo</span>';
       }
     }
 

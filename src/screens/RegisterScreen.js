@@ -62,8 +62,7 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
 
     setLoading(true);
     try {
-      let data;
-      data = await registerCompany({
+      const data = await registerCompany({
         razonSocialEmpresa: companyName.trim(),
         nombreCompleto: cleanUserName,
         correo: cleanEmail,
@@ -71,7 +70,13 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
       });
 
       if (onRegisterSuccess) {
-        onRegisterSuccess(data.usuario, data.token);
+        onRegisterSuccess({
+          email: cleanEmail,
+          companyId: data?.empresa?.id || data?.usuario?.empresa_prestadora_id,
+          devCode: data?.devCode,
+          usuario: data?.usuario,
+          token: data?.token,
+        });
       }
     } catch (error) {
       setErrorMessage(error.message || 'Error al procesar el registro.');

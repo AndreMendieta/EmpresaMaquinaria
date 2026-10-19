@@ -7,6 +7,13 @@ const requireRole = require('./middlewares/requireRole');
 const {registrarAuditoria} = require('./utils/audit');
 const {crearNotificacion} = require('./utils/notifications');
 
+const {
+  enviarCodigoVerificacion,
+  enviarCodigoRecuperacion,
+  enviarRecordatorioCuentas,
+  generarCodigo6Digitos,
+} = require('./utils/mailer');
+
 const router = express.Router();
 
 function tokenFor(user) {
@@ -22,6 +29,7 @@ router.post('/auth/login', async (req, res) => {
     const {companyCode, email, password} = req.body;
     const result = await pool.query(
       `SELECT u.id, u.empresa_prestadora_id, u.nombre_completo, u.correo, u.clave_hash, u.rol, u.activo,
+              u.correo_verificado, u.codigo_verificacion, u.codigo_verificacion_expira,
               e.nombre_comercial AS codigo_empresa, e.razon_social AS nombre_empresa
        FROM usuarios_multiempresa u
        JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
@@ -33,6 +41,34 @@ router.post('/auth/login', async (req, res) => {
     if (!user || !user.activo || !(await bcrypt.compare(password || '', user.clave_hash))) {
       return res.status(401).json({message: 'Credenciales inválidas.'});
     }
+
+    if (!user.correo_verificado) {
+      let codigo = user.codigo_verificacion;
+      const expira = user.codigo_verificacion_expira ? new Date(user.codigo_verificacion_expira) : null;
+      if (!codigo || !expira || expira < new Date()) {
+        codigo = generarCodigo6Digitos();
+        await pool.query(
+          `UPDATE usuarios_multiempresa
+           SET codigo_verificacion = $1, codigo_verificacion_expira = NOW() + INTERVAL '24 hours'
+           WHERE id = $2`,
+          [codigo, user.id]
+        );
+      }
+      const emailRes = await enviarCodigoVerificacion({
+        correo: user.correo,
+        nombre: user.nombre_completo,
+        codigo,
+        nombreEmpresa: user.nombre_empresa,
+      });
+      return res.status(403).json({
+        message: 'Tu correo aún no ha sido verificado. Por favor ingresa el código de 6 dígitos enviado para activar tu cuenta.',
+        requiereVerificacion: true,
+        email: user.correo,
+        companyCode: user.codigo_empresa || user.empresa_prestadora_id,
+        devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigo : undefined),
+      });
+    }
+
     return res.json({
       ok: true,
       token: tokenFor(user),
@@ -64,18 +100,31 @@ router.post('/auth/register-company', async (req, res) => {
       [companyName.trim(), companyCode.trim().toUpperCase()]
     );
     const hash = await bcrypt.hash(password, 10);
+    const codigoVerificacion = generarCodigo6Digitos();
     const user = await client.query(
       `INSERT INTO usuarios_multiempresa
-        (empresa_prestadora_id, nombre_completo, correo, clave_hash, rol)
-       VALUES ($1, $2, LOWER($3), $4, 'admin')
-       RETURNING id, empresa_prestadora_id, nombre_completo, correo, rol`,
-      [company.rows[0].id, userName.trim(), email.trim(), hash]
+        (empresa_prestadora_id, nombre_completo, correo, clave_hash, rol, correo_verificado, codigo_verificacion, codigo_verificacion_expira)
+       VALUES ($1, $2, LOWER($3), $4, 'admin', FALSE, $5, NOW() + INTERVAL '24 hours')
+       RETURNING id, empresa_prestadora_id, nombre_completo, correo, rol, correo_verificado`,
+      [company.rows[0].id, userName.trim(), email.trim(), hash, codigoVerificacion]
     );
     await client.query('COMMIT');
     const createdUser = user.rows[0];
+
+    const emailRes = await enviarCodigoVerificacion({
+      correo: createdUser.correo,
+      nombre: createdUser.nombre_completo,
+      codigo: codigoVerificacion,
+      nombreEmpresa: company.rows[0].razon_social,
+    });
+
     return res.status(201).json({
       ok: true,
-      token: tokenFor(createdUser),
+      requiereVerificacion: true,
+      message: 'Registro exitoso. Se ha enviado un código de 6 dígitos a tu correo.',
+      email: createdUser.correo,
+      companyCode: company.rows[0].nombre_comercial,
+      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigoVerificacion : undefined),
       usuario: {
         id: createdUser.id,
         nombre: createdUser.nombre_completo,
@@ -91,6 +140,232 @@ router.post('/auth/register-company', async (req, res) => {
     return res.status(500).json({message: 'No se pudo registrar la empresa.'});
   } finally {
     client.release();
+  }
+});
+
+router.post('/auth/verify-email', async (req, res) => {
+  try {
+    const { email, codigo } = req.body;
+    if (!email || !codigo) {
+      return res.status(400).json({ message: 'Correo y código son obligatorios.' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCodigo = String(codigo).trim();
+
+    const result = await pool.query(
+      `SELECT u.id, u.empresa_prestadora_id, u.nombre_completo, u.correo, u.rol,
+              u.correo_verificado, u.codigo_verificacion, u.codigo_verificacion_expira,
+              e.nombre_comercial AS codigo_empresa, e.razon_social AS nombre_empresa
+       FROM usuarios_multiempresa u
+       JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
+       WHERE LOWER(u.correo) = $1
+       LIMIT 1`,
+      [cleanEmail]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado.' });
+    if (user.correo_verificado) {
+      return res.json({
+        ok: true,
+        message: 'Tu correo ya está verificado.',
+        token: tokenFor(user),
+        usuario: { id: user.id, nombre: user.nombre_completo, email: user.correo, rol: user.rol, empresa: { codigo: user.codigo_empresa, nombre: user.nombre_empresa } }
+      });
+    }
+    if (!user.codigo_verificacion || user.codigo_verificacion !== cleanCodigo) {
+      return res.status(400).json({ message: 'El código de verificación es incorrecto.' });
+    }
+    if (user.codigo_verificacion_expira && new Date(user.codigo_verificacion_expira) < new Date()) {
+      return res.status(400).json({ message: 'El código ha expirado. Solicita un reenvío.' });
+    }
+    await pool.query(
+      `UPDATE usuarios_multiempresa
+       SET correo_verificado = TRUE, codigo_verificacion = NULL, codigo_verificacion_expira = NULL
+       WHERE id = $1`,
+      [user.id]
+    );
+    user.correo_verificado = true;
+    return res.json({
+      ok: true,
+      message: '¡Correo verificado con éxito! Tu cuenta ha sido activada.',
+      token: tokenFor(user),
+      usuario: { id: user.id, nombre: user.nombre_completo, email: user.correo, rol: user.rol, empresa: { codigo: user.codigo_empresa, nombre: user.nombre_empresa } }
+    });
+  } catch (err) {
+    console.error('Error en verify-email preview:', err);
+    return res.status(500).json({ message: 'Error verificando correo.' });
+  }
+});
+
+router.post('/auth/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Correo obligatorio.' });
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query(
+      `SELECT u.id, u.empresa_prestadora_id, u.nombre_completo, u.correo, u.correo_verificado,
+              e.razon_social AS nombre_empresa
+       FROM usuarios_multiempresa u
+       JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
+       WHERE LOWER(u.correo) = $1 LIMIT 1`,
+      [cleanEmail]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado.' });
+    if (user.correo_verificado) return res.status(400).json({ message: 'La cuenta ya está verificada.' });
+
+    const nuevoCodigo = generarCodigo6Digitos();
+    await pool.query(
+      `UPDATE usuarios_multiempresa
+       SET codigo_verificacion = $1, codigo_verificacion_expira = NOW() + INTERVAL '24 hours'
+       WHERE id = $2`,
+      [nuevoCodigo, user.id]
+    );
+    const emailRes = await enviarCodigoVerificacion({
+      correo: user.correo,
+      nombre: user.nombre_completo,
+      codigo: nuevoCodigo,
+      nombreEmpresa: user.nombre_empresa,
+    });
+    return res.json({
+      ok: true,
+      message: 'Nuevo código enviado a tu correo.',
+      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? nuevoCodigo : undefined),
+    });
+  } catch (err) {
+    console.error('Error en resend-verification preview:', err);
+    return res.status(500).json({ message: 'Error al reenviar código.' });
+  }
+});
+
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Ingresa tu correo.' });
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query(
+      `SELECT u.id, u.empresa_prestadora_id, u.nombre_completo, u.correo,
+              e.razon_social AS nombre_empresa, e.nombre_comercial AS codigo_empresa
+       FROM usuarios_multiempresa u
+       JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
+       WHERE LOWER(u.correo) = $1 LIMIT 1`,
+      [cleanEmail]
+    );
+    const user = result.rows[0];
+    if (!user) {
+      return res.json({
+        ok: true,
+        message: 'Si el correo está registrado, recibirás un código de 6 dígitos.',
+      });
+    }
+
+    const codigo = generarCodigo6Digitos();
+    await pool.query(
+      `UPDATE usuarios_multiempresa
+       SET codigo_recuperacion = $1, codigo_recuperacion_expira = NOW() + INTERVAL '15 minutes'
+       WHERE id = $2`,
+      [codigo, user.id]
+    );
+    const emailRes = await enviarCodigoRecuperacion({
+      correo: user.correo,
+      nombre: user.nombre_completo,
+      codigo,
+      nombreEmpresa: user.nombre_empresa,
+      serviceCompanyId: user.codigo_empresa || user.empresa_prestadora_id,
+    });
+    return res.json({
+      ok: true,
+      message: 'Código de recuperación enviado a tu correo.',
+      companyCode: user.codigo_empresa,
+      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigo : undefined),
+    });
+  } catch (err) {
+    console.error('Error en forgot-password preview:', err);
+    return res.status(500).json({ message: 'Error al solicitar recuperación.' });
+  }
+});
+
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, codigo, nuevaPassword } = req.body;
+    if (!email || !codigo || !nuevaPassword) {
+      return res.status(400).json({ message: 'Completa todos los campos.' });
+    }
+    if (nuevaPassword.length < 6) {
+      return res.status(400).json({ message: 'La nueva contraseña debe tener mínimo 6 caracteres.' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCodigo = String(codigo).trim();
+
+    const result = await pool.query(
+      `SELECT id, clave_hash, codigo_recuperacion, codigo_recuperacion_expira
+       FROM usuarios_multiempresa
+       WHERE LOWER(correo) = $1 LIMIT 1`,
+      [cleanEmail]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado.' });
+    if (!user.codigo_recuperacion || user.codigo_recuperacion !== cleanCodigo) {
+      return res.status(400).json({ message: 'El código de recuperación es incorrecto.' });
+    }
+    if (user.codigo_recuperacion_expira && new Date(user.codigo_recuperacion_expira) < new Date()) {
+      return res.status(400).json({ message: 'El código ha expirado (15 min). Solicita uno nuevo.' });
+    }
+
+    const hash = await bcrypt.hash(nuevaPassword, 10);
+    await pool.query(
+      `UPDATE usuarios_multiempresa
+       SET clave_hash = $1, codigo_recuperacion = NULL, codigo_recuperacion_expira = NULL,
+           correo_verificado = TRUE, intentos_fallidos = 0, bloqueado_hasta = NULL
+       WHERE id = $2`,
+      [hash, user.id]
+    );
+    return res.json({
+      ok: true,
+      message: '¡Tu contraseña ha sido actualizada con éxito! Ya puedes iniciar sesión.',
+    });
+  } catch (err) {
+    console.error('Error en reset-password preview:', err);
+    return res.status(500).json({ message: 'Error al restablecer contraseña.' });
+  }
+});
+
+router.post('/auth/recover-user', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Ingresa tu correo.' });
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query(
+      `SELECT u.nombre_completo, u.correo, u.rol,
+              e.razon_social AS nombre_empresa, e.nombre_comercial AS codigo_empresa
+       FROM usuarios_multiempresa u
+       JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
+       WHERE LOWER(u.correo) = $1 AND u.activo = TRUE`,
+      [cleanEmail]
+    );
+    if (!result.rows.length) {
+      return res.json({
+        ok: true,
+        message: 'Si el correo está registrado, recibirás un recordatorio con tus empresas y datos de acceso.',
+      });
+    }
+    await enviarRecordatorioCuentas({
+      correo: cleanEmail,
+      nombre: result.rows[0].nombre_completo,
+      cuentas: result.rows.map(r => ({
+        empresa: r.nombre_empresa,
+        idEmpresa: r.codigo_empresa,
+        rol: r.rol,
+        correo: r.correo,
+      })),
+    });
+    return res.json({
+      ok: true,
+      message: 'Hemos enviado la lista de tus empresas e identificadores a tu correo.',
+    });
+  } catch (err) {
+    console.error('Error en recover-user preview:', err);
+    return res.status(500).json({ message: 'Error al procesar solicitud.' });
   }
 });
 

@@ -1,291 +1,294 @@
-# HydroTech — Plataforma de Gestión de Maquinaria
+# HydroTech — Plataforma Multiempresa de Gestión de Maquinaria y Servicios Técnicos
 
-Aplicación móvil desarrollada en React Native y backend en Node.js con base de datos relacional PostgreSQL, orientada a la administración de maquinaria industrial, repuestos hidráulicos (mangueras, racores, acoples, piezas metalmecánicas) y control operativo bajo un esquema multi-empresa (*multi-tenant*).
+Plataforma integral móvil (React Native) y backend (Node.js + PostgreSQL) orientada a la administración de maquinaria pesada, componentes y repuestos hidráulicos (mangueras, racores, torneado, cilindros) y órdenes de trabajo bajo una arquitectura multi-inquilino (*multi-tenant*) con aislamiento estricto por empresa prestadora.
 
-Repositorio: https://github.com/AndreMendieta/EmpresaMaquinaria
-
----
-
-## 1. Arquitectura del Sistema
-
-El sistema implementa una arquitectura desacoplada basada en servicios REST y una base de datos relacional con integridad estricta:
-
-- **Frontend Móvil:** React Native 0.86.2 (JavaScript estándar), `react-native-safe-area-context`.
-- **Backend API:** Node.js, Express, `pg` (PostgreSQL Client), `bcryptjs`, `jsonwebtoken` (JWT), `cors`, `dotenv`.
-- **Base de Datos:** PostgreSQL con restricciones de integridad referencial (`FOREIGN KEY ... ON DELETE CASCADE`), claves únicas compuestas (`UNIQUE (empresa_id, codigo)`, `UNIQUE (maquina_id, codigo)`) y restricciones de verificación de estado y roles (`CHECK`).
-- **Visor Web de Pruebas:** Simulador web interactivo (`preview.html`) para validación rápida de interfaces y flujos de usuario sin necesidad de emulador móvil.
-
-### Justificación de Base de Datos Relacional (PostgreSQL)
-El proyecto requiere una estructura de datos relacional por exigencia técnica y de negocio:
-- **Aislamiento Multi-inquilino:** Separación estricta por `empresa_id` con validación en cada consulta SQL mediante sentencias parametrizadas (`$1`, `$2`), previniendo inyección SQL.
-- **Integridad de Datos:** Garantía ACID en operaciones críticas mediante transacciones atómicas (`BEGIN ... COMMIT / ROLLBACK`), como el alta conjunta de una empresa y su administrador inicial.
-- **Trazabilidad y Relaciones Técnicas:** Vínculos de llave foránea entre empresas, colaboradores, maquinaria autorizada, fichas de piezas y notificaciones de supervisión.
+- **Repositorio:** [https://github.com/AndreMendieta/EmpresaMaquinaria](https://github.com/AndreMendieta/EmpresaMaquinaria)
+- **Diseño de Arquitectura:** Basado en el **Modelo C4** (Contexto, Contenedores y Componentes, diagramados en `docs/diagrams/`).
 
 ---
 
-## 2. Roles del Sistema y Permisos
+## 1. Resumen Ejecutivo y Arquitectura Técnica
 
-La plataforma gestiona tres roles definidos mediante restricción a nivel de base de datos (`CHECK (rol IN ('admin', 'supervisor', 'tecnico'))`):
+El sistema implementa una arquitectura desacoplada cliente-servidor con seguridad multicapa:
 
-| Rol | Alcance y Permisos |
-|---|---|
-| **Administrador (`admin`)** | Control total de la empresa. Da de alta nuevos usuarios con cualquier rol (`admin`, `supervisor`, `tecnico`), activa/desactiva colaboradores, registra maquinaria y puede supervisar y validar piezas. |
-| **Supervisor (`supervisor`)** | Gestión de flota y control de calidad. Registra maquinaria autorizada, enlaza manuales técnicos de fabricante, revisa la bandeja de notificaciones operativas y valida/aprueba fichas de piezas registradas por técnicos. Visualiza el personal sin permisos de creación de cuentas. |
-| **Técnico (`tecnico`)** | Operador en campo. Consulta maquinaria autorizada (sin permisos de creación), accede a los manuales técnicos en línea como guía, busca fichas de piezas existentes para evitar duplicados y registra nuevas piezas con medidas técnicas y fotos. Cada nueva pieza notifica automáticamente al supervisor. |
-
----
-
-## 3. Módulos Funcionales e Historias de Usuario
-
-### HU-014: Registro y Consulta de Piezas con Guía Técnica (Técnico)
-Orientado a optimizar el trabajo del operador en campo y prevenir registros duplicados o incorrectos:
-
-1. **Búsqueda de Maquinaria Autorizada (Solo Consulta):**
-   - El técnico busca por nombre o código el equipo con el que va a interactuar.
-   - Si la máquina no está en el sistema, la creación está bloqueada (`403 Forbidden` a nivel de API) y la interfaz presenta un aviso indicando que debe solicitar el alta previa al supervisor.
-2. **Guía Técnica y Manual en Línea:**
-   - La ficha del equipo seleccionado incluye acceso directo al manual técnico oficial del fabricante mediante enlace web.
-3. **Búsqueda y Consulta de Piezas Existentes:**
-   - El técnico busca si la pieza requerida ya fue documentada en esa máquina.
-   - Al encontrarla, accede a la ficha técnica completa (medidas, fotografías, estado de validación) sin duplicar trabajo.
-   - Si el técnico intenta registrar un código existente en la misma máquina, el sistema bloquea el duplicado (`409 Conflict`) y redirige a la ficha técnica original.
-4. **Registro de Nueva Pieza Técnica:**
-   - Si la pieza no existe, registra su código, nombre, tipo (`Manguera`, `Racor`, `Acople`, `Válvula`), medidas técnicas estructuradas (`longitud`, `diametro`, `presion_psi`, `rosca`), fotografías de evidencia y observaciones.
-   - La pieza queda asociada a la máquina con estado `pendiente`.
-5. **Alerta Automática al Supervisor:**
-   - Al crearse la pieza, el sistema genera automáticamente una notificación en la bandeja de supervisión para su revisión.
-
-### HU-015: Registro de Maquinaria y Supervisión (Supervisor)
-Permite mantener el control de qué equipos existen en la empresa y garantizar la calidad técnica:
-
-1. **Alta de Maquinaria:**
-   - Registro de equipos con código interno, nombre descriptivo, tipo de máquina, URL del manual técnico del fabricante y especificaciones del circuito hidráulico.
-2. **Detección de Duplicados:**
-   - Si se intenta registrar un equipo con un nombre similar o idéntico al de otra máquina existente en la empresa, el backend retorna una advertencia (`409 Conflict`) solicitando confirmación explícita para evitar registros redundantes.
-3. **Bandeja de Validación de Piezas:**
-   - Monitoreo en tiempo real de las piezas dadas de alta por técnicos.
-   - Acción directa para validar y certificar la pieza técnica (`PATCH /api/piezas/:id/validar`).
-
----
-
-## 4. Endpoints de la API REST
-
-### Autenticación y Cuentas (`/api/auth`)
-- `POST /api/auth/register-company`: Registro de nueva empresa y su primer usuario Administrador.
-- `POST /api/auth/register-user`: Auto-registro de técnicos asociados a una empresa existente por código.
-- `POST /api/auth/login`: Autenticación multi-empresa. Retorna token JWT (vigencia 8 horas).
-
-### Gestión de Personal (`/api/users` - Requiere JWT)
-- `GET /api/users`: Lista colaboradores de la empresa (Admin y Supervisor).
-- `POST /api/users`: Creación de colaborador con rol asignado (`admin`, `supervisor`, `tecnico`) — Solo Admin.
-- `PATCH /api/users/:id`: Activar o desactivar cuenta — Solo Admin.
-
-### Maquinaria (`/api/maquinas` - Requiere JWT)
-- `GET /api/maquinas?query=...`: Listado de maquinaria con filtro de búsqueda por código o nombre (Todos los roles).
-- `GET /api/maquinas/:id`: Detalle de máquina específica (Todos los roles).
-- `POST /api/maquinas`: Registro de nuevo equipo con control de duplicados (Supervisor y Admin).
-
-### Piezas Técnicas (`/api/piezas` - Requiere JWT)
-- `GET /api/piezas?maquinaId=X&query=...`: Listado de componentes de una máquina específica (Todos los roles).
-- `GET /api/piezas/:id`: Ficha técnica completa de componente con medidas y fotos (Todos los roles).
-- `POST /api/piezas`: Registro de ficha técnica y emisión de alerta al supervisor (Todos los roles). Bloquea código duplicado en la misma máquina.
-- `PATCH /api/piezas/:id/validar`: Aprobación y validación de pieza (Supervisor y Admin).
-
-### Notificaciones de Supervisión (`/api/notificaciones` - Requiere JWT)
-- `GET /api/notificaciones`: Bandeja de alertas de piezas pendientes de revisión (Supervisor y Admin).
-- `PATCH /api/notificaciones/:id/leida`: Marcar notificación como revisada.
-
----
-
-## 5. Esquema de Base de Datos
-
-```sql
--- Empresas registradas
-CREATE TABLE empresas (
-    id SERIAL PRIMARY KEY,
-    codigo VARCHAR(20) UNIQUE NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Colaboradores
-CREATE TABLE usuarios (
-    id SERIAL PRIMARY KEY,
-    empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
-    nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    rol VARCHAR(20) NOT NULL DEFAULT 'tecnico' CHECK (rol IN ('admin', 'supervisor', 'tecnico')),
-    activo BOOLEAN NOT NULL DEFAULT true,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_empresa_email UNIQUE (empresa_id, email)
-);
-
--- Maquinaria autorizada (HU-015)
-CREATE TABLE maquinarias (
-    id SERIAL PRIMARY KEY,
-    empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
-    codigo VARCHAR(50) NOT NULL,
-    nombre VARCHAR(150) NOT NULL,
-    tipo VARCHAR(100) NOT NULL,
-    manual_url TEXT,
-    descripcion TEXT,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_maquina_codigo_empresa UNIQUE (empresa_id, codigo)
-);
-
--- Componentes y piezas técnicas (HU-014)
-CREATE TABLE piezas (
-    id SERIAL PRIMARY KEY,
-    maquina_id INTEGER NOT NULL REFERENCES maquinarias(id) ON DELETE CASCADE,
-    creado_por_usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-    codigo VARCHAR(50) NOT NULL,
-    nombre VARCHAR(150) NOT NULL,
-    tipo VARCHAR(50) NOT NULL,
-    medidas JSONB DEFAULT '{}'::jsonb,
-    descripcion TEXT,
-    fotos TEXT[] DEFAULT '{}',
-    estado_validacion VARCHAR(20) NOT NULL DEFAULT 'pendiente' CHECK (estado_validacion IN ('pendiente', 'validada', 'rechazada')),
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_pieza_codigo_maquina UNIQUE (maquina_id, codigo)
-);
-
--- Bandeja de alertas para supervisión
-CREATE TABLE notificaciones_supervisor (
-    id SERIAL PRIMARY KEY,
-    empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
-    maquina_id INTEGER REFERENCES maquinarias(id) ON DELETE CASCADE,
-    pieza_id INTEGER REFERENCES piezas(id) ON DELETE CASCADE,
-    mensaje TEXT NOT NULL,
-    leida BOOLEAN NOT NULL DEFAULT false,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 HydroTech Mobile (React Native)             │
+│   src/auth/ · src/api/ · src/navigation/ · src/screens/     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTPS / REST (JWT Bearer)
+┌──────────────────────────────▼──────────────────────────────┐
+│                    API Backend (Node.js / Express)          │
+│   /api/v2: Auth · Clientes · Usuarios · Máquinas · Piezas   │
+│            Órdenes de Trabajo · Notificaciones · Reportes   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ SQL Parametrizado (Pool / SSL)
+┌──────────────────────────────▼──────────────────────────────┐
+│             Base de Datos Relacional (PostgreSQL / Neon)    │
+│   Multi-tenant por UUID · Integridad Referencial · JSONB   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 6. Identidad Visual (Guía de Marca HydroTech)
-
-La interfaz de usuario implementa el manual de marca oficial de **HydroTech**, enfocado en ingeniería de fluidos, circuitos de alta presión y maquinaria pesada:
-
-- **Naranja HydroTech (`#FF6A00`):** Color primario de acción, botones destacados, acento en títulos y distinción del rol Administrador.
-- **Naranja Secundario (`#C75300`):** Estados pulsados e interacción activa.
-- **Negro Base (`#0D0D0D`):** Fondo principal oscuro de alta densidad.
-- **Superficie 1 (`#161616`):** Contenedores principales, tarjetas y modales técnicos.
-- **Superficie 2 (`#1E1E1E`):** Entradas de texto (*inputs*) y pestañas de selección de rol/tipo.
-- **Plata Técnica (`#C0C0C0`):** Marcadores visuales de ingeniería (*eyebrow bars*) y bordes de precisión.
-- **Borde de Precisión (`rgba(192, 192, 192, 0.16)`):** Separación visual nítida en temas oscuros.
-- **Tipografía:** Montserrat para encabezados y Roboto para cuerpos de datos técnicos.
+- **Frontend Móvil:** React Native 0.86.2, `react-native-safe-area-context`, `@react-native-async-storage/async-storage`.
+- **Backend API:** Node.js, Express, `pg` (PostgreSQL Pool), `bcryptjs`, `jsonwebtoken` (JWT), `cors`, `dotenv`.
+- **Base de Datos:** PostgreSQL con extensiones criptográficas (`pgcrypto`), claves foráneas en cascada, índices compuestos por empresa prestadora (`empresa_prestadora_id`), columnas `JSONB` para subtipos técnicos y evidencias fotográficas, y restricciones `CHECK` para integridad estricta de estados y roles.
+- **Visor Web de Validación:** Simulador web interactivo (`preview.html`) con endpoints de compatibilidad (`/api/preview`) para pruebas ágiles de diseño y flujos de usuario en escritorio.
 
 ---
 
-## 7. Estructura del Repositorio
+## 2. Evolución del Proyecto (Fases 1 a 4)
+
+El desarrollo del proyecto se consolidó de manera incremental siguiendo especificaciones de ingeniería:
+
+### Fase 1: Prototipo Inicial e Historias de Usuario HU-014 y HU-015
+- Implementación de flujos base de registro y consulta de maquinaria.
+- Creación de fichas técnicas para componentes de campo con carga fotográfica.
+- Bandeja de supervisión para aprobación y validación de repuestos.
+
+### Fase 2: Modelo de Datos Multiempresa (*Multi-tenant Database*)
+- Transición a claves primarias tipo UUID (`gen_random_uuid()`).
+- Creación del esquema `schema.multiempresa.sql`:
+  - `empresas_prestadoras`: Empresas contratistas de servicio técnico y taller.
+  - `empresas_clientes`: Empresas dueñas de maquinaria y contratantes de servicios.
+  - `usuarios_multiempresa`: Personal técnico y administrativo con scope empresarial.
+  - Subtipos estructurados de repuestos: `piezas_manguera`, `piezas_torno`, `piezas_cilindro`.
+  - `ordenes_servicio`: Control operativo de órdenes de trabajo.
+  - `registros_auditoria`: Trazabilidad inmutable de altas, bajas y modificaciones.
+
+### Fase 3: API REST v2 y Seguridad por Ámbito Empresarial
+- Implementación de rutas `/api/v2` con validación estricta de empresa prestadora (`req.user.service_company_id`).
+- Middlewares de seguridad:
+  - `auth`: Decodificación y verificación del token JWT.
+  - `requireRole`: Control de acceso basado en roles (RBAC).
+  - `requireCompanyScope`: Bloqueo de acceso cruzado entre empresas inquilinas (*cross-tenant leakage*).
+- Prevención de auto-aprobación en piezas: un usuario no puede validar sus propias piezas (`creado_por <> $4`).
+
+### Fase 4: Frontend Móvil React Native (Carpeta `src/`)
+- Reorganización total de la arquitectura frontend:
+  - `src/auth/`: Contexto de autenticación (`AuthContext.js`, `useAuth.js`) y persistencia local (`session.js`).
+  - `src/api/`: Cliente HTTP centralizado (`client.js`) con interceptores para JWT, timeout de 15s con `AbortController` y detección de errores `401` y `403`.
+  - `src/navigation/`: Navegador tipo pila con histórico (`AppNavigator.js`), condicionado al rol activo (`admin`, `supervisor`, `tecnico`).
+  - `src/components/`: Componentes UI reutilizables con la guía de marca oficial HydroTech (`HeaderBar`, `Badge`, `ForbiddenNotice`, `CustomInput`, formularios de subtipos).
+  - `src/screens/`: 20 pantallas oficiales implementadas para cubrir todo el ciclo operativo.
+
+---
+
+## 3. Matriz de Roles y Control de Acceso (RBAC)
+
+La plataforma aplica permisos tanto a nivel de API como en interfaz móvil:
+
+| Módulo / Acción | Administrador (`admin`) | Supervisor (`supervisor`) | Técnico (`tecnico`) |
+|---|:---:|:---:|:---:|
+| **Empresas Clientes** | Crear, Consultar, Modificar | Consultar | Consultar |
+| **Flota de Maquinaria** | Crear, Consultar, Editar | Crear, Consultar, Editar | Solo Consulta y Guía Técnica |
+| **Manuales de Fabricante** | Enlazar y Consultar | Enlazar y Consultar | Consultar en línea |
+| **Fichas de Piezas (Borrador)** | Crear y Consultar | Crear y Consultar | Crear y Enviar a Revisión |
+| **Aprobación de Calidad** | Aprobar / Rechazar | Aprobar / Rechazar | ❌ Bloqueado |
+| **Órdenes de Trabajo** | Crear, Asignar, Gestionar | Crear, Asignar, Gestionar | Atender y Cerrar Asignadas |
+| **Evidencias Técnicas** | Registrar y Consultar | Registrar y Consultar | Registrar (Antes / Durante / Después) |
+| **Gestión de Personal** | Crear usuarios, Activar/Desactivar | Consultar técnicos | ❌ Bloqueado |
+| **Reportes y Métricas** | Métricas Globales de Taller | Métricas Globales de Taller | Solo tareas y piezas propias |
+
+> **Seguridad Defensiva en Frontend:** Cada pantalla que consume rutas restringidas captura automáticamente el código `403 Forbidden` (`err.isForbidden`) y renderiza el componente [ForbiddenNotice.js](file:///c:/dev/EmpresaMaquinaria/src/components/ForbiddenNotice.js), impidiendo que la aplicación sufra cierres forzados (*crashes*).
+
+---
+
+## 4. Formularios y Gestión de Órdenes de Trabajo
+
+El módulo de órdenes de trabajo permite coordinar las actividades de taller y campo cubriendo los siguientes datos clave:
+
+1. **Empresa Cliente:** Selección interactiva del cliente contratante (`empresa_cliente_id`).
+2. **Máquina Asociada:** Equipo intervenido (`maquinaria_id`), con filtrado por cliente.
+3. **Descripción del Trabajo:** Detalle técnico de averías, síntomas o requerimientos operativos.
+4. **Prioridad:** Clasificación visual por urgencia (`baja`, `normal`, `alta`, `urgente`).
+5. **Técnico Asignado:** Especialista responsable (`asignada_a`). Asignable al crear o reasignable en cualquier etapa por supervisores/administradores con emisión de notificación automática.
+6. **Estado de la Orden:** Ciclo de vida controlado: `abierta` ➔ `en_progreso` ➔ `completada` (o `cancelada`). Al completarse, se registra la marca de tiempo `completada_en = NOW()`.
+7. **Evidencias del Trabajo Realizado:** Registro fotográfico y notas técnicas almacenadas en columna `evidencias JSONB`, clasificadas en tres etapas de intervención:
+   - 🟡 **Antes / Diagnóstico:** Estado del equipo o pieza al ser recibido (fugas, desgaste, roturas).
+   - 🔵 **Durante / Intervención:** Avance del maquinado, prensado de mangueras o armado de sellos.
+   - 🟢 **Después / Finalizado:** Prueba de presión hidrostática superada y equipo entregado operativo.
+
+---
+
+## 5. Depuración y Eliminación de Código Muerto (*Code Cleanup*)
+
+Durante la consolidación de la Fase 4, se realizó una auditoría y saneamiento técnico integral para eliminar código heredado (*legacy*) que introducía duplicidad y confusión arquitectónica:
+
+### Archivos Eliminados del Frontend
+
+| Archivo / Carpeta Eliminada | Motivo de Depuración | Sustituto Oficial Fase 4 |
+|---|---|---|
+| `src/screens/MaquinariaListScreen.js` | Pantalla v1 obsoleta, endpoints legacy `/api/maquinas`. | [MachinesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachinesScreen.js) |
+| `src/screens/MaquinariaDetailScreen.js` | Detalle v1 sin soporte para subtipos de ingeniería. | [MachineDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachineDetailScreen.js) |
+| `src/screens/PiezaFormScreen.js` | Formulario genérico v1 sin campos específicos por familia. | [CreateHoseScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateHoseScreen.js), [CreateLathePartScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateLathePartScreen.js), [CreateCylinderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateCylinderScreen.js) |
+| `src/screens/NotificacionesScreen.js` | Bandeja v1 sin distinción de órdenes ni scope UUID. | [NotificationsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/NotificationsScreen.js) |
+| `src/services/` *(carpeta completa)* | Capa de servicios legacy v1 con URLs cableadas (`api.js`, `authService.js`, `maquinaService.js`, `piezaService.js`, `session.js`, `userService.js`). | Capa centralizada modular: [src/api/](file:///c:/dev/EmpresaMaquinaria/src/api/) y [src/auth/](file:///c:/dev/EmpresaMaquinaria/src/auth/) |
+
+### Resultados del Saneamiento
+- **0 advertencias en ESLint:** Verificado con `npx eslint .` en todo el proyecto.
+- **Desacoplamiento total:** Ningún componente activo referencia módulos heredados.
+- **Reducción de tamaño del paquete:** Eliminadas más de 1,200 líneas de código muerto.
+
+---
+
+## 6. Dificultades Técnicas Encontradas y Soluciones de Ingeniería
+
+Durante el desarrollo e integración se superaron diversos desafíos técnicos relevantes:
+
+### 1. Incompatibilidad de Tipos en PostgreSQL (`Error 42P08: inconsistent types deduced`)
+- **Problema:** En la sentencia de actualización de órdenes:
+  ```sql
+  UPDATE ordenes_servicio SET estado = $1, completada_en = CASE WHEN $1 = 'completada' THEN NOW() ...
+  ```
+  PostgreSQL deducía que `$1` era `VARCHAR(20)` para la asignación de columna, pero deducía `TEXT` en la expresión condicional del `CASE WHEN`, arrojando un error `500` interno.
+- **Solución  :** Se aplicó casting explícito de parámetros:
+  ```sql
+  UPDATE ordenes_servicio
+  SET estado = $1::varchar,
+      completada_en = CASE WHEN $1::text = 'completada' THEN NOW() ELSE completada_en END,
+      actualizado_en = NOW()
+  WHERE id = $2 AND empresa_prestadora_id = $3
+  ```
+
+### 2. Discrepancia en Nombres de Columnas Relacionales (`JOINs` Multi-tenant)
+- **Problema:** La consulta de órdenes intentaba proyectar `ec.nombre AS cliente_nombre`, pero la tabla `empresas_clientes` almacena la razón social y nombre comercial bajo `razon_social` y `nombre_comercial`.
+- **Solución:** Se estandarizó la consulta base con resolución en cascada:
+  ```sql
+  COALESCE(ec.razon_social, ec.nombre_comercial) AS cliente_nombre
+  ```
+
+### 3. Procesos Residuales y Conflicto de Puertos en Windows (`EADDRINUSE :::3000`)
+- **Problema:** Al reiniciar servidores de desarrollo bajo Windows, procesos secundarios de Node.js quedaban en segundo plano manteniendo abierto el puerto TCP 3000.
+- **Solución:** Implementación de scripts de inspección vía PowerShell (`Get-NetTCPConnection -LocalPort 3000`) para identificar el PID del proceso huérfano y terminarlo limpiamente antes de reiniciar el entorno de desarrollo.
+
+### 4. Navegación Dinámica por Roles sin Fallas Nativas
+- **Problema:** El uso de librerías nativas complejas de navegación en entornos híbridos Windows / Android suele presentar conflictos de enlace nativo (*native linking*) con versiones recientes de React Native (0.86+).
+- **Solución:** Se diseñó un enrutador por estado reactivo tipo pila (`navStack`) dentro de [AppNavigator.js](file:///c:/dev/EmpresaMaquinaria/src/navigation/AppNavigator.js), que gestiona transiciones, paso de parámetros entre pantallas y botón de retroceso (`goBack`), integrado transparentemente con `useAuth()`.
+
+### 5. Control Estricto de Calidad (Anti Auto-aprobación)
+- **Problema:** Riesgo de fraude o negligencia técnica si un usuario aprueba sus propias reparaciones.
+- **Solución:** Restricción a nivel de consulta SQL en `backend/src/v2/routes/parts.routes.js`:
+  ```sql
+  UPDATE piezas_multiempresa
+  SET estado_validacion = 'validada', validado_por = $2, validado_en = NOW()
+  WHERE id = $1 AND empresa_prestadora_id = $3 AND creado_por <> $4
+  ```
+  Si el autor intenta validarla, la base de datos no actualiza ningún registro y el backend retorna `403 Forbidden`.
+
+---
+
+## 7. Catálogo de Pantallas de la Fase 4 (`src/screens/`)
+
+La aplicación móvil cuenta con 21 pantallas optimizadas:
+
+1. [LoginScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/LoginScreen.js): Autenticación con ID de empresa prestadora (UUID), correo y contraseña.
+2. [RegisterScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/RegisterScreen.js): Registro de colaboradores con validaciones de contraseña.
+3. [DashboardScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/DashboardScreen.js): Panel principal con accesos rápidos condicionados al rol.
+4. [ClientCompaniesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ClientCompaniesScreen.js): Catálogo de clientes contratantes.
+5. [ClientCompanyDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ClientCompanyDetailScreen.js): Ficha del cliente y flota asociada.
+6. [MachinesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachinesScreen.js): Listado de maquinaria con buscador y filtro.
+7. [MachineDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachineDetailScreen.js): Ficha de equipo, manual oficial enlazado y despiece.
+8. [CreateMachineScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateMachineScreen.js): Alta de maquinaria autorizada (Supervisor/Admin).
+9. [PartsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartsScreen.js): Catálogo de repuestos con chips de estado (`borrador`, `pendiente`, `validada`, `rechazada`).
+10. [PartDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartDetailScreen.js): Ficha técnica de pieza, galería fotográfica y botón para enviar a revisión.
+11. [PartReviewScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartReviewScreen.js): Panel de control de calidad para validación/rechazo de piezas.
+12. [CreateHoseScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateHoseScreen.js): Formulario técnico de mangueras (diámetros, presión, conexiones).
+13. [CreateLathePartScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateLathePartScreen.js): Formulario técnico de piezas de torno (tolerancias, roscas, material).
+14. [CreateCylinderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateCylinderScreen.js): Formulario técnico de cilindros (camisa, vástago, carrera, sellos).
+15. [OrdersScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/OrdersScreen.js): Listado de órdenes con filtros de estado y resumen de evidencias.
+16. [CreateOrderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateOrderScreen.js): Formulario de orden con cliente, máquina, técnico, prioridad y evidencias iniciales.
+17. [OrderDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/OrderDetailScreen.js): Gestión completa de la orden, avance de estado, reasignación y modal de evidencias.
+18. [NotificationsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/NotificationsScreen.js): Centro de alertas operativas con marcado de lectura.
+19. [ReportsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ReportsScreen.js): Tablero analítico con métricas consolidadas de órdenes, piezas y maquinaria.
+20. [UsersScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/UsersScreen.js): Panel de administración de colaboradores y activación de cuentas.
+21. [ProfileScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ProfileScreen.js): Datos del usuario, sincronización de credenciales y cierre de sesión seguro.
+
+---
+
+## 8. Estructura del Repositorio
 
 ```
 EmpresaMaquinaria/
-├── android/                   # Proyecto nativo Android (Gradle, SDK)
-├── ios/                       # Proyecto nativo iOS (CocoaPods)
-├── backend/                   # API REST en Node.js + Express
+├── android/                         # Proyecto nativo Android
+├── ios/                             # Proyecto nativo iOS
+├── backend/                         # Servidor Node.js Express + PostgreSQL
 │   ├── src/
-│   │   ├── db/                # pool.js, schema.sql, seed.js
-│   │   ├── middlewares/       # auth.middleware.js (verifyToken, requireRoles)
-│   │   ├── routes/            # auth, user, maquinas, piezas, notificaciones
-│   │   └── server.js          # Servidor Express
-│   ├── test-suite.js          # Suite de pruebas automatizadas (12 casos de prueba)
-│   ├── package.json
-│   └── .env                   # Variables de entorno (DATABASE_URL, JWT_SECRET, PORT)
-├── src/                       # Aplicación React Native
-│   ├── components/            # CustomInput.js, PrimaryButton.js
-│   ├── constants/             # colors.js (tokens oficiales HydroTech)
-│   ├── navigation/            # AppNavigator.js
-│   ├── screens/               # LoginScreen.js, RegisterScreen.js, DashboardScreen.js
-│   ├── services/              # api.js, authService.js, userService.js, maquinaService.js, piezaService.js
-│   └── utils/
-├── App.js                     # Componente raíz
-├── preview.html               # Simulador interactivo web para pruebas completas
-└── package.json               # Dependencias del cliente móvil
+│   │   ├── db/                      # pool.js, schema.multiempresa.sql, seed.js
+│   │   ├── middlewares/             # auth.middleware.js (v1 legacy)
+│   │   ├── routes/                  # Rutas Fase 1 (usadas por test-suite.js)
+│   │   ├── v2/                      # API REST Multiempresa Oficial
+│   │   │   ├── middlewares/         # auth.js, requireRole.js, requireCompanyScope.js
+│   │   │   ├── routes/              # auth, clientCompanies, users, machines, parts, orders, notifications, reports
+│   │   │   ├── utils/               # audit.js, notifications.js
+│   │   │   ├── app.js               # Enrutador central v2
+│   │   │   └── previewCompat.js     # Endpoints de compatibilidad para preview.html
+│   │   └── server.js                # Servidor principal (puerto 3000)
+│   ├── test-suite.js                # Pruebas automatizadas de integración
+│   └── package.json
+├── docs/
+│   └── diagrams/                    # Modelos C4 en PlantUML (Nivel 1, 2 y 3)
+├── src/                             # Código fuente móvil React Native
+│   ├── api/                         # Cliente HTTP y llamadas a la API v2
+│   ├── auth/                        # Contexto de sesión, persistencia y hooks
+│   ├── components/                  # Componentes reutilizables y formularios
+│   ├── constants/                   # colors.js (paleta oficial HydroTech)
+│   ├── navigation/                  # AppNavigator.js con stack por roles
+│   └── screens/                     # 21 pantallas de la aplicación
+├── App.js                           # Punto de entrada envuelto en AuthProvider
+├── preview.html                     # Visor web interactivo para pruebas rápidas
+├── package.json                     # Configuración del frontend
+└── README.md                        # Documentación técnica del proyecto
 ```
 
 ---
 
-## 8. Guía de Instalación y Pruebas
+## 9. Guía de Instalación, Pruebas y Despliegue
 
-### Requisitos Previos
+### Requisitos
 - Node.js versión 20 o superior.
-- Instancia de PostgreSQL (local o nube: Neon, Render, Supabase).
-- Navegador web moderno o Android Studio si se compila para móvil.
+- Base de datos PostgreSQL en la nube (Neon / Render) o local.
 
-### Configuración del Backend
+### 1. Puesta en Marcha del Backend
+```bash
+# 1. Instalar dependencias
+cd backend
+npm install
 
-1. Instalar dependencias del backend:
-   ```bash
-   cd backend
-   npm install
-   ```
+# 2. Configurar variables de entorno (.env)
+# DATABASE_URL=postgresql://usuario:clave@host/db?sslmode=require
+# JWT_SECRET=clave_secreta_jwt_hydrotech
+# PORT=3000
 
-2. Configurar variables de entorno (`backend/.env`):
-   ```env
-   DATABASE_URL=postgresql://usuario:password@host:5432/nombre_bd
-   JWT_SECRET=clave_secreta_jwt_hydrotech
-   PORT=3000
-   ```
+# 3. Aplicar esquema multiempresa
+npm run migrate:multitenant
 
-3. Ejecutar migraciones del esquema:
-   ```bash
-   npm run migrate
-   ```
+# 4. Iniciar servidor de desarrollo
+npm run dev
+```
 
-4. Poblar datos iniciales de prueba (maquinaria, piezas y usuarios demo):
-   ```bash
-   npm run seed
-   ```
+### 2. Ejecución de Pruebas Automatizadas
+```bash
+# Ejecutar suite de pruebas de integración del backend (17 casos de prueba)
+npm test
 
-5. Iniciar servidor:
-   ```bash
-   npm run dev
-   ```
-   Servidor activo en `http://localhost:3000`.
+# Ejecutar verificación de estilo y calidad de código (0 warnings)
+npx eslint .
+```
 
-6. Ejecutar pruebas automatizadas:
-   ```bash
-   npm test
-   ```
-   Ejecuta los 12 casos de integración que cubren autenticación, roles, HU-014 (técnico, manuales, fichas, duplicados) y HU-015 (supervisor, validaciones, detección de nombres duplicados).
+### 3. Credenciales de Prueba (HydroTech S.A.S.)
+- **ID Empresa Prestadora:** `16818a8e-7f9f-4456-92b1-ba15aeb882e3` (o código `DEMO01` en el preview)
 
----
+| Rol | Correo Electrónico | Contraseña |
+|---|---|---|
+| **Administrador** | `admin@demo.com` | `Admin123!` |
+| **Supervisor** | `supervisor@demo.com` | `Supervisor123!` |
+| **Técnico** | `tecnico@demo.com` | `Tecnico123!` |
 
-### Credenciales de Prueba (Empresa DEMO01)
-
-| Rol | Empresa | Correo Electrónico | Contraseña |
-|---|---|---|---|
-| **Admin** | `DEMO01` | `admin@demo.com` | `Admin123!` |
-| **Supervisor** | `DEMO01` | `supervisor@demo.com` | `Supervisor123!` |
-| **Técnico** | `DEMO01` | `tecnico@demo.com` | `Tecnico123!` |
-
----
-
-### Métodos de Ejecución de la Interfaz
-
-#### 1. Visor Web Interactivo (`preview.html`) — Recomendado para Pruebas Inmediatas
-Permite validar toda la experiencia sin consumo de recursos en emulador:
-1. Mantener el backend corriendo (`npm run dev` en `backend/`).
-2. Abrir `preview.html` en el navegador.
-3. Utilizar los accesos directos laterales para ingresar como Técnico, Supervisor o Administrador.
-4. Interactuar con los flujos de búsqueda de maquinaria, manual en línea, fichas de piezas, registro con medidas estructuradas y validación en bandeja de supervisión.
-
-#### 2. Dispositivo Físico Android (USB)
-1. Conectar dispositivo con depuración USB activa (`adb devices`).
-2. Redireccionar puertos:
+### 4. Métodos para Probar la Interfaz
+1. **Visor Web Interactivo (`preview.html`):** Mantén corriendo el backend y abre `preview.html` en el navegador para validar la interacción visual inmediata de todos los roles.
+2. **Dispositivo Físico o Emulador Android:**
    ```bash
    adb reverse tcp:8081 tcp:8081
    adb reverse tcp:3000 tcp:3000
-   ```
-3. Ejecutar:
-   ```bash
    npx react-native run-android
    ```
-
-#### 3. Emulador de Android Studio
-1. Iniciar Metro Bundler: `npx react-native start`
-2. En otra terminal: `npx react-native run-android`

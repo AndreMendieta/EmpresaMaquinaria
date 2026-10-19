@@ -70,8 +70,8 @@ export const AuthProvider = ({ children }) => {
   }, [applySession, logout]);
 
   const login = useCallback(
-    async ({ correo, password }) => {
-      const res = await apiLogin({ correo, password });
+    async ({ serviceCompanyId: companyIdParam, correo, password }) => {
+      const res = await apiLogin({ serviceCompanyId: companyIdParam, correo, password });
       if (res?.ok && res?.usuario && res?.token) {
         applySession(res.usuario, res.token);
         await saveSession({ user: res.usuario, token: res.token });

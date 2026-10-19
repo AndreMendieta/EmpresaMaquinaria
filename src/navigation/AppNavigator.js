@@ -6,6 +6,8 @@ import { COLORS } from '../constants/colors';
 // 20 Pantallas de Fase 4
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import VerifyEmailScreen from '../screens/VerifyEmailScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ClientCompaniesScreen from '../screens/ClientCompaniesScreen';
 import ClientCompanyDetailScreen from '../screens/ClientCompanyDetailScreen';
@@ -46,10 +48,6 @@ const AppNavigator = () => {
     setNavStack([{ name, params }]);
   };
 
-  if (currentRoute.name === 'register' && (!user || !token)) {
-    return <RegisterScreen onNavigateToLogin={() => resetTo('login')} onRegisterSuccess={() => resetTo('login')} />;
-  }
-
   // 1. Cargando sesión persistente
   if (isLoading) {
     return (
@@ -59,9 +57,60 @@ const AppNavigator = () => {
     );
   }
 
-  // 2. Si no hay sesión activa, siempre mostrar LoginScreen
+  // 2. Si no hay sesión activa, manejar flujos de autenticación
   if (!user || !token) {
-    return <LoginScreen onNavigateToRegister={() => resetTo('register')} onLoginSuccess={() => resetTo('dashboard')} />;
+    if (currentRoute.name === 'register') {
+      return (
+        <RegisterScreen
+          onNavigateToLogin={() => resetTo('login')}
+          onRegisterSuccess={(regData) =>
+            resetTo('verify_email', {
+              initialEmail: regData?.email || '',
+              initialCompanyId: regData?.companyId || '',
+              initialDevCode: regData?.devCode || '',
+            })
+          }
+        />
+      );
+    }
+
+    if (currentRoute.name === 'verify_email') {
+      return (
+        <VerifyEmailScreen
+          initialEmail={currentRoute.params?.initialEmail || ''}
+          initialCompanyId={currentRoute.params?.initialCompanyId || ''}
+          initialDevCode={currentRoute.params?.initialDevCode || ''}
+          onVerificationSuccess={() => resetTo('dashboard')}
+          onBackToLogin={() => resetTo('login')}
+        />
+      );
+    }
+
+    if (currentRoute.name === 'forgot_password') {
+      return (
+        <ForgotPasswordScreen
+          initialEmail={currentRoute.params?.initialEmail || ''}
+          onNavigateToLogin={() => resetTo('login')}
+        />
+      );
+    }
+
+    return (
+      <LoginScreen
+        onNavigateToRegister={() => resetTo('register')}
+        onNavigateToForgotPassword={(email) =>
+          resetTo('forgot_password', { initialEmail: email })
+        }
+        onRequireVerification={(verData) =>
+          resetTo('verify_email', {
+            initialEmail: verData?.email || '',
+            initialCompanyId: verData?.companyId || '',
+            initialDevCode: verData?.devCode || '',
+          })
+        }
+        onLoginSuccess={() => resetTo('dashboard')}
+      />
+    );
   }
 
   // 3. Renderizado de la pantalla activa

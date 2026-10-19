@@ -35,6 +35,11 @@ CREATE TABLE IF NOT EXISTS usuarios_multiempresa (
   clave_hash TEXT NOT NULL,
   rol VARCHAR(20) NOT NULL DEFAULT 'tecnico' CHECK (rol IN ('admin','supervisor','tecnico')),
   activo BOOLEAN NOT NULL DEFAULT TRUE,
+  correo_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+  codigo_verificacion VARCHAR(10),
+  codigo_verificacion_expira TIMESTAMPTZ,
+  codigo_recuperacion VARCHAR(10),
+  codigo_recuperacion_expira TIMESTAMPTZ,
   intentos_fallidos INTEGER NOT NULL DEFAULT 0 CHECK (intentos_fallidos >= 0),
   bloqueado_hasta TIMESTAMPTZ,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -44,6 +49,13 @@ CREATE TABLE IF NOT EXISTS usuarios_multiempresa (
   CONSTRAINT fk_usuario_cliente FOREIGN KEY (empresa_prestadora_id, empresa_cliente_id)
     REFERENCES empresas_clientes (empresa_prestadora_id, id)
 );
+
+ALTER TABLE usuarios_multiempresa
+  ADD COLUMN IF NOT EXISTS correo_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS codigo_verificacion VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS codigo_verificacion_expira TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS codigo_recuperacion VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS codigo_recuperacion_expira TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS maquinarias_multiempresa (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
