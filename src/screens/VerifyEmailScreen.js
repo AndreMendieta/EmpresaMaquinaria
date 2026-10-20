@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { verifyEmail, resendVerification } from '../api/authApi';
@@ -21,6 +21,8 @@ const VerifyEmailScreen = ({
   initialEmail = '',
   initialCompanyId = '',
   initialDevCode = '',
+  initialEmailSent = false,
+  initialDeliveryMessage = '',
   onVerificationSuccess,
   onBackToLogin,
 }) => {
@@ -28,14 +30,13 @@ const VerifyEmailScreen = ({
   const correo = initialEmail;
   const serviceCompanyId = initialCompanyId;
   const [codigo, setCodigo] = useState(initialDevCode || '');
+  const [emailSent, setEmailSent] = useState(initialEmailSent);
 
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState(
-    initialDevCode
-      ? `Código autocompletado para pruebas: [${initialDevCode}]`
-      : 'Ingresa el código de 6 dígitos enviado a tu correo.'
+    initialDeliveryMessage || 'Ingresa el código de 6 dígitos para activar tu cuenta.'
   );
 
   const handleVerify = async () => {
@@ -85,7 +86,8 @@ const VerifyEmailScreen = ({
         serviceCompanyId,
         correo,
       });
-      setSuccessMessage('¡Se ha enviado un nuevo código a tu correo electrónico!');
+      setEmailSent(res.emailSent === true);
+      setSuccessMessage(res.message || 'Se solicitó un nuevo código de verificación.');
       if (res.devCode) {
         setCodigo(res.devCode);
       }
@@ -110,12 +112,12 @@ const VerifyEmailScreen = ({
 
             <Text style={styles.title}>Verifica tu Correo</Text>
             <Text style={styles.subtitle}>
-              Hemos enviado un código de 6 dígitos para activar tu cuenta en la plataforma HydroTech.
+              Ingresa el código de 6 dígitos para activar tu cuenta. Si no recibiste el correo, puedes solicitar otro.
             </Text>
 
             {/* Email destinatario */}
             <View style={styles.targetEmailBox}>
-              <Text style={styles.targetEmailLabel}>Código enviado a:</Text>
+              <Text style={styles.targetEmailLabel}>Correo de la cuenta:</Text>
               <Text style={styles.targetEmailText}>{correo || 'tu correo'}</Text>
             </View>
 
@@ -126,8 +128,8 @@ const VerifyEmailScreen = ({
             ) : null}
 
             {successMessage ? (
-              <View style={styles.successContainer}>
-                <Text style={styles.successText}>{successMessage}</Text>
+              <View style={[styles.successContainer, !emailSent && styles.deliveryWarningContainer]}>
+                <Text style={[styles.successText, !emailSent && styles.deliveryWarningText]}>{successMessage}</Text>
               </View>
             ) : null}
 
@@ -291,6 +293,13 @@ const styles = StyleSheet.create({
     color: COLORS.success,
     fontSize: 12,
     textAlign: 'center',
+  },
+  deliveryWarningContainer: {
+    backgroundColor: 'rgba(255, 106, 0, 0.1)',
+    borderColor: 'rgba(255, 106, 0, 0.4)',
+  },
+  deliveryWarningText: {
+    color: '#FFB36B',
     fontWeight: '600',
   },
   resendRow: {

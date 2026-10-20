@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
-import { getReportsSummary } from '../api/reportsApi';
+import { downloadCompanyReport, getReportsSummary } from '../api/reportsApi';
 import HeaderBar from '../components/HeaderBar';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
@@ -19,6 +20,9 @@ const ReportsScreen = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [exportError, setExportError] = useState('');
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -41,6 +45,20 @@ const ReportsScreen = ({ onBack }) => {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  const handleDownloadReport = async () => {
+    setExporting(true);
+    setExportStatus('');
+    setExportError('');
+    try {
+      const result = await downloadCompanyReport();
+      setExportStatus(result.message);
+    } catch (error) {
+      setExportError(error.message || 'No se pudo descargar el reporte PDF.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const totalOrdenes = (data.ordenes || []).reduce((acc, curr) => acc + Number(curr.total || 0), 0);
   const totalPiezas = (data.piezas || []).reduce((acc, curr) => acc + Number(curr.total || 0), 0);
@@ -66,6 +84,26 @@ const ReportsScreen = ({ onBack }) => {
             <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
         ) : null}
+
+        <View style={styles.exportCard}>
+          <Text style={styles.exportTitle}>Reporte completo de operaciones</Text>
+          <Text style={styles.exportDescription}>
+            Descarga las máquinas con sus piezas técnicas y órdenes de trabajo asociadas en un solo PDF.
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            disabled={exporting}
+            onPress={handleDownloadReport}
+            style={[styles.exportButton, exporting && styles.exportButtonDisabled]}>
+            {exporting ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.exportButtonText}>Descargar PDF</Text>
+            )}
+          </TouchableOpacity>
+          {exportStatus ? <Text style={styles.exportStatus}>{exportStatus}</Text> : null}
+          {exportError ? <Text style={styles.exportError}>{exportError}</Text> : null}
+        </View>
 
         {role === 'tecnico' ? (
           <View style={styles.techNote}>
@@ -182,6 +220,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  exportCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  exportTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  exportDescription: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 6,
+  },
+  exportButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 42,
+    backgroundColor: COLORS.orange,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  exportButtonDisabled: {
+    opacity: 0.65,
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  exportStatus: {
+    color: COLORS.success,
+    fontSize: 12,
+    marginTop: 8,
+  },
+  exportError: {
+    color: COLORS.danger,
+    fontSize: 12,
+    marginTop: 8,
   },
   techNote: {
     backgroundColor: 'rgba(56, 189, 248, 0.1)',

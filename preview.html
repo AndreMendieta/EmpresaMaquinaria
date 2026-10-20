@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0D0D0D">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/brand/app-icon-512.png">
   <title>HydroTech — Visor Interactivo Móvil (HU-014 y HU-015)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -275,6 +277,37 @@
       display: flex;
       flex-direction: column;
       position: relative;
+    }
+
+    .preview-splash {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--black);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 280ms ease, visibility 280ms ease;
+    }
+
+    .preview-splash img {
+      display: block;
+      width: min(76%, 280px);
+      height: auto;
+    }
+
+    .preview-splash.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .preview-splash {
+        transition: none;
+      }
     }
 
     /* Barra de estado */
@@ -1296,6 +1329,10 @@
           </div>
         </div>
 
+        <div id="preview-splash" class="preview-splash" aria-label="HydroTech iniciando">
+          <img src="assets/brand/logo-full.png" alt="HydroTech">
+        </div>
+
       </div>
     </div>
   </div>
@@ -1313,6 +1350,7 @@
     let verifyTargetEmail = '';
     let verifyDevCode = '';
     let verifyNoticeMsg = '';
+    let verifyEmailSent = false;
     let forgotTab = 'password'; // 'password' | 'user'
     let forgotStep = 1; // 1 | 2
     let forgotEmail = '';
@@ -1394,6 +1432,7 @@
         container.innerHTML = `
           <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div class="rn-card">
+              <img src="assets/brand/logo-icon.png" alt="Logo HydroTech" style="display: block; width: 150px; margin: 0 auto 16px;">
               <div style="text-align: center; margin-bottom: 6px;">
                 <span class="eyebrow-bar" style="font-size: 10px;">SISTEMAS HIDRÁULICOS & FLUIDOS</span>
               </div>
@@ -1430,17 +1469,17 @@
               </div>
               <h2 style="font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">Verifica tu Correo</h2>
               <p style="font-size: 12px; color: var(--ink-muted); line-height: 1.4; margin-bottom: 14px;">
-                Hemos enviado un código de 6 dígitos para activar tu cuenta en la plataforma HydroTech.
+                Ingresa el código de 6 dígitos para activar tu cuenta. Si no recibiste el correo, puedes solicitar otro.
               </p>
 
               <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px;">
-                <div style="font-size: 10px; color: var(--ink-muted);">Código enviado a:</div>
+                <div style="font-size: 10px; color: var(--ink-muted);">Correo de la cuenta:</div>
                 <div id="verify-email-display" style="font-size: 12px; font-weight: 700; color: var(--orange); margin-top: 2px;">
                   ${escapeHtml(verifyTargetEmail || 'tu correo')}
                 </div>
               </div>
 
-              ${verifyNoticeMsg ? `<div class="alert-notice-box" style="margin-bottom: 12px; font-size: 11px; color: #34D399; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);">${escapeHtml(verifyNoticeMsg)}</div>` : ''}
+              ${verifyNoticeMsg ? `<div class="alert-notice-box" style="margin-bottom: 12px; font-size: 11px; color: ${verifyEmailSent ? '#34D399' : '#FFB36B'}; background: ${verifyEmailSent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 106, 0, 0.12)'}; border-color: ${verifyEmailSent ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 106, 0, 0.35)'};">${escapeHtml(verifyNoticeMsg)}</div>` : ''}
 
               <div id="verify-error" class="rn-error" style="display: none;"></div>
 
@@ -2618,7 +2657,8 @@
           if (res.status === 403 && data.requiereVerificacion) {
             verifyTargetEmail = data.email || email;
             verifyDevCode = data.devCode || '';
-            verifyNoticeMsg = data.message || 'Código de 6 dígitos enviado para activar tu cuenta.';
+            verifyEmailSent = data.emailSent === true;
+            verifyNoticeMsg = data.message || 'Ingresa el código de verificación para activar tu cuenta.';
             setView('verify_email');
             return;
           }
@@ -2707,7 +2747,8 @@
         if (data.requiereVerificacion) {
           verifyTargetEmail = email;
           verifyDevCode = data.devCode || '';
-          verifyNoticeMsg = data.message || 'Código de 6 dígitos enviado para activar tu cuenta.';
+          verifyEmailSent = data.emailSent === true;
+          verifyNoticeMsg = data.message || 'Ingresa el código de verificación para activar tu cuenta.';
           setView('verify_email');
           return;
         }
@@ -2793,7 +2834,8 @@
         if (data.devCode) {
           verifyDevCode = data.devCode;
         }
-        verifyNoticeMsg = 'Nuevo código enviado a tu correo.';
+        verifyEmailSent = data.emailSent === true;
+        verifyNoticeMsg = data.message || 'Se solicitó un nuevo código de verificación.';
         render();
       } catch (err) {
         errorEl.innerText = err.message;
@@ -3052,6 +3094,9 @@
 
     // Iniciar
     render();
+    window.setTimeout(() => {
+      document.getElementById('preview-splash').classList.add('is-hidden');
+    }, 1200);
   </script>
 </body>
 </html>

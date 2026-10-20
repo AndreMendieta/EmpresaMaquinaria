@@ -68,6 +68,8 @@ const AppNavigator = () => {
               initialEmail: regData?.email || '',
               initialCompanyId: regData?.companyId || '',
               initialDevCode: regData?.devCode || '',
+              initialEmailSent: regData?.emailSent,
+              initialDeliveryMessage: regData?.message || '',
             })
           }
         />
@@ -80,6 +82,8 @@ const AppNavigator = () => {
           initialEmail={currentRoute.params?.initialEmail || ''}
           initialCompanyId={currentRoute.params?.initialCompanyId || ''}
           initialDevCode={currentRoute.params?.initialDevCode || ''}
+          initialEmailSent={currentRoute.params?.initialEmailSent}
+          initialDeliveryMessage={currentRoute.params?.initialDeliveryMessage || ''}
           onVerificationSuccess={() => resetTo('dashboard')}
           onBackToLogin={() => resetTo('login')}
         />
@@ -106,6 +110,8 @@ const AppNavigator = () => {
             initialEmail: verData?.email || '',
             initialCompanyId: verData?.companyId || '',
             initialDevCode: verData?.devCode || '',
+            initialEmailSent: verData?.emailSent,
+            initialDeliveryMessage: verData?.message || '',
           })
         }
         onLoginSuccess={() => resetTo('dashboard')}

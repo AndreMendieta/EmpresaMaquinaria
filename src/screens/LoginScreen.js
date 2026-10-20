@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -8,7 +7,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { useAuth } from '../auth/useAuth';
@@ -53,6 +54,8 @@ const LoginScreen = ({
             email: error.data.correo || cleanEmail,
             companyId: error.data.serviceCompanyId || cleanCompanyId,
             devCode: error.data.devCode,
+            emailSent: error.data.emailSent,
+            message: error.message,
           });
           return;
         }
@@ -79,6 +82,12 @@ const LoginScreen = ({
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
+            <Image
+              source={require('../../assets/brand/logo-icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="Logo HydroTech"
+            />
             <View style={styles.eyebrowContainer}>
               <View style={styles.eyebrowBar} />
               <Text style={styles.eyebrowText}>SISTEMAS HIDRÁULICOS & FLUIDOS</Text>
@@ -197,6 +206,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 6,
+  },
+  logo: {
+    alignSelf: 'center',
+    width: 150,
+    height: 101,
+    marginBottom: 16,
   },
   eyebrowContainer: {
     flexDirection: 'row',

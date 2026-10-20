@@ -59,7 +59,7 @@ async function seed() {
         [empresaId, u.nombre, u.email, passwordHash, u.rol],
       );
       userIds[u.rol] = userRes.rows[0].id;
-      console.log(`  - Rol: ${u.rol.toUpperCase().padEnd(11)} | Correo: ${u.email.padEnd(22)} | Clave: ${u.password}`);
+      console.log(`  - Usuario demo listo: ${u.rol.toUpperCase().padEnd(11)} | ${u.email}`);
     }
 
     // 3. Maquinaria de prueba (HU-015)

@@ -9,6 +9,10 @@ import App from '../App';
 import {saveSession, getSession} from '../src/auth/session';
 import {getMe} from '../src/api/authApi';
 
+jest.mock('react-native-safe-area-context', () =>
+  require('react-native-safe-area-context/jest/mock').default,
+);
+
 const storage = {};
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

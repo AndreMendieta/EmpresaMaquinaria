@@ -95,33 +95,62 @@ function generarPlantillaBase({ titulo, subtitulo, contenidoHtml, avisoPie }) {
 }
 
 async function dispatchEmail({ to, subject, html, text, devCode = null }) {
-  if (transporter) {
-    try {
-      const info = await transporter.sendMail({
-        from: SMTP_FROM,
-        to,
-        subject,
-        html,
-        text: text || subject,
-      });
-      console.log(`[MAILER] Correo enviado a ${to} (MessageId: ${info.messageId})`);
-      return { ok: true, sent: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`[MAILER ERROR] Falló envío a ${to}:`, err.message);
-      // Fallback a log para no romper la experiencia en caso de fallo SMTP
+  if (!transporter) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[MAILER ERROR] SMTP no está configurado; no se envió el correo.');
+      return {
+        ok: false,
+        sent: false,
+        devMode: false,
+        error: 'SMTP_NOT_CONFIGURED',
+        message: 'No se envió el correo porque SMTP no está configurado en el backend.',
+      };
     }
+
+    console.log('\n======================================================');
+    console.log(`📨 [MAILER DEV SIMULATOR] No se envió correo real a: ${to}`);
+    console.log(`📋 Asunto: ${subject}`);
+    if (devCode) {
+      console.log(`🔑 CÓDIGO DE PRUEBA: >>> [ ${devCode} ] <<<`);
+    }
+    console.log('======================================================\n');
+
+    return {
+      ok: false,
+      sent: false,
+      devMode: true,
+      error: 'SMTP_NOT_CONFIGURED',
+      message: 'No se envió un correo real: SMTP no está configurado. En modo desarrollo usa el código de prueba.',
+      devCode,
+    };
   }
 
-  // Fallback simulado para desarrollo local / testing
-  console.log('\n======================================================');
-  console.log(`📨 [MAILER DEV SIMULATOR] Correo para: ${to}`);
-  console.log(`📋 Asunto: ${subject}`);
-  if (devCode) {
-    console.log(`🔑 CÓDIGO GENERADO: >>> [ ${devCode} ] <<<`);
+  try {
+    const info = await transporter.sendMail({
+      from: SMTP_FROM,
+      to,
+      subject,
+      html,
+      text: text || subject,
+    });
+    console.log(`[MAILER] Correo enviado a ${to} (MessageId: ${info.messageId})`);
+    return {
+      ok: true,
+      sent: true,
+      devMode: false,
+      messageId: info.messageId,
+      message: 'Correo enviado correctamente.',
+    };
+  } catch (err) {
+    console.error(`[MAILER ERROR] Falló envío a ${to}:`, err.message);
+    return {
+      ok: false,
+      sent: false,
+      devMode: false,
+      error: 'SMTP_SEND_FAILED',
+      message: 'No se pudo enviar el correo. Revisa la configuración SMTP del backend.',
+    };
   }
-  console.log('======================================================\n');
-
-  return { ok: true, devMode: true, devCode };
 }
 
 /**

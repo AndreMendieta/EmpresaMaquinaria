@@ -48,6 +48,20 @@ async function resolveToken(explicitToken) {
   return session?.token || null;
 }
 
+export async function getDownloadRequest(path) {
+  const token = await resolveToken();
+  return {
+    url: `${BASE_URL}${path}`,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  };
+}
+
+export async function handleUnauthorizedResponse() {
+  await clearSession();
+  setClientToken(null);
+  if (onSessionExpiredCallback) onSessionExpiredCallback();
+}
+
 async function request(path, options = {}) {
   const controller = new AbortController();
   const timeoutMs = options.timeout ?? 15000;
@@ -72,13 +86,7 @@ async function request(path, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      if (response.status === 401) {
-        await clearSession();
-        setClientToken(null);
-        if (onSessionExpiredCallback) {
-          onSessionExpiredCallback();
-        }
-      }
+      if (response.status === 401) await handleUnauthorizedResponse();
 
       let message = data.error || data.message || 'Error en la solicitud.';
       if (response.status === 403) {

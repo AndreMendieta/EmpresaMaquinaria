@@ -61,11 +61,14 @@ router.post('/auth/login', async (req, res) => {
         nombreEmpresa: user.nombre_empresa,
       });
       return res.status(403).json({
-        message: 'Tu correo aún no ha sido verificado. Por favor ingresa el código de 6 dígitos enviado para activar tu cuenta.',
+        message: emailRes.sent
+          ? 'Tu correo aún no está verificado. Revisa tu bandeja de entrada e ingresa el código.'
+          : `Tu correo aún no está verificado. ${emailRes.message}`,
         requiereVerificacion: true,
         email: user.correo,
         companyCode: user.codigo_empresa || user.empresa_prestadora_id,
-        devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigo : undefined),
+        emailSent: emailRes.sent,
+        devCode: emailRes.devMode ? emailRes.devCode : undefined,
       });
     }
 
@@ -121,10 +124,13 @@ router.post('/auth/register-company', async (req, res) => {
     return res.status(201).json({
       ok: true,
       requiereVerificacion: true,
-      message: 'Registro exitoso. Se ha enviado un código de 6 dígitos a tu correo.',
+      message: emailRes.sent
+        ? 'Registro exitoso. Se envió el código de verificación a tu correo.'
+        : `Cuenta creada. ${emailRes.message}`,
       email: createdUser.correo,
       companyCode: company.rows[0].nombre_comercial,
-      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigoVerificacion : undefined),
+      emailSent: emailRes.sent,
+      devCode: emailRes.devMode ? emailRes.devCode : undefined,
       usuario: {
         id: createdUser.id,
         nombre: createdUser.nombre_completo,
@@ -229,8 +235,9 @@ router.post('/auth/resend-verification', async (req, res) => {
     });
     return res.json({
       ok: true,
-      message: 'Nuevo código enviado a tu correo.',
-      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? nuevoCodigo : undefined),
+      message: emailRes.sent ? 'Nuevo código enviado a tu correo.' : emailRes.message,
+      emailSent: emailRes.sent,
+      devCode: emailRes.devMode ? emailRes.devCode : undefined,
     });
   } catch (err) {
     console.error('Error en resend-verification preview:', err);

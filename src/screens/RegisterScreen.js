@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import {register as registerCompany} from '../api/authApi';
@@ -74,6 +74,8 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
           email: cleanEmail,
           companyId: data?.empresa?.id || data?.usuario?.empresa_prestadora_id,
           devCode: data?.devCode,
+          emailSent: data?.emailSent,
+          message: data?.message,
           usuario: data?.usuario,
           token: data?.token,
         });

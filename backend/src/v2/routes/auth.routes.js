@@ -104,10 +104,13 @@ router.post('/register', async (req, res) => {
     return res.status(201).json({
       ok: true,
       requiereVerificacion: true,
-      message: 'Registro exitoso. Se ha enviado un código de 6 dígitos a tu correo electrónico para verificar tu cuenta.',
+      message: emailRes.sent
+        ? 'Registro exitoso. Se envió el código de verificación a tu correo.'
+        : `Cuenta creada. ${emailRes.message}`,
+      emailSent: emailRes.sent,
       usuario: user,
       empresa: company,
-      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigoVerificacion : undefined),
+      devCode: emailRes.devMode ? emailRes.devCode : undefined,
     });
   } catch (error) {
     await client.query('ROLLBACK');
@@ -168,11 +171,14 @@ router.post('/login', async (req, res) => {
       });
 
       return res.status(403).json({
-        error: 'Tu correo aún no ha sido verificado. Por favor ingresa el código de 6 dígitos que enviamos a tu correo para activar tu cuenta.',
+        error: emailRes.sent
+          ? 'Tu correo aún no está verificado. Revisa tu bandeja de entrada e ingresa el código.'
+          : `Tu correo aún no está verificado. ${emailRes.message}`,
         requiereVerificacion: true,
         correo: user.correo,
         serviceCompanyId: user.empresa_prestadora_id,
-        devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? codigo : undefined),
+        emailSent: emailRes.sent,
+        devCode: emailRes.devMode ? emailRes.devCode : undefined,
       });
     }
 
@@ -318,8 +324,9 @@ router.post('/resend-verification', async (req, res) => {
 
     return res.json({
       ok: true,
-      message: 'Nuevo código de verificación enviado a tu correo.',
-      devCode: emailRes.devCode || (process.env.NODE_ENV !== 'production' ? nuevoCodigo : undefined),
+      message: emailRes.sent ? 'Nuevo código enviado a tu correo.' : emailRes.message,
+      emailSent: emailRes.sent,
+      devCode: emailRes.devMode ? emailRes.devCode : undefined,
     });
   } catch (error) {
     console.error('Error en resend-verification:', error);

@@ -69,7 +69,7 @@ El desarrollo del proyecto se consolidó de manera incremental siguiendo especif
   - `src/api/`: Cliente HTTP centralizado (`client.js`) con interceptores para JWT, timeout de 15s con `AbortController` y detección de errores `401` y `403`.
   - `src/navigation/`: Navegador tipo pila con histórico (`AppNavigator.js`), condicionado al rol activo (`admin`, `supervisor`, `tecnico`).
   - `src/components/`: Componentes UI reutilizables con la guía de marca oficial HydroTech (`HeaderBar`, `Badge`, `ForbiddenNotice`, `CustomInput`, formularios de subtipos).
-  - `src/screens/`: 20 pantallas oficiales implementadas para cubrir todo el ciclo operativo.
+  - `src/screens/`: 21 pantallas implementadas para cubrir todo el ciclo operativo.
 
 ---
 
@@ -210,7 +210,6 @@ La aplicación móvil cuenta con 21 pantallas optimizadas:
 ```
 EmpresaMaquinaria/
 ├── android/                         # Proyecto nativo Android
-├── ios/                             # Proyecto nativo iOS
 ├── backend/                         # Servidor Node.js Express + PostgreSQL
 │   ├── src/
 │   │   ├── db/                      # pool.js, schema.multiempresa.sql, seed.js
@@ -245,7 +244,7 @@ EmpresaMaquinaria/
 ## 9. Guía de Instalación, Pruebas y Despliegue
 
 ### Requisitos
-- Node.js versión 20 o superior.
+- Node.js versión 22.11 o superior.
 - Base de datos PostgreSQL en la nube (Neon / Render) o local.
 
 ### 1. Puesta en Marcha del Backend
