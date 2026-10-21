@@ -23,7 +23,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Maquinaria y Equipos',
       desc: 'Consulta de equipos autorizados, series y manuales en línea.',
       badge: 'HU-015',
-      icon: '🚜',
       visible: true,
     },
     {
@@ -31,7 +30,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Catálogo y Fichas de Piezas',
       desc: 'Mangueras, piezas de torno, cilindros y fichas técnicas.',
       badge: 'HU-014',
-      icon: '⚙️',
       visible: true,
     },
     {
@@ -39,7 +37,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Órdenes de Trabajo',
       desc: 'Seguimiento de servicios de mantenimiento y asignaciones.',
       badge: 'ORD',
-      icon: '📋',
       visible: true,
     },
     {
@@ -47,7 +44,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Empresas Clientes',
       desc: 'Empresas contratantes de servicios y flotas asociadas.',
       badge: 'CLIENTES',
-      icon: '🏢',
       visible: true,
     },
     {
@@ -55,7 +51,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Bandeja de Notificaciones',
       desc: 'Alertas de piezas por aprobar, rechazos y asignaciones.',
       badge: 'ALERTAS',
-      icon: '🔔',
       visible: true,
     },
     {
@@ -63,7 +58,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Reportes y Métricas',
       desc: 'Indicadores de producción, estados de piezas y órdenes.',
       badge: 'MÉTRICAS',
-      icon: '📊',
       visible: isAdmin || isSupervisor,
     },
     {
@@ -71,7 +65,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Gestión de Personal',
       desc: 'Alta de colaboradores, asignación de roles y estados.',
       badge: 'ADMIN',
-      icon: '👥',
       visible: isAdmin,
     },
     {
@@ -79,7 +72,6 @@ const DashboardScreen = ({ onNavigate }) => {
       title: 'Mi Perfil y Configuración',
       desc: 'Detalles de la cuenta y empresa prestadora.',
       badge: 'CUENTA',
-      icon: '👤',
       visible: true,
     },
   ];
@@ -115,7 +107,6 @@ const DashboardScreen = ({ onNavigate }) => {
                 activeOpacity={0.8}
                 onPress={() => onNavigate(item.id)}>
                 <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardIcon}>{item.icon}</Text>
                   <View style={styles.cardBadge}>
                     <Text style={styles.cardBadgeText}>{item.badge}</Text>
                   </View>
@@ -188,9 +179,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  cardIcon: {
-    fontSize: 22,
   },
   cardBadge: {
     backgroundColor: 'rgba(255, 106, 0, 0.12)',

@@ -26,9 +26,9 @@ import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
 
 const ETAPAS = [
-  { key: 'antes', label: '🟡 Antes / Diagnóstico', color: '#F59E0B' },
-  { key: 'durante', label: '🔵 Durante / Intervención', color: '#38BDF8' },
-  { key: 'despues', label: '🟢 Después / Finalizado', color: '#10B981' },
+  { key: 'antes', label: 'Antes / Diagnóstico', color: '#F59E0B' },
+  { key: 'durante', label: 'Durante / Intervención', color: '#38BDF8' },
+  { key: 'despues', label: 'Después / Finalizado', color: '#10B981' },
 ];
 
 const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
@@ -271,7 +271,7 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
             <View style={styles.techAssignRow}>
               <Text style={[styles.infoValue, { color: currentOrder.tecnico_nombre ? COLORS.orange : COLORS.textMuted }]}>
                 {currentOrder.tecnico_nombre
-                  ? `👷 ${currentOrder.tecnico_nombre}`
+                  ? `${currentOrder.tecnico_nombre}`
                   : currentOrder.asignada_a
                   ? `Usuario #${currentOrder.asignada_a}`
                   : 'Sin técnico asignado'}
@@ -330,7 +330,7 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
         <View style={styles.card}>
           <View style={styles.evidenceSectionHeader}>
             <View>
-              <Text style={styles.cardSectionTitle}>📷 Evidencias del Trabajo Realizado</Text>
+              <Text style={styles.cardSectionTitle}>Evidencias del Trabajo Realizado</Text>
               <Text style={styles.evidenceSubtitle}>
                 Registro fotográfico y reportes técnicos de antes, durante y después.
               </Text>
@@ -374,7 +374,7 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
                       <View style={styles.evidenceUrlContainer}>
                         <Text style={styles.evidenceUrlLabel}>Foto / Archivo:</Text>
                         <Text style={styles.evidenceUrlLink} numberOfLines={1}>
-                          🔗 {evi.url}
+                          {evi.url}
                         </Text>
                       </View>
                     ) : null}
@@ -591,7 +591,7 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
                     style={[styles.techOptionItem, isCurrent && styles.techOptionItemSelected]}
                     onPress={() => handleAssignTechnician(t.id)}>
                     <Text style={[styles.techOptionName, isCurrent && styles.techOptionNameSelected]}>
-                      👷 {t.nombre_completo}
+                      {t.nombre_completo}
                     </Text>
                     <Text style={styles.techOptionEmail}>{t.correo}</Text>
                   </TouchableOpacity>

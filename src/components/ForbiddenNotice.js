@@ -5,7 +5,7 @@ import { COLORS } from '../constants/colors';
 const ForbiddenNotice = ({ message = 'No tienes permisos para acceder o modificar este recurso (403 Prohibido).' }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🔒 Acceso Restringido</Text>
+      <Text style={styles.title}>Acceso Restringido</Text>
       <Text style={styles.text}>{message}</Text>
     </View>
   );

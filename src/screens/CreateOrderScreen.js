@@ -183,7 +183,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                     style={[styles.chip, isSel && styles.chipSelected]}
                     onPress={() => setSelectedCompanyId(c.id)}>
                     <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                      🏢 {c.razon_social || c.nombre_comercial || c.nombre}
+                      {c.razon_social || c.nombre_comercial || c.nombre}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -214,7 +214,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                     style={[styles.chip, isSel && styles.chipSelected]}
                     onPress={() => setSelectedMachineId(m.id)}>
                     <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                      🚜 [{m.codigo}] {m.nombre}
+                      [{m.codigo}] {m.nombre}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -282,7 +282,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                     style={[styles.chip, isSel && styles.chipSelected]}
                     onPress={() => setSelectedTechId(t.id)}>
                     <Text style={[styles.chipText, isSel && styles.chipTextSelected]}>
-                      👷 {t.nombre_completo}
+                      {t.nombre_completo}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -303,7 +303,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                 <View key={item.id || index} style={styles.evidenciaCard}>
                   <View style={styles.evidenciaHeader}>
                     <Text style={styles.evidenciaEtapa}>
-                      {item.etapa === 'antes' ? '🟡 Estado Inicial / Recepción' : '🔵 Proceso'}
+                      {item.etapa === 'antes' ? 'Estado Inicial / Recepción' : 'Proceso'}
                     </Text>
                     <TouchableOpacity onPress={() => handleRemoveEvidencia(item.id)}>
                       <Text style={styles.evidenciaRemove}>✕ Eliminar</Text>
@@ -311,7 +311,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                   </View>
                   {item.url ? (
                     <Text style={styles.evidenciaUrl} numberOfLines={1}>
-                      🔗 {item.url}
+                      {item.url}
                     </Text>
                   ) : null}
                   <Text style={styles.evidenciaDesc}>{item.descripcion}</Text>

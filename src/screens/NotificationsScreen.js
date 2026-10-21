@@ -91,7 +91,7 @@ const NotificationsScreen = ({ onBack, onNavigateOrder, onNavigatePart }) => {
           <ActivityIndicator size="small" color={COLORS.orange} style={styles.loader} />
         ) : notifications.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>🔔 Bandeja sin novedades</Text>
+            <Text style={styles.emptyTitle}>Bandeja sin novedades</Text>
             <Text style={styles.emptyText}>
               No hay alertas pendientes de órdenes ni piezas en tu buzón en este momento.
             </Text>
@@ -114,11 +114,6 @@ const NotificationsScreen = ({ onBack, onNavigateOrder, onNavigatePart }) => {
                     }
                   }}>
                   <View style={styles.cardHeader}>
-                    <View style={styles.iconTag}>
-                      <Text style={styles.iconText}>
-                        {item.orden_id ? '📋' : item.pieza_id ? '⚙️' : '🔔'}
-                      </Text>
-                    </View>
                     <View style={styles.flex1}>
                       <View style={styles.titleRow}>
                         <Text style={[styles.notifTitle, isUnread && styles.notifTitleBold]}>
@@ -230,19 +225,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-  },
-  iconTag: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 16,
   },
   titleRow: {
     flexDirection: 'row',

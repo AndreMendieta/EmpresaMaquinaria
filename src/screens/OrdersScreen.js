@@ -119,7 +119,7 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
           <ActivityIndicator size="small" color={COLORS.orange} style={styles.loader} />
         ) : filtered.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>📋 No se encontraron órdenes</Text>
+            <Text style={styles.emptyTitle}>No se encontraron órdenes</Text>
             <Text style={styles.emptyText}>
               No hay órdenes de servicio que coincidan con los filtros seleccionados.
             </Text>
@@ -171,18 +171,18 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
                   <View style={styles.metaContainer}>
                     {item.cliente_nombre ? (
                       <Text style={styles.metaLine}>
-                        🏢 <Text style={styles.metaLabel}>Cliente:</Text> {item.cliente_nombre}
+                        <Text style={styles.metaLabel}>Cliente:</Text> {item.cliente_nombre}
                       </Text>
                     ) : null}
 
                     {item.maquina_nombre ? (
                       <Text style={styles.metaLine}>
-                        🚜 <Text style={styles.metaLabel}>Equipo:</Text> [{item.maquina_codigo || 'S/C'}] {item.maquina_nombre}
+                        <Text style={styles.metaLabel}>Equipo:</Text> [{item.maquina_codigo || 'S/C'}] {item.maquina_nombre}
                       </Text>
                     ) : null}
 
                     <Text style={styles.metaLine}>
-                      👷 <Text style={styles.metaLabel}>Técnico:</Text>{' '}
+                      <Text style={styles.metaLabel}>Técnico:</Text>{' '}
                       <Text style={item.tecnico_nombre ? styles.metaTechName : styles.metaUnassigned}>
                         {item.tecnico_nombre || 'Sin técnico asignado'}
                       </Text>
@@ -191,7 +191,7 @@ const OrdersScreen = ({ onBack, onSelectOrder, onNavigateCreateOrder }) => {
                     {numEvidencias > 0 ? (
                       <View style={styles.evidenciasBadge}>
                         <Text style={styles.evidenciasBadgeText}>
-                          📷 {numEvidencias} evidencia(s) técnica(s)
+                          {numEvidencias} evidencia(s) técnica(s)
                         </Text>
                       </View>
                     ) : null}

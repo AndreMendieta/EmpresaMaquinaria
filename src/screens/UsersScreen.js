@@ -144,7 +144,7 @@ const UsersScreen = ({ onBack }) => {
           <ActivityIndicator size="small" color={COLORS.orange} style={styles.loader} />
         ) : !forbidden && users.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>👥 Sin usuarios adicionales</Text>
+            <Text style={styles.emptyTitle}>Sin usuarios adicionales</Text>
             <Text style={styles.emptyText}>
               Aún no hay colaboradores registrados para esta empresa prestadora.
             </Text>

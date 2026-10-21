@@ -153,10 +153,6 @@ const ForgotPasswordScreen = ({ initialEmail = '', onNavigateToLogin }) => {
           keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
             {/* Header / Logo */}
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>{tab === 'password' ? '🔑' : '🏢'}</Text>
-            </View>
-
             <Text style={styles.appTitle}>
               Hydro<Text style={styles.titleOrange}>Tech</Text>
             </Text>
@@ -297,7 +293,6 @@ const ForgotPasswordScreen = ({ initialEmail = '', onNavigateToLogin }) => {
             {/* CONTENIDO ÉXITO TRAS RESTABLECER */}
             {tab === 'password' && isResetDone && (
               <View style={styles.doneContainer}>
-                <Text style={styles.doneEmoji}>✅</Text>
                 <Text style={styles.doneTitle}>¡Contraseña Actualizada!</Text>
                 <Text style={styles.doneDesc}>
                   Tu clave ha sido modificada con éxito. Ya puedes iniciar sesión en
@@ -339,7 +334,6 @@ const ForgotPasswordScreen = ({ initialEmail = '', onNavigateToLogin }) => {
             {/* CONTENIDO ÉXITO TRAS ENVIAR RECORDATORIO DE EMPRESA */}
             {tab === 'user' && isRecoverSent && (
               <View style={styles.doneContainer}>
-                <Text style={styles.doneEmoji}>📬</Text>
                 <Text style={styles.doneTitle}>Información Enviada</Text>
                 <Text style={styles.doneDesc}>
                   Revisa tu bandeja de entrada en {correo}. Te enviamos los
@@ -389,25 +383,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 106, 0, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 106, 0, 0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  iconText: {
-    fontSize: 26,
   },
   appTitle: {
     fontSize: 24,
@@ -553,10 +528,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 12,
-  },
-  doneEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
   },
   doneTitle: {
     fontSize: 20,

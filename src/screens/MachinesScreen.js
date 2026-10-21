@@ -84,7 +84,7 @@ const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) =>
           <ActivityIndicator size="small" color={COLORS.orange} style={styles.loader} />
         ) : filtered.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>⚠️ Sin maquinaria encontrada</Text>
+            <Text style={styles.emptyTitle}>Sin maquinaria encontrada</Text>
             <Text style={styles.emptyText}>
               No se encontraron equipos registrados con este criterio.
             </Text>
@@ -115,7 +115,7 @@ const MachinesScreen = ({ onBack, onSelectMachine, onNavigateCreateMachine }) =>
 
                 {item.url_manual || item.manual_url ? (
                   <View style={styles.manualIndicator}>
-                    <Text style={styles.manualText}>📖 Manual Oficial Enlazado</Text>
+                    <Text style={styles.manualText}>Manual Oficial Enlazado</Text>
                   </View>
                 ) : null}
 

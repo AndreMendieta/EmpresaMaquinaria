@@ -243,11 +243,6 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 10},
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 8,
   },
   eyebrowContainer: {
     flexDirection: 'row',

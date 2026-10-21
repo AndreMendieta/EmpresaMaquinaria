@@ -65,7 +65,7 @@ const PartDetailScreen = ({ part, onBack, onNavigateReview }) => {
             {part?.fotos && part.fotos.length > 0 ? (
               part.fotos.map((f, i) => (
                 <Text key={i} style={styles.photoLink}>
-                  📷 Foto #{i + 1}: {f}
+                  Foto #{i + 1}: {f}
                 </Text>
               ))
             ) : (

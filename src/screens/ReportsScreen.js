@@ -108,7 +108,7 @@ const ReportsScreen = ({ onBack }) => {
         {role === 'tecnico' ? (
           <View style={styles.techNote}>
             <Text style={styles.techNoteText}>
-              👷 Vista Técnico: Las métricas de órdenes y piezas reflejan únicamente tus tareas y piezas creadas.
+              Vista Técnico: Las métricas de órdenes y piezas reflejan únicamente tus tareas y piezas creadas.
             </Text>
           </View>
         ) : null}
@@ -120,7 +120,7 @@ const ReportsScreen = ({ onBack }) => {
             {/* Sección Órdenes de Servicio */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>📋 Órdenes de Trabajo</Text>
+                <Text style={styles.sectionTitle}>Órdenes de Trabajo</Text>
                 <View style={styles.totalBadge}>
                   <Text style={styles.totalBadgeText}>{totalOrdenes} Total</Text>
                 </View>
@@ -144,7 +144,7 @@ const ReportsScreen = ({ onBack }) => {
             {/* Sección Piezas Técnicas */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>⚙️ Piezas & Repuestos</Text>
+                <Text style={styles.sectionTitle}>Piezas & Repuestos</Text>
                 <View style={styles.totalBadge}>
                   <Text style={styles.totalBadgeText}>{totalPiezas} Total</Text>
                 </View>
@@ -168,7 +168,7 @@ const ReportsScreen = ({ onBack }) => {
             {/* Sección Flota de Maquinaria */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>🚜 Flota de Maquinaria</Text>
+                <Text style={styles.sectionTitle}>Flota de Maquinaria</Text>
                 <View style={styles.totalBadge}>
                   <Text style={styles.totalBadgeText}>{totalMaquinas} Total</Text>
                 </View>

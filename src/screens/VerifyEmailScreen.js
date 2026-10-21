@@ -106,10 +106,6 @@ const VerifyEmailScreen = ({
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
             {/* Header con icono y títulos */}
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>✉️</Text>
-            </View>
-
             <Text style={styles.title}>Verifica tu Correo</Text>
             <Text style={styles.subtitle}>
               Ingresa el código de 6 dígitos para activar tu cuenta. Si no recibiste el correo, puedes solicitar otro.
@@ -198,20 +194,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: 24,
     alignItems: 'center',
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 106, 0, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 106, 0, 0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  iconText: {
-    fontSize: 28,
   },
   title: {
     fontSize: 22,

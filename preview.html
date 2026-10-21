@@ -56,19 +56,7 @@
       overflow-x: hidden;
     }
 
-    /* Cuadrícula técnica tipo plano de ingeniería (Blueprint Grid) */
-    .blueprint-grid {
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(192, 192, 192, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(192, 192, 192, 0.04) 1px, transparent 1px);
-      background-size: 36px 36px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .app-layout {
+        .app-layout {
       display: flex;
       flex-direction: row;
       gap: 36px;
@@ -85,11 +73,9 @@
       flex: 1;
       max-width: 410px;
       background: rgba(22, 22, 22, 0.9);
-      backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 24px;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
     }
 
     .eyebrow-bar {
@@ -237,9 +223,7 @@
       background: #000000;
       border-radius: 48px;
       padding: 12px;
-      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9),
-                  0 0 0 1px rgba(255, 255, 255, 0.12),
-                  0 0 45px rgba(255, 106, 0, 0.15);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
       position: relative;
       display: flex;
       flex-direction: column;
@@ -337,7 +321,6 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 24px 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
     .rn-brand-title {
@@ -399,7 +382,6 @@
       align-items: center;
       justify-content: center;
       margin-top: 6px;
-      box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
       transition: background 0.2s, transform 0.1s;
     }
 
@@ -944,7 +926,6 @@
       right: 0;
       bottom: 0;
       background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(5px);
       z-index: 200;
       display: flex;
       align-items: center;
@@ -960,7 +941,6 @@
       width: 100%;
       max-height: 92%;
       overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
     }
 
     .modal-title {
@@ -1088,8 +1068,6 @@
 </head>
 <body>
 
-  <div class="blueprint-grid"></div>
-
   <div class="app-layout">
     <!-- Panel Lateral de Control HydroTech -->
     <div class="control-panel">
@@ -1107,7 +1085,7 @@
       </div>
 
       <div class="quick-section">
-        <div class="quick-title">⚡ Acceso Rápido por Rol</div>
+        <div class="quick-title">Acceso Rápido por Rol</div>
         <button class="quick-btn" onclick="quickLogin('admin@demo.com', 'Admin123!')">
           <span>Admin Principal</span>
           <span class="badge-pill badge-admin">ADMIN</span>
@@ -1123,22 +1101,18 @@
       </div>
 
       <div class="quick-section">
-        <div class="quick-title">🔄 Navegación</div>
+        <div class="quick-title">Navegación</div>
         <button class="quick-btn" onclick="setView('login')">
           <span>Iniciar Sesión</span>
-          <span>🔑</span>
         </button>
         <button class="quick-btn" onclick="setView('register')">
           <span>Registrar Cuenta</span>
-          <span>📝</span>
         </button>
         <button class="quick-btn" onclick="setView('verify_email')">
           <span>Verificar Correo (6 Dígitos)</span>
-          <span>✉️</span>
         </button>
         <button class="quick-btn" onclick="setView('forgot_password')">
           <span>Recuperar Clave / Empresa</span>
-          <span>🔒</span>
         </button>
       </div>
 
@@ -1151,7 +1125,7 @@
       </div>
 
       <div class="help-hint" style="margin-top: 14px;">
-        🎨 Paleta: <span style="color: var(--orange); font-weight:700;">#FF6A00</span> · <span style="color: var(--silver); font-weight:700;">#C0C0C0</span> · <span style="color: #6B7280; font-weight:700;">#0D0D0D</span>.
+        Paleta: <span style="color: var(--orange); font-weight:700;">#FF6A00</span> · <span style="color: var(--silver); font-weight:700;">#C0C0C0</span> · <span style="color: #6B7280; font-weight:700;">#0D0D0D</span>.
       </div>
     </div>
 
@@ -1195,7 +1169,7 @@
             <div id="modal-user-error" class="rn-error" style="display: none;"></div>
 
             <button id="modal-submit-user-btn" class="rn-btn" onclick="submitCreateUser()">Crear Usuario</button>
-            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeUserModal()">Cancelar</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px;" onclick="closeUserModal()">Cancelar</button>
           </div>
         </div>
 
@@ -1207,7 +1181,7 @@
             <input id="modal-client-comercial" class="rn-input" placeholder="Nombre comercial (opcional)">
             <div id="modal-client-error" class="rn-error" style="display: none;"></div>
             <button id="modal-submit-client-btn" class="rn-btn" onclick="submitCreateClientCompany()">Crear Empresa Cliente</button>
-            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeClientCompanyModal()">Cancelar</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px;" onclick="closeClientCompanyModal()">Cancelar</button>
           </div>
         </div>
 
@@ -1225,7 +1199,7 @@
             </select>
             <div id="modal-order-error" class="rn-error" style="display: none;"></div>
             <button id="modal-submit-order-btn" class="rn-btn" onclick="submitCreateOrder()">Crear Orden</button>
-            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeOrderModal()">Cancelar</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px;" onclick="closeOrderModal()">Cancelar</button>
           </div>
         </div>
 
@@ -1249,7 +1223,7 @@
             <div id="modal-maq-error" class="rn-error" style="display: none;"></div>
 
             <button id="modal-submit-maq-btn" class="rn-btn" onclick="submitCreateMaquina(false)">Registrar Maquinaria</button>
-            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closeMaquinaModal()">Cancelar</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px;" onclick="closeMaquinaModal()">Cancelar</button>
           </div>
         </div>
 
@@ -1316,7 +1290,7 @@
             <div id="modal-pieza-error" class="rn-error" style="display: none;"></div>
 
             <button id="modal-submit-pieza-btn" class="rn-btn" onclick="submitCreatePieza()">Guardar Ficha y Notificar</button>
-            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px; box-shadow: none;" onclick="closePiezaModal()">Cancelar</button>
+            <button class="rn-btn" style="background: transparent; color: var(--ink-muted); margin-top: 4px;" onclick="closePiezaModal()">Cancelar</button>
           </div>
         </div>
 
@@ -1464,9 +1438,6 @@
         container.innerHTML = `
           <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div class="rn-card" style="padding: 22px 18px; text-align: center;">
-              <div style="width: 56px; height: 56px; border-radius: 28px; background: rgba(255, 106, 0, 0.12); border: 1px solid rgba(255, 106, 0, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-size: 24px;">
-                ✉️
-              </div>
               <h2 style="font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">Verifica tu Correo</h2>
               <p style="font-size: 12px; color: var(--ink-muted); line-height: 1.4; margin-bottom: 14px;">
                 Ingresa el código de 6 dígitos para activar tu cuenta. Si no recibiste el correo, puedes solicitar otro.
@@ -1505,9 +1476,6 @@
         container.innerHTML = `
           <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div class="rn-card" style="padding: 22px 18px;">
-              <div style="width: 56px; height: 56px; border-radius: 28px; background: rgba(255, 106, 0, 0.12); border: 1px solid rgba(255, 106, 0, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; font-size: 24px;">
-                ${forgotTab === 'password' ? '🔑' : '🏢'}
-              </div>
               <h2 style="font-size: 20px; font-weight: 800; color: var(--ink); text-align: center; margin-bottom: 4px;">
                 ${forgotTab === 'password' ? 'Recuperar Contraseña' : 'Recordar ID de Empresa'}
               </h2>
@@ -1801,7 +1769,7 @@
 
             ${selectedMaquina.manual_url ? `
               <button class="manual-btn" onclick="openManual('${selectedMaquina.manual_url}')">
-                📖 Consultar Manual Técnico en Línea
+                Consultar Manual Técnico en Línea
               </button>
             ` : `
               <div class="no-manual-hint">Sin manual técnico en línea enlazado.</div>
@@ -1816,7 +1784,7 @@
       if (maquinasList.length === 0) {
         return `
           <div class="alert-notice-box">
-            <div class="alert-notice-title">⚠️ Máquina no registrada</div>
+            <div class="alert-notice-title">Máquina no registrada</div>
             <div class="alert-notice-text">
               La máquina buscada no se encuentra en el sistema. Debe ser dada de alta previamente por un supervisor antes de registrar o intervenir piezas.
             </div>
@@ -2437,7 +2405,7 @@
         if (p.fotos && p.fotos.length > 0) {
           fotosHtml = p.fotos.map((f, i) => `
             <div style="font-size: 11px; color: var(--orange); margin-bottom: 4px;">
-              📷 Foto ${i + 1}: <a href="${f}" target="_blank" style="color: var(--orange); text-decoration: underline;">${f}</a>
+              Foto ${i + 1}: <a href="${f}" target="_blank" style="color: var(--orange); text-decoration: underline;">${f}</a>
             </div>
           `).join('');
         }
@@ -2482,7 +2450,7 @@
           </div>
 
           <div class="already-exists-banner">
-            ℹ️ Esta pieza ya está documentada. No se permite duplicar el registro.
+            Esta pieza ya está documentada. No se permite duplicar el registro.
           </div>
 
           <button class="rn-btn" style="background: var(--surface-2); border: 1px solid var(--border); color: var(--ink);" onclick="closePiezaDetailModal()">
@@ -2561,7 +2529,7 @@
 
         if (!res.ok) {
           if (data.advertenciaDuplicado) {
-            const confirmed = confirm(`⚠️ MÁQUINA DUPLICADA:\n${data.message}\n\n¿Deseas registrarla de todas formas?`);
+            const confirmed = confirm(`MÁQUINA DUPLICADA:\n${data.message}\n\n¿Deseas registrarla de todas formas?`);
             if (confirmed) {
               submitBtn.classList.remove('rn-btn-disabled');
               submitBtn.innerHTML = 'Registrar Maquinaria';

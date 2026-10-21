@@ -75,7 +75,7 @@ const PartsScreen = ({
             activeOpacity={0.85}
             onPress={() => onOpenReview && onOpenReview()}>
             <Text style={styles.reviewBannerTitle}>
-              🔔 {pendingCount} {pendingCount === 1 ? 'Pieza pendiente' : 'Piezas pendientes'} de revisión
+              {pendingCount} {pendingCount === 1 ? 'Pieza pendiente' : 'Piezas pendientes'} de revisión
             </Text>
             <Text style={styles.reviewBannerAction}>Abrir Bandeja de Aprobación →</Text>
           </TouchableOpacity>

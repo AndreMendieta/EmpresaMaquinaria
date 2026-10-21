@@ -89,7 +89,7 @@ const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
           </View>
 
           <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>📋 REVISIÓN TÉCNICA DE CONTROL DE CALIDAD</Text>
+            <Text style={styles.infoTitle}>REVISIÓN TÉCNICA DE CONTROL DE CALIDAD</Text>
             <Text style={styles.infoText}>
               Como supervisor, debes verificar que las medidas, fotos y especificaciones cumplan con el manual de la maquinaria antes de certificar la pieza.
             </Text>
@@ -108,14 +108,14 @@ const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
               style={[styles.btn, styles.btnApprove]}
               onPress={handleApprove}
               disabled={loading || forbidden}>
-              <Text style={styles.btnText}>✅ Aprobar y Validar Pieza</Text>
+              <Text style={styles.btnText}>Aprobar y Validar Pieza</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.btn, styles.btnReject]}
               onPress={handleReject}
               disabled={loading || forbidden}>
-              <Text style={styles.btnText}>❌ Rechazar / Devolver a Técnico</Text>
+              <Text style={styles.btnText}>Rechazar / Devolver a Técnico</Text>
             </TouchableOpacity>
           </View>
         </View>

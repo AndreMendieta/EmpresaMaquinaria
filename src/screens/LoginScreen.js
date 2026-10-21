@@ -147,7 +147,7 @@ const LoginScreen = ({
 
             {/* Accesos rápidos de desarrollo */}
             <View style={styles.quickAccessSection}>
-              <Text style={styles.quickAccessTitle}>⚡ ACCESO RÁPIDO POR ROL (DEMO)</Text>
+              <Text style={styles.quickAccessTitle}>ACCESO RÁPIDO POR ROL (DEMO)</Text>
               <View style={styles.quickAccessRow}>
                 <TouchableOpacity
                   style={[styles.quickBtn, styles.quickBtnAdmin]}
@@ -201,11 +201,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 18,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 6,
   },
   logo: {
     alignSelf: 'center',

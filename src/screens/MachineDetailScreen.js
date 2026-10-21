@@ -93,7 +93,7 @@ const MachineDetailScreen = ({
               style={styles.manualButton}
               onPress={() => handleOpenManual(manualUrl)}>
               <Text style={styles.manualButtonText}>
-                📖 Consultar Manual Técnico en Línea
+                Consultar Manual Técnico en Línea
               </Text>
             </TouchableOpacity>
           ) : (
@@ -111,21 +111,18 @@ const MachineDetailScreen = ({
           <TouchableOpacity
             style={styles.typeBtn}
             onPress={() => onCreateHose && onCreateHose(machine)}>
-            <Text style={styles.typeIcon}>🪢</Text>
             <Text style={styles.typeLabel}>Manguera</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.typeBtn}
             onPress={() => onCreateLathePart && onCreateLathePart(machine)}>
-            <Text style={styles.typeIcon}>🔩</Text>
             <Text style={styles.typeLabel}>Torno / Eje</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.typeBtn}
             onPress={() => onCreateCylinder && onCreateCylinder(machine)}>
-            <Text style={styles.typeIcon}>🧪</Text>
             <Text style={styles.typeLabel}>Cilindro</Text>
           </TouchableOpacity>
         </View>
@@ -267,10 +264,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
-  },
-  typeIcon: {
-    fontSize: 20,
-    marginBottom: 4,
   },
   typeLabel: {
     fontSize: 11,
