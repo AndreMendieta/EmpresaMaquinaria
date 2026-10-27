@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
 import HeaderBar from '../components/HeaderBar';
+import Icon from '../components/Icon';
 import { COLORS } from '../constants/colors';
 
 const DashboardScreen = ({ onNavigate }) => {
@@ -20,7 +21,7 @@ const DashboardScreen = ({ onNavigate }) => {
   const menuItems = [
     {
       id: 'machines',
-      icon: '🚜',
+      icon: 'machines',
       title: 'Maquinaria y Equipos',
       desc: 'Consulta de equipos autorizados, series y manuales en línea.',
       badge: 'HU-015',
@@ -28,7 +29,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'parts',
-      icon: '🔩',
+      icon: 'parts',
       title: 'Catálogo y Fichas de Piezas',
       desc: 'Mangueras, piezas de torno, cilindros y fichas técnicas.',
       badge: 'HU-014',
@@ -36,7 +37,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'orders',
-      icon: '📋',
+      icon: 'orders',
       title: 'Órdenes de Trabajo',
       desc: 'Seguimiento de servicios de mantenimiento y asignaciones.',
       badge: 'ORD',
@@ -44,7 +45,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'client_companies',
-      icon: '🏢',
+      icon: 'client_companies',
       title: 'Empresas Clientes',
       desc: 'Empresas contratantes de servicios y flotas asociadas.',
       badge: 'CLIENTES',
@@ -52,7 +53,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'notifications',
-      icon: '🔔',
+      icon: 'notifications',
       title: 'Bandeja de Notificaciones',
       desc: 'Alertas de piezas por aprobar, rechazos y asignaciones.',
       badge: 'ALERTAS',
@@ -60,7 +61,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'reports',
-      icon: '📊',
+      icon: 'reports',
       title: 'Reportes y Métricas',
       desc: 'Indicadores de producción, estados de piezas y órdenes.',
       badge: 'MÉTRICAS',
@@ -68,7 +69,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'users',
-      icon: '👥',
+      icon: 'users',
       title: 'Gestión de Personal',
       desc: 'Alta de colaboradores, asignación de roles y estados.',
       badge: 'ADMIN',
@@ -76,7 +77,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'profile',
-      icon: '👤',
+      icon: 'profile',
       title: 'Mi Perfil y Configuración',
       desc: 'Detalles de la cuenta y empresa prestadora.',
       badge: 'CUENTA',
@@ -114,7 +115,9 @@ const DashboardScreen = ({ onNavigate }) => {
                 style={styles.cardItem}
                 activeOpacity={0.8}
                 onPress={() => onNavigate(item.id)}>
-                <Text style={styles.cardIcon}>{item.icon}</Text>
+                <View style={styles.iconWrap}>
+                  <Icon name={item.icon} size={30} />
+                </View>
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 <Text style={styles.cardDesc} numberOfLines={3}>{item.desc}</Text>
               </TouchableOpacity>
@@ -182,9 +185,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
   },
-  cardIcon: {
-    fontSize: 38,
-    marginBottom: 8,
+  iconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 106, 0, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 106, 0, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   cardTitle: {
     fontSize: 17,

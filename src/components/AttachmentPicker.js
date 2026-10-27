@@ -13,6 +13,7 @@ import { pick, types, isErrorWithCode, errorCodes } from '@react-native-document
 import { uploadFile } from '../api/filesApi';
 import { resolveFileUrl } from '../api/client';
 import { isImageItem } from '../utils/attachments';
+import Icon from './Icon';
 import { COLORS } from '../constants/colors';
 
 const IMAGE_OPTIONS = {
@@ -104,20 +105,20 @@ const AttachmentPicker = ({ label, items, onChange, allowFiles = false, max = 10
           style={[styles.btn, disabled && styles.btnDisabled]}
           onPress={handleCamera}
           disabled={disabled}>
-          <Text style={styles.btnText}>📷 Tomar foto</Text>
+          <Icon name="camera" size={20} color={COLORS.orange} /><Text style={styles.btnText}>Tomar foto</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.btn, disabled && styles.btnDisabled]}
           onPress={handleGallery}
           disabled={disabled}>
-          <Text style={styles.btnText}>🖼️ Galería</Text>
+          <Icon name="gallery" size={20} color={COLORS.orange} /><Text style={styles.btnText}>Galería</Text>
         </TouchableOpacity>
         {allowFiles ? (
           <TouchableOpacity
             style={[styles.btn, disabled && styles.btnDisabled]}
             onPress={handleFile}
             disabled={disabled}>
-            <Text style={styles.btnText}>📎 Archivo</Text>
+            <Icon name="file" size={20} color={COLORS.orange} /><Text style={styles.btnText}>Archivo</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -140,7 +141,7 @@ const AttachmentPicker = ({ label, items, onChange, allowFiles = false, max = 10
                   <Image source={{ uri: resolveFileUrl(item.url) }} style={styles.thumb} />
                 ) : (
                   <View style={styles.fileBox}>
-                    <Text style={styles.fileIcon}>📄</Text>
+                    <Icon name="file" size={28} color={COLORS.silver} />
                     <Text style={styles.fileName} numberOfLines={2}>
                       {item.name}
                     </Text>
@@ -173,6 +174,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
     backgroundColor: COLORS.surface2,
     borderWidth: 1,
     borderColor: COLORS.orange,

@@ -17,6 +17,7 @@ import Badge from '../components/Badge';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
+import Icon from '../components/Icon';
 import { COLORS } from '../constants/colors';
 
 const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMachine }) => {
@@ -184,7 +185,8 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
 
               {isAdmin ? (
                 <TouchableOpacity style={styles.editBtn} onPress={startEditing}>
-                  <Text style={styles.editBtnText}>✏️ Editar datos de la empresa</Text>
+                  <Icon name="edit" size={20} color={COLORS.orange} />
+                  <Text style={styles.editBtnText}>Editar datos de la empresa</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -269,6 +271,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   editBtnText: { color: COLORS.orange, fontSize: 15, fontWeight: '700' },
   cancelEditBtn: { minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
