@@ -159,7 +159,7 @@ async function dispatchEmail({ to, subject, html, text, devCode = null }) {
 /**
  * Envía el código de 6 dígitos para verificar la cuenta al registrarse
  */
-async function enviarCodigoVerificacion({ correo, nombre, codigo, nombreEmpresa }) {
+async function enviarCodigoVerificacion({ correo, nombre, codigo, nombreEmpresa, serviceCompanyId }) {
   const subject = `${codigo} es tu código de verificación de cuenta HydroTech`;
   const html = generarPlantillaBase({
     titulo: `¡Hola, ${nombre || 'Usuario'}!`,
@@ -169,6 +169,10 @@ async function enviarCodigoVerificacion({ correo, nombre, codigo, nombreEmpresa 
         <div class="code-value">${codigo}</div>
         <div class="code-hint">Válido por 24 horas a partir de su emisión</div>
       </div>
+      ${serviceCompanyId ? `<div class="info-card">
+        🔑 <strong>ID de Empresa (necesario para iniciar sesión):</strong><br>
+        <code style="color: #FF6A00;">${serviceCompanyId}</code>
+      </div>` : ''}
       <div class="info-card">
         🛡️ <strong>Tu seguridad es primero:</strong> La verificación de correo garantiza que solo tú puedas gestionar tus órdenes y componentes autorizados.
       </div>

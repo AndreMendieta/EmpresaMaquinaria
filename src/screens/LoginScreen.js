@@ -16,14 +16,16 @@ import { useAuth } from '../auth/useAuth';
 import { COLORS } from '../constants/colors';
 
 const LoginScreen = ({
+  initialEmail = '',
+  initialCompanyId = '',
   onNavigateToRegister,
   onNavigateToForgotPassword,
   onRequireVerification,
   onLoginSuccess,
 }) => {
   const { login } = useAuth();
-  const [serviceCompanyId, setServiceCompanyId] = useState('');
-  const [correo, setCorreo] = useState('');
+  const [serviceCompanyId, setServiceCompanyId] = useState(initialCompanyId);
+  const [correo, setCorreo] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);

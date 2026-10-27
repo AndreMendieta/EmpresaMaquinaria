@@ -99,6 +99,7 @@ router.post('/register', async (req, res) => {
       nombre: cleanNombre,
       codigo: codigoVerificacion,
       nombreEmpresa: company.razon_social,
+      serviceCompanyId: company.id,
     });
 
     return res.status(201).json({
@@ -320,6 +321,7 @@ router.post('/resend-verification', async (req, res) => {
       nombre: user.nombre_completo,
       codigo: nuevoCodigo,
       nombreEmpresa: user.nombre_empresa,
+      serviceCompanyId: user.empresa_prestadora_id,
     });
 
     return res.json({

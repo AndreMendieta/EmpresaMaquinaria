@@ -84,7 +84,12 @@ const AppNavigator = () => {
           initialDevCode={currentRoute.params?.initialDevCode || ''}
           initialEmailSent={currentRoute.params?.initialEmailSent}
           initialDeliveryMessage={currentRoute.params?.initialDeliveryMessage || ''}
-          onVerificationSuccess={() => resetTo('dashboard')}
+          onVerificationSuccess={() =>
+            resetTo('login', {
+              initialEmail: currentRoute.params?.initialEmail || '',
+              initialCompanyId: currentRoute.params?.initialCompanyId || '',
+            })
+          }
           onBackToLogin={() => resetTo('login')}
         />
       );
@@ -101,6 +106,8 @@ const AppNavigator = () => {
 
     return (
       <LoginScreen
+        initialEmail={currentRoute.params?.initialEmail || ''}
+        initialCompanyId={currentRoute.params?.initialCompanyId || ''}
         onNavigateToRegister={() => resetTo('register')}
         onNavigateToForgotPassword={(email) =>
           resetTo('forgot_password', { initialEmail: email })

@@ -115,6 +115,14 @@ const VerifyEmailScreen = ({
             <View style={styles.targetEmailBox}>
               <Text style={styles.targetEmailLabel}>Correo de la cuenta:</Text>
               <Text style={styles.targetEmailText}>{correo || 'tu correo'}</Text>
+              {serviceCompanyId ? (
+              <>
+                <Text style={[styles.targetEmailLabel, styles.companyIdLabel]}>
+                  ID de Empresa (guárdalo, lo necesitas para iniciar sesión):
+                </Text>
+                <Text selectable style={styles.targetEmailText}>{serviceCompanyId}</Text>
+              </>
+              ) : null}
             </View>
 
             {errorMessage ? (
@@ -223,6 +231,9 @@ const styles = StyleSheet.create({
   targetEmailLabel: {
     fontSize: 11,
     color: COLORS.textMuted,
+  },
+  companyIdLabel: {
+    marginTop: 10,
   },
   targetEmailText: {
     fontSize: 13,
