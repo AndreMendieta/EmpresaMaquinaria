@@ -163,11 +163,11 @@ router.delete('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('p
 async function resolverPieza(req, res, estado) {
   const {rows} = await pool.query(
     `UPDATE piezas_multiempresa SET estado_validacion = $1, actualizado_en = NOW()
-     WHERE id = $2 AND empresa_prestadora_id = $3 AND creado_por <> $4 AND estado_validacion = 'pendiente'
+     WHERE id = $2 AND empresa_prestadora_id = $3 AND (creado_por <> $4 OR $5 = 'admin') AND estado_validacion = 'pendiente'
      RETURNING *`,
-    [estado, req.params.id, req.user.service_company_id, req.user.id]
+    [estado, req.params.id, req.user.service_company_id, req.user.id, req.user.role]
   );
-  if (!rows.length) return res.status(403).json({error: 'No puedes resolver tu propia pieza o la pieza no está pendiente'});
+  if (!rows.length) return res.status(403).json({error: 'No puedes resolver tu propia pieza (pídelo a un admin) o la pieza no está pendiente de revisión'});
   await crearNotificacion({
     empresaPrestadoraId: req.user.service_company_id,
     usuarioId: rows[0].creado_por,

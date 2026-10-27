@@ -21,7 +21,7 @@ const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [forbidden, setForbidden] = useState(!isSupervisorOrAdmin);
+  const forbidden = !isSupervisorOrAdmin;
 
   const handleApprove = async () => {
     setErrorMsg('');
@@ -31,11 +31,7 @@ const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
       Alert.alert('Pieza Aprobada', 'La pieza ha sido validada oficialmente.');
       if (onReviewCompleted) onReviewCompleted();
     } catch (err) {
-      if (err.isForbidden) {
-        setForbidden(true);
-      } else {
-        setErrorMsg(err.message || 'Error al aprobar la pieza.');
-      }
+      setErrorMsg(err.message || 'Error al aprobar la pieza.');
     } finally {
       setLoading(false);
     }
@@ -49,11 +45,7 @@ const PartReviewScreen = ({ part, onBack, onReviewCompleted }) => {
       Alert.alert('Pieza Devuelta', 'La pieza ha sido marcada como rechazada.');
       if (onReviewCompleted) onReviewCompleted();
     } catch (err) {
-      if (err.isForbidden) {
-        setForbidden(true);
-      } else {
-        setErrorMsg(err.message || 'Error al rechazar la pieza.');
-      }
+      setErrorMsg(err.message || 'Error al rechazar la pieza.');
     } finally {
       setLoading(false);
     }
