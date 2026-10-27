@@ -67,3 +67,11 @@ export async function recoverUser({ correo }) {
 export async function getMe() {
   return client.get('/auth/me');
 }
+
+export async function updateMyPhoto(fotoUrl) {
+  return client.patch('/auth/me/photo', { fotoUrl });
+}
+
+export async function updateCompanyLogo(logoUrl) {
+  return client.patch('/auth/company/logo', { logoUrl });
+}

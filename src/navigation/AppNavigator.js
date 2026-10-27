@@ -16,6 +16,7 @@ import MachineDetailScreen from '../screens/MachineDetailScreen';
 import CreateMachineScreen from '../screens/CreateMachineScreen';
 import PartsScreen from '../screens/PartsScreen';
 import PartDetailScreen from '../screens/PartDetailScreen';
+import EditPartScreen from '../screens/EditPartScreen';
 import PartReviewScreen from '../screens/PartReviewScreen';
 import CreateHoseScreen from '../screens/CreateHoseScreen';
 import CreateLathePartScreen from '../screens/CreateLathePartScreen';
@@ -209,7 +210,19 @@ const AppNavigator = () => {
         <PartDetailScreen
           part={currentRoute.params.part}
           onBack={goBack}
+          onEdit={(part) => navigate('part_edit', { part })}
           onNavigateReview={(part) => navigate('part_review', { part })}
+        />
+      );
+
+    case 'part_edit':
+      return (
+        <EditPartScreen
+          part={currentRoute.params.part}
+          onBack={goBack}
+          onSaved={(part) =>
+            setNavStack((prev) => [...prev.slice(0, -2), { name: 'part_detail', params: { part } }])
+          }
         />
       );
 

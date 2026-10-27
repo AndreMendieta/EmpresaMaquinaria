@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
 import { getUsers, createUser, updateUser } from '../api/usersApi';
 import HeaderBar from '../components/HeaderBar';
+import Avatar from '../components/Avatar';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
 import Badge from '../components/Badge';
@@ -154,6 +155,9 @@ const UsersScreen = ({ onBack }) => {
             {users.map((item) => (
               <View key={item.id} style={styles.cardItem}>
                 <View style={styles.cardHeader}>
+                  <View style={styles.userAvatar}>
+                    <Avatar uri={item.foto_url} name={item.nombre_completo} size={44} />
+                  </View>
                   <View style={styles.flex1}>
                     <Text style={styles.nameText}>{item.nombre_completo}</Text>
                     <Text style={styles.emailText}>{item.correo}</Text>
@@ -256,6 +260,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
+  },
+  userAvatar: {
+    marginRight: 12,
   },
   flex1: {
     flex: 1,

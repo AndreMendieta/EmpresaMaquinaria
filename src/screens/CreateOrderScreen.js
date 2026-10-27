@@ -17,6 +17,7 @@ import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
 import AttachmentPicker from '../components/AttachmentPicker';
+import Icon from '../components/Icon';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
 
@@ -313,9 +314,12 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                     </TouchableOpacity>
                   </View>
                   {item.url ? (
-                    <Text style={styles.evidenciaUrl} numberOfLines={1}>
-                      📎 {item.url.split('/').pop().slice(0, 8)}… adjunto
-                    </Text>
+                    <View style={styles.evidenciaUrlRow}>
+                      <Icon name="file" size={14} color={COLORS.orange} />
+                      <Text style={styles.evidenciaUrl} numberOfLines={1}>
+                        {item.url.split('/').pop().slice(0, 8)}… adjunto
+                      </Text>
+                    </View>
                   ) : null}
                   <Text style={styles.evidenciaDesc}>{item.descripcion}</Text>
                 </View>
@@ -501,10 +505,15 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontWeight: '600',
   },
+  evidenciaUrlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   evidenciaUrl: {
     fontSize: 11,
     color: '#38BDF8',
-    marginBottom: 4,
   },
   evidenciaDesc: {
     fontSize: 12,

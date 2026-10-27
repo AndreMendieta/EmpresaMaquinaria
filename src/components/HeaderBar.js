@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useAuth } from '../auth/useAuth';
+import Avatar from './Avatar';
 import { COLORS } from '../constants/colors';
 
 const ROLE_LABELS = {
@@ -17,6 +19,7 @@ const HeaderBar = ({
   rightActionLabel,
 }) => {
   const roleInfo = ROLE_LABELS[role] || null;
+  const { user } = useAuth();
 
   return (
     <View style={styles.header}>
@@ -26,9 +29,18 @@ const HeaderBar = ({
             <Text style={styles.backText}>← Volver</Text>
           </TouchableOpacity>
         ) : null}
-        <View>
-          <Text style={styles.brandTitle}>
-            Hydro<Text style={styles.titleOrange}>Tech</Text>
+        {user?.empresa_logo_url ? (
+          <Avatar uri={user.empresa_logo_url} name={user.empresa_nombre} size={34} square />
+        ) : null}
+        <View style={styles.titleBlock}>
+          <Text style={styles.brandTitle} numberOfLines={1}>
+            {user?.empresa_nombre ? (
+              user.empresa_nombre
+            ) : (
+              <>
+                Hydro<Text style={styles.titleOrange}>Tech</Text>
+              </>
+            )}
             {title ? <Text style={styles.pageTitle}> • {title}</Text> : null}
           </Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -36,6 +48,7 @@ const HeaderBar = ({
       </View>
 
       <View style={styles.rightContainer}>
+        {user ? <Avatar uri={user.foto_url} name={user.nombre_completo} size={34} /> : null}
         {roleInfo ? (
           <View style={[styles.roleBadge, { backgroundColor: roleInfo.bg }]}>
             <Text style={[styles.roleText, { color: roleInfo.color }]}>
@@ -69,6 +82,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  titleBlock: {
+    flexShrink: 1,
   },
   rightContainer: {
     flexDirection: 'row',

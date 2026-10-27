@@ -6,6 +6,26 @@ const { createCompanyReport } = require('../utils/companyReportPdf');
 const router = express.Router();
 router.use(auth);
 
+// pdfkit solo admite PNG y JPEG; otros formatos se omiten y el PDF sale sin logo
+async function loadCompanyBranding(companyId) {
+  const {rows} = await pool.query(
+    'SELECT COALESCE(nombre_comercial, razon_social) AS nombre, logo_url FROM empresas_prestadoras WHERE id = $1',
+    [companyId]
+  );
+  const company = rows[0] || {};
+  let logo = null;
+  const fileId = company.logo_url && company.logo_url.split('/').pop();
+  if (fileId) {
+    const file = await pool.query(
+      `SELECT contenido FROM archivos_multiempresa
+       WHERE id::text = $1 AND empresa_prestadora_id = $2 AND tipo_mime IN ('image/png', 'image/jpeg')`,
+      [fileId, companyId]
+    );
+    logo = file.rows[0] ? file.rows[0].contenido : null;
+  }
+  return {nombre: company.nombre, logo};
+}
+
 router.get('/summary', async (req, res) => {
   const params = [req.user.service_company_id];
   let orderFilter = '';
@@ -80,10 +100,13 @@ router.get('/export.pdf', async (req, res) => {
     ]);
 
     const filename = `hydrotech-reporte-${new Date().toISOString().slice(0, 10)}.pdf`;
+    const company = await loadCompanyBranding(companyId);
     const document = createCompanyReport({
       machines: machines.rows,
       pieces: pieces.rows,
       orders: orders.rows,
+      company: {nombre: company.nombre},
+      logo: company.logo,
     });
     document.on('error', (error) => {
       console.error('Error generando reporte PDF:', error);

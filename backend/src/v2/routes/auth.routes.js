@@ -222,17 +222,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    const perfil = await pool.query(PERFIL_SELECT, [user.id, user.empresa_prestadora_id]);
     return res.json({
       ok: true,
       token: crearToken(user),
-      usuario: {
-        id: user.id,
-        empresa_prestadora_id: user.empresa_prestadora_id,
-        nombre_completo: user.nombre_completo,
-        correo: user.correo,
-        rol: user.rol,
-        correo_verificado: user.correo_verificado,
-      },
+      usuario: perfil.rows[0],
     });
   } catch (error) {
     console.error('Error en v2 login:', error);
@@ -565,16 +559,59 @@ router.post('/recover-user', async (req, res) => {
  * GET /me
  * Consulta los datos del usuario conectado
  */
+const PERFIL_SELECT = `SELECT u.id, u.empresa_prestadora_id, u.nombre_completo, u.correo, u.rol, u.activo,
+       u.correo_verificado, u.foto_url,
+       COALESCE(e.nombre_comercial, e.razon_social) AS empresa_nombre, e.logo_url AS empresa_logo_url
+     FROM usuarios_multiempresa u
+     JOIN empresas_prestadoras e ON e.id = u.empresa_prestadora_id
+     WHERE u.id = $1 AND u.empresa_prestadora_id = $2`;
+
+const FILE_URL_REGEX = /^\/api\/v2\/files\/[0-9a-f-]{36}$/i;
+
 router.get('/me', auth, async (req, res) => {
-  const result = await pool.query(
-    `SELECT id, empresa_prestadora_id, nombre_completo, correo, rol, activo, correo_verificado
-     FROM usuarios_multiempresa
-     WHERE id = $1 AND empresa_prestadora_id = $2`,
-    [req.user.id, req.user.service_company_id]
-  );
+  const result = await pool.query(PERFIL_SELECT, [req.user.id, req.user.service_company_id]);
   if (result.rows.length === 0) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
+  return res.json({ ok: true, usuario: result.rows[0] });
+});
+
+// Foto de perfil del usuario conectado (null para quitarla)
+router.patch('/me/photo', auth, async (req, res) => {
+  const { fotoUrl = null } = req.body || {};
+  if (fotoUrl !== null && !FILE_URL_REGEX.test(String(fotoUrl))) {
+    return res.status(400).json({ error: 'La foto debe ser un archivo subido previamente' });
+  }
+  await pool.query(
+    'UPDATE usuarios_multiempresa SET foto_url = $1 WHERE id = $2 AND empresa_prestadora_id = $3',
+    [fotoUrl, req.user.id, req.user.service_company_id]
+  );
+  const result = await pool.query(PERFIL_SELECT, [req.user.id, req.user.service_company_id]);
+  return res.json({ ok: true, usuario: result.rows[0] });
+});
+
+// Logo de la empresa: solo el administrador (null para quitarlo)
+router.patch('/company/logo', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Solo el administrador puede cambiar el logo de la empresa' });
+  }
+  const { logoUrl = null } = req.body || {};
+  if (logoUrl !== null && !FILE_URL_REGEX.test(String(logoUrl))) {
+    return res.status(400).json({ error: 'El logo debe ser un archivo subido previamente' });
+  }
+  await pool.query('UPDATE empresas_prestadoras SET logo_url = $1 WHERE id = $2', [
+    logoUrl,
+    req.user.service_company_id,
+  ]);
+  await registrarAuditoria({
+    empresaPrestadoraId: req.user.service_company_id,
+    usuarioId: req.user.id,
+    accion: 'modificar',
+    entidad: 'empresa',
+    entidadId: req.user.service_company_id,
+    detalle: { logo: Boolean(logoUrl) },
+  });
+  const result = await pool.query(PERFIL_SELECT, [req.user.id, req.user.service_company_id]);
   return res.json({ ok: true, usuario: result.rows[0] });
 });
 

@@ -10,7 +10,7 @@ router.use(auth);
 
 router.get('/', requireRole('admin', 'supervisor'), async (req, res) => {
   const {rows} = await pool.query(
-    `SELECT id, empresa_prestadora_id, empresa_cliente_id, nombre_completo, correo, rol, activo, creado_en
+    `SELECT id, empresa_prestadora_id, empresa_cliente_id, nombre_completo, correo, rol, activo, creado_en, foto_url
      FROM usuarios_multiempresa WHERE empresa_prestadora_id = $1 ORDER BY creado_en DESC`,
     [req.user.service_company_id]
   );

@@ -28,6 +28,15 @@ export async function submitPart(id) {
   return client.patch(`/parts/${id}/submit`);
 }
 
+export async function updatePart(id, { nombre, descripcion, fotos, subtipo }) {
+  return client.patch(`/parts/${id}`, {
+    nombre: nombre.trim(),
+    descripcion: descripcion?.trim() || null,
+    fotos,
+    subtipo,
+  });
+}
+
 export async function approvePart(id) {
   return client.post(`/parts/${id}/approve`);
 }

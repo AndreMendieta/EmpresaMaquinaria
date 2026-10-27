@@ -74,6 +74,10 @@ cd android
 | 22 | `files.routes.test.js` | Subir sin archivo | 400 |
 | 23 | `files.routes.test.js` | Descargar imagen | Tipo `image/jpeg` y `inline` |
 | 24 | `files.routes.test.js` | Descargar inexistente | 404 |
+| 25 | `profile.routes.test.js` | Guardar foto de perfil con URL de archivo subido | 200 y la foto queda guardada |
+| 26 | `profile.routes.test.js` | Foto de perfil con URL externa | 400, no toca la base de datos |
+| 27 | `profile.routes.test.js` | Admin cambia el logo de la empresa | 200 |
+| 28 | `profile.routes.test.js` | Técnico intenta cambiar el logo | 403 |
 
 ---
 
@@ -116,6 +120,11 @@ La primera petición puede tardar hasta 1 minuto (la instancia gratuita se duerm
 | A11 | Evidencia de orden | Orden > Adjuntar Evidencia con foto y descripción | La evidencia muestra la imagen |
 | A12 | Editar empresa | Empresa cliente > "Editar datos" (admin), cambiar y guardar | Los datos nuevos se ven al instante |
 | A13 | Menú | Abrir el panel principal | Tarjetas en 2 columnas con iconos y texto legible |
+| A14 | Foto de perfil | Perfil > tocar el círculo > Tomar foto / Galería | La foto aparece en Perfil, encabezado y lista de usuarios |
+| A15 | Logo de empresa | Perfil (admin) > "Subir logo" | El logo aparece en el encabezado y en el PDF |
+| A16 | PDF con estilo | Reportes > Descargar PDF | Encabezado con logo y nombre de la empresa, resumen, tarjetas por pieza/orden y paginación |
+| A17 | Editar pieza | Detalle de pieza > "Editar pieza" (creador en borrador/rechazada, o admin/supervisor) | Cambios guardados y visibles en el detalle |
+| A18 | Aprobar propia pieza (admin) | Admin crea pieza, la envía y la aprueba | Queda en "validada" |
 
 ---
 

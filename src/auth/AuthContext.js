@@ -12,6 +12,7 @@ export const AuthContext = createContext({
   login: async () => {},
   logout: async () => {},
   refreshSession: async () => {},
+  updateUser: async () => {},
 });
 
 export const AuthProvider = ({ children }) => {
@@ -95,6 +96,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, applySession]);
 
+  // Reemplaza los datos del usuario (p. ej. tras cambiar foto o logo) y los persiste
+  const updateUser = useCallback(
+    async (userData) => {
+      if (!token || !userData) return;
+      applySession(userData, token);
+      await saveSession({ user: userData, token });
+    },
+    [token, applySession]
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -105,8 +116,9 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       refreshSession,
+      updateUser,
     }),
-    [user, role, token, serviceCompanyId, isLoading, login, logout, refreshSession]
+    [user, role, token, serviceCompanyId, isLoading, login, logout, refreshSession, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

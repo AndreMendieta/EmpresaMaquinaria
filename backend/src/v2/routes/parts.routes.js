@@ -11,8 +11,16 @@ router.use(auth);
 
 router.get('/', async (req, res) => {
   const {rows} = await pool.query(
-    `SELECT * FROM piezas_multiempresa
-     WHERE empresa_prestadora_id = $1 ORDER BY creado_en DESC`,
+    `SELECT p.*,
+            COALESCE(to_jsonb(h) - 'pieza_id' - 'empresa_prestadora_id', '{}'::jsonb)
+              || COALESCE(to_jsonb(t) - 'pieza_id' - 'empresa_prestadora_id', '{}'::jsonb)
+              || COALESCE(to_jsonb(c) - 'pieza_id' - 'empresa_prestadora_id', '{}'::jsonb)
+              AS subtipo
+     FROM piezas_multiempresa p
+     LEFT JOIN piezas_manguera h ON h.empresa_prestadora_id = p.empresa_prestadora_id AND h.pieza_id = p.id
+     LEFT JOIN piezas_torno t ON t.empresa_prestadora_id = p.empresa_prestadora_id AND t.pieza_id = p.id
+     LEFT JOIN piezas_cilindro c ON c.empresa_prestadora_id = p.empresa_prestadora_id AND c.pieza_id = p.id
+     WHERE p.empresa_prestadora_id = $1 ORDER BY p.creado_en DESC`,
     [req.user.service_company_id]
   );
   return res.json({ok: true, piezas: rows});
@@ -81,13 +89,13 @@ router.patch('/:id/submit', requireCompanyScope('pieza_id'), async (req, res) =>
   return res.json({ok: true, pieza: rows[0]});
 });
 
-router.patch('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('pieza_id'), async (req, res) => {
+router.patch('/:id', requireCompanyScope('pieza_id'), async (req, res) => {
   const client = await pool.connect();
   try {
     const {nombre, descripcion, fotos, subtipo = {}} = req.body;
     await client.query('BEGIN');
     const current = await client.query(
-      `SELECT id, tipo FROM piezas_multiempresa
+      `SELECT id, tipo, creado_por, estado_validacion FROM piezas_multiempresa
        WHERE id = $1 AND empresa_prestadora_id = $2`,
       [req.params.id, req.user.service_company_id]
     );
@@ -95,12 +103,22 @@ router.patch('/:id', requireRole('admin', 'supervisor'), requireCompanyScope('pi
       await client.query('ROLLBACK');
       return res.status(404).json({error: 'Pieza no encontrada'});
     }
+    const existing = current.rows[0];
+    const isReviewer = ['admin', 'supervisor'].includes(req.user.role);
+    const ownEditable = existing.creado_por === req.user.id && ['borrador', 'rechazada'].includes(existing.estado_validacion);
+    if (!isReviewer && !ownEditable) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({error: 'Solo puedes editar tus piezas en borrador o rechazadas'});
+    }
 
     const updates = [];
     const values = [req.params.id, req.user.service_company_id];
     if (nombre !== undefined) { values.push(nombre.trim()); updates.push(`nombre = $${values.length}`); }
     if (descripcion !== undefined) { values.push(descripcion || null); updates.push(`descripcion = $${values.length}`); }
     if (fotos !== undefined) { values.push(Array.isArray(fotos) ? fotos : []); updates.push(`fotos = $${values.length}`); }
+    if (existing.estado_validacion === 'rechazada' && existing.creado_por === req.user.id) {
+      updates.push(`estado_validacion = 'borrador'`);
+    }
     updates.push('actualizado_en = NOW()');
     const piece = await client.query(
       `UPDATE piezas_multiempresa SET ${updates.join(', ')}

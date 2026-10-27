@@ -147,7 +147,11 @@ ALTER TABLE empresas_prestadoras
   ADD COLUMN IF NOT EXISTS legacy_empresa_id INTEGER UNIQUE;
 
 ALTER TABLE usuarios_multiempresa
-  ADD COLUMN IF NOT EXISTS legacy_usuario_id INTEGER;
+  ADD COLUMN IF NOT EXISTS legacy_usuario_id INTEGER,
+  ADD COLUMN IF NOT EXISTS foto_url TEXT;
+
+ALTER TABLE empresas_prestadoras
+  ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
 ALTER TABLE maquinarias_multiempresa
   ADD COLUMN IF NOT EXISTS legacy_maquina_id INTEGER;
