@@ -1,7 +1,8 @@
 import client from './client';
 
 export async function getMachines() {
-  return client.get('/machines');
+  const res = await client.get('/machines');
+  return {...res, maquinas: res?.maquinas || res?.maquinarias || []};
 }
 
 export async function getMachineById(id) {

@@ -20,6 +20,7 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
   const [tab, setTab] = useState('company');
 
   // Campos
+  const [companyCode, setCompanyCode] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -50,6 +51,11 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
       return;
     }
 
+    if (!/^[A-Za-z0-9_-]{3,20}$/.test(companyCode.trim())) {
+      setErrorMessage('El código de empresa debe tener de 3 a 20 letras, números o guiones (ej: MAQ01).');
+      return;
+    }
+
     if (password.length < 6) {
       setErrorMessage('La contraseña debe tener al menos 6 caracteres.');
       return;
@@ -67,12 +73,16 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
         nombreCompleto: cleanUserName,
         correo: cleanEmail,
         password,
+        codigoEmpresa: companyCode.trim(),
       });
 
       if (onRegisterSuccess) {
         onRegisterSuccess({
           email: cleanEmail,
-          companyId: data?.empresa?.id || data?.usuario?.empresa_prestadora_id,
+          companyId:
+            data?.companyCode ||
+            data?.empresa?.id ||
+            data?.usuario?.empresa_prestadora_id,
           devCode: data?.devCode,
           emailSent: data?.emailSent,
           message: data?.message,
@@ -149,11 +159,19 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
 
             {/* Formulario */}
             {tab === 'company' && (
-              <CustomInput
-                placeholder="Nombre de la empresa (ej: Maquinaria S.A.)"
-                value={companyName}
-                onChangeText={setCompanyName}
-              />
+              <>
+                <CustomInput
+                  placeholder="Código de empresa (ej: MAQ01)"
+                  value={companyCode}
+                  onChangeText={setCompanyCode}
+                  autoCapitalize="characters"
+                />
+                <CustomInput
+                  placeholder="Nombre de la empresa (ej: Maquinaria S.A.)"
+                  value={companyName}
+                  onChangeText={setCompanyName}
+                />
+              </>
             )}
 
             <CustomInput

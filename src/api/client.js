@@ -9,16 +9,12 @@ export function setOnSessionExpired(callback) {
 }
 
 const getBaseUrl = () => {
-  const isAndroid = Platform.OS === 'android';
   const isWeb = typeof window !== 'undefined' && window.location && window.location.protocol;
 
-  if (isAndroid) {
-    return 'http://10.0.2.2:3000/api/v2';
-  }
   if (isWeb) {
     return 'http://localhost:3000/api/v2';
   }
-  return 'http://localhost:3000/api/v2';
+  return 'https://hydrotech-api-c2bs.onrender.com/api/v2';
 };
 
 const BASE_URL = getBaseUrl();
@@ -64,7 +60,7 @@ export async function handleUnauthorizedResponse() {
 
 async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeoutMs = options.timeout ?? 15000;
+  const timeoutMs = options.timeout ?? 60000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   const token = await resolveToken(options.token);

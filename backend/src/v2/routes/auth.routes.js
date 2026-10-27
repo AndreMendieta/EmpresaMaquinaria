@@ -50,6 +50,28 @@ function generarCodigo6Digitos() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CODIGO_EMPRESA_REGEX = /^[A-Za-z0-9_-]{3,20}$/;
+const UNKNOWN_COMPANY_ID = '00000000-0000-0000-0000-000000000000';
+
+// Permite identificar la empresa con su código corto (ej. MAQ01) además del UUID
+router.use(async (req, res, next) => {
+  const value = req.body && req.body.serviceCompanyId;
+  if (typeof value !== 'string' || !value.trim() || UUID_REGEX.test(value.trim())) {
+    return next();
+  }
+  try {
+    const { rows } = await pool.query(
+      'SELECT id FROM empresas_prestadoras WHERE UPPER(nombre_comercial) = UPPER($1) LIMIT 1',
+      [value.trim()]
+    );
+    req.body.serviceCompanyId = rows[0] ? rows[0].id : UNKNOWN_COMPANY_ID;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
+
 /**
  * POST /register
  * Registra nueva empresa prestadora y usuario administrador inicial.
@@ -58,7 +80,7 @@ function generarCodigo6Digitos() {
 router.post('/register', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { razonSocial, nombre, correo, password, rol = 'admin' } = req.body;
+    const { razonSocial, nombre, correo, password, codigoEmpresa, rol = 'admin' } = req.body;
     if (!razonSocial || !nombre || !correo || !password) {
       return res.status(400).json({ error: 'razonSocial, nombre, correo y password son obligatorios' });
     }
@@ -69,13 +91,29 @@ router.post('/register', async (req, res) => {
     const cleanEmail = correo.trim().toLowerCase();
     const cleanNombre = nombre.trim();
     const cleanRazonSocial = razonSocial.trim();
+    const cleanCodigoEmpresa = codigoEmpresa ? String(codigoEmpresa).trim().toUpperCase() : '';
+
+    if (cleanCodigoEmpresa) {
+      if (!CODIGO_EMPRESA_REGEX.test(cleanCodigoEmpresa)) {
+        return res.status(400).json({
+          error: 'El código de empresa debe tener de 3 a 20 caracteres: letras, números, guion o guion bajo.',
+        });
+      }
+      const existing = await client.query(
+        'SELECT 1 FROM empresas_prestadoras WHERE UPPER(nombre_comercial) = $1 LIMIT 1',
+        [cleanCodigoEmpresa]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({ error: 'Ese código de empresa ya existe. Elige otro.' });
+      }
+    }
 
     await client.query('BEGIN');
 
     const companyResult = await client.query(
       `INSERT INTO empresas_prestadoras (razon_social, nombre_comercial)
        VALUES ($1, $2) RETURNING id, razon_social, nombre_comercial`,
-      [cleanRazonSocial, cleanNombre]
+      [cleanRazonSocial, cleanCodigoEmpresa || cleanNombre]
     );
     const company = companyResult.rows[0];
 
@@ -99,6 +137,7 @@ router.post('/register', async (req, res) => {
       nombre: cleanNombre,
       codigo: codigoVerificacion,
       nombreEmpresa: company.razon_social,
+      serviceCompanyId: cleanCodigoEmpresa || company.id,
     });
 
     return res.status(201).json({
@@ -110,6 +149,7 @@ router.post('/register', async (req, res) => {
       emailSent: emailRes.sent,
       usuario: user,
       empresa: company,
+      companyCode: cleanCodigoEmpresa || undefined,
       devCode: emailRes.devMode ? emailRes.devCode : undefined,
     });
   } catch (error) {
@@ -320,6 +360,7 @@ router.post('/resend-verification', async (req, res) => {
       nombre: user.nombre_completo,
       codigo: nuevoCodigo,
       nombreEmpresa: user.nombre_empresa,
+      serviceCompanyId: user.empresa_prestadora_id,
     });
 
     return res.json({

@@ -9,12 +9,20 @@ export async function login({ serviceCompanyId, correo, email, password }) {
   });
 }
 
-export async function register({ razonSocialEmpresa, nombreCompleto, correo, password, rol = 'admin' }) {
+export async function register({
+  razonSocialEmpresa,
+  nombreCompleto,
+  correo,
+  password,
+  codigoEmpresa,
+  rol = 'admin',
+}) {
   return client.post('/auth/register', {
     razonSocial: (razonSocialEmpresa || '').trim(),
     nombre: (nombreCompleto || '').trim(),
     correo: (correo || '').trim().toLowerCase(),
     password,
+    codigoEmpresa: (codigoEmpresa || '').trim(),
     rol,
   });
 }

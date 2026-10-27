@@ -1085,22 +1085,6 @@
       </div>
 
       <div class="quick-section">
-        <div class="quick-title">Acceso Rápido por Rol</div>
-        <button class="quick-btn" onclick="quickLogin('admin@demo.com', 'Admin123!')">
-          <span>Admin Principal</span>
-          <span class="badge-pill badge-admin">ADMIN</span>
-        </button>
-        <button class="quick-btn" onclick="quickLogin('supervisor@demo.com', 'Supervisor123!')">
-          <span>Supervisor de Flota</span>
-          <span class="badge-pill badge-supervisor">SUPERVISOR</span>
-        </button>
-        <button class="quick-btn" onclick="quickLogin('tecnico@demo.com', 'Tecnico123!')">
-          <span>Técnico de Campo</span>
-          <span class="badge-pill badge-tecnico">TÉCNICO</span>
-        </button>
-      </div>
-
-      <div class="quick-section">
         <div class="quick-title">Navegación</div>
         <button class="quick-btn" onclick="setView('login')">
           <span>Iniciar Sesión</span>
@@ -1415,9 +1399,9 @@
 
               <div id="login-error" class="rn-error" style="display: none;"></div>
 
-              <input id="login-company" class="rn-input" placeholder="Código de empresa (ej: DEMO01)" value="DEMO01">
-              <input id="login-email" class="rn-input" placeholder="Correo electrónico" type="email" value="admin@demo.com">
-              <input id="login-password" class="rn-input" placeholder="Contraseña" type="password" value="Admin123!">
+              <input id="login-company" class="rn-input" placeholder="Código de empresa (ej: MAQ01)">
+              <input id="login-email" class="rn-input" placeholder="Correo electrónico" type="email">
+              <input id="login-password" class="rn-input" placeholder="Contraseña" type="password">
 
               <button id="login-btn" class="rn-btn" onclick="handleLogin()">
                 <span>Iniciar Sesión</span>
@@ -3048,16 +3032,6 @@
       piezasList = [];
       notificacionesList = [];
       setView('login');
-    }
-
-    function quickLogin(email, password) {
-      setView('login');
-      setTimeout(() => {
-        document.getElementById('login-company').value = 'DEMO01';
-        document.getElementById('login-email').value = email;
-        document.getElementById('login-password').value = password;
-        handleLogin();
-      }, 50);
     }
 
     // Iniciar
