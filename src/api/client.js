@@ -60,7 +60,7 @@ export async function handleUnauthorizedResponse() {
 
 async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeoutMs = options.timeout ?? 15000;
+  const timeoutMs = options.timeout ?? 60000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   const token = await resolveToken(options.token);
