@@ -20,7 +20,6 @@ const FILTERS = ['todas', 'borrador', 'pendiente', 'validada', 'rechazada'];
 const PartsScreen = ({
   onBack,
   onSelectPart,
-  onOpenReview,
   onCreateHose,
   onCreateLathePart,
   onCreateCylinder,
@@ -73,11 +72,11 @@ const PartsScreen = ({
           <TouchableOpacity
             style={styles.reviewBanner}
             activeOpacity={0.85}
-            onPress={() => onOpenReview && onOpenReview()}>
+            onPress={() => setActiveFilter('pendiente')}>
             <Text style={styles.reviewBannerTitle}>
               {pendingCount} {pendingCount === 1 ? 'Pieza pendiente' : 'Piezas pendientes'} de revisión
             </Text>
-            <Text style={styles.reviewBannerAction}>Abrir Bandeja de Aprobación →</Text>
+            <Text style={styles.reviewBannerAction}>Ver piezas pendientes →</Text>
           </TouchableOpacity>
         ) : null}
 

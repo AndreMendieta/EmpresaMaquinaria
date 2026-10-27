@@ -172,9 +172,9 @@ const AppNavigator = () => {
           machine={currentRoute.params.machine}
           onBack={goBack}
           onSelectPart={(part) => navigate('part_detail', { part })}
-          onNavigateCreateHose={(machine) => navigate('create_hose', { machine })}
-          onNavigateCreateLathe={(machine) => navigate('create_lathe', { machine })}
-          onNavigateCreateCylinder={(machine) => navigate('create_cylinder', { machine })}
+          onCreateHose={(machine) => navigate('create_hose', { machine })}
+          onCreateLathePart={(machine) => navigate('create_lathe', { machine })}
+          onCreateCylinder={(machine) => navigate('create_cylinder', { machine })}
         />
       );
 
@@ -198,10 +198,9 @@ const AppNavigator = () => {
         <PartsScreen
           onBack={goBack}
           onSelectPart={(part) => navigate('part_detail', { part })}
-          onNavigateReview={(part) => navigate('part_review', { part })}
-          onNavigateCreateHose={() => navigate('create_hose')}
-          onNavigateCreateLathe={() => navigate('create_lathe')}
-          onNavigateCreateCylinder={() => navigate('create_cylinder')}
+          onCreateHose={() => navigate('create_hose')}
+          onCreateLathePart={() => navigate('create_lathe')}
+          onCreateCylinder={() => navigate('create_cylinder')}
         />
       );
 
