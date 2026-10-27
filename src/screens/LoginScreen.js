@@ -68,13 +68,6 @@ const LoginScreen = ({
     }
   };
 
-  const handleQuickFill = (emailVal, passVal) => {
-    setCorreo(emailVal);
-    setPassword(passVal);
-    setServiceCompanyId('');
-    setErrorMessage('');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -109,8 +102,8 @@ const LoginScreen = ({
             ) : null}
 
             <CustomInput
-              label="Empresa Prestadora (ID)"
-              placeholder="UUID de la empresa prestadora"
+              label="Código de empresa"
+              placeholder="ej: MAQ01 (o el ID de la empresa)"
               value={serviceCompanyId}
               onChangeText={setServiceCompanyId}
               autoCapitalize="none"
@@ -118,7 +111,7 @@ const LoginScreen = ({
 
             <CustomInput
               label="Correo Electrónico"
-              placeholder="ej: admin@demo.com"
+              placeholder="correo@empresa.com"
               value={correo}
               onChangeText={setCorreo}
               keyboardType="email-address"
@@ -146,28 +139,6 @@ const LoginScreen = ({
               onPress={handleLogin}
               loading={loading}
             />
-
-            {/* Accesos rápidos de desarrollo */}
-            <View style={styles.quickAccessSection}>
-              <Text style={styles.quickAccessTitle}>ACCESO RÁPIDO POR ROL (DEMO)</Text>
-              <View style={styles.quickAccessRow}>
-                <TouchableOpacity
-                  style={[styles.quickBtn, styles.quickBtnAdmin]}
-                  onPress={() => handleQuickFill('admin@demo.com', 'Admin123!')}>
-                  <Text style={styles.quickBtnText}>Admin</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.quickBtn, styles.quickBtnSupervisor]}
-                  onPress={() => handleQuickFill('supervisor@demo.com', 'Supervisor123!')}>
-                  <Text style={styles.quickBtnText}>Supervisor</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.quickBtn, styles.quickBtnTecnico]}
-                  onPress={() => handleQuickFill('tecnico@demo.com', 'Tecnico123!')}>
-                  <Text style={styles.quickBtnText}>Técnico</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
 
             {onNavigateToRegister ? (
               <View style={styles.footerLink}>
@@ -256,49 +227,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '600',
-  },
-  quickAccessSection: {
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  quickAccessTitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: COLORS.silver,
-    letterSpacing: 0.6,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  quickAccessRow: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'space-between',
-  },
-  quickBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  quickBtnAdmin: {
-    backgroundColor: 'rgba(255, 106, 0, 0.12)',
-    borderColor: 'rgba(255, 106, 0, 0.4)',
-  },
-  quickBtnSupervisor: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-  },
-  quickBtnTecnico: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderColor: 'rgba(16, 185, 129, 0.4)',
-  },
-  quickBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   forgotContainer: {
     alignSelf: 'flex-end',
