@@ -5,6 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Image,
+  Linking,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
@@ -12,6 +15,8 @@ import { submitPart } from '../api/partsApi';
 import HeaderBar from '../components/HeaderBar';
 import Badge from '../components/Badge';
 import PrimaryButton from '../components/PrimaryButton';
+import { resolveFileUrl } from '../api/client';
+import { parseAttachments, isImageItem } from '../utils/attachments';
 import { COLORS } from '../constants/colors';
 
 const PartDetailScreen = ({ part, onBack, onNavigateReview }) => {
@@ -64,14 +69,35 @@ const PartDetailScreen = ({ part, onBack, onNavigateReview }) => {
             <Text style={styles.boxLabel}>EVIDENCIAS FOTOGRÁFICAS:</Text>
             {part?.fotos && part.fotos.length > 0 ? (
               part.fotos.map((f, i) => (
-                <Text key={i} style={styles.photoLink}>
-                  Foto #{i + 1}: {f}
-                </Text>
+                <TouchableOpacity key={i} onPress={() => Linking.openURL(resolveFileUrl(f))}>
+                  <Image source={{ uri: resolveFileUrl(f) }} style={styles.photo} resizeMode="cover" />
+                </TouchableOpacity>
               ))
             ) : (
               <Text style={styles.emptyPhotoText}>Sin fotografías adjuntas.</Text>
             )}
           </View>
+
+          {['planos', 'evidencia'].map((campo) => {
+            const items = parseAttachments(part?.subtipo?.[campo] || part?.[campo]);
+            if (items.length === 0) return null;
+            return (
+              <View key={campo} style={styles.sectionBox}>
+                <Text style={styles.boxLabel}>{campo === 'planos' ? 'PLANOS:' : 'EVIDENCIA:'}</Text>
+                {items.map((item, i) =>
+                  isImageItem(item) ? (
+                    <TouchableOpacity key={i} onPress={() => Linking.openURL(resolveFileUrl(item.url))}>
+                      <Image source={{ uri: resolveFileUrl(item.url) }} style={styles.photo} resizeMode="cover" />
+                    </TouchableOpacity>
+                  ) : (
+                    <Text key={i} style={styles.photoLink} onPress={() => Linking.openURL(resolveFileUrl(item.url))}>
+                      📄 {item.name}
+                    </Text>
+                  )
+                )}
+              </View>
+            );
+          })}
 
           {/* Acciones según estado y rol */}
           {currentStatus === 'borrador' ? (
@@ -115,6 +141,13 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+  },
+  photo: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: COLORS.surface2,
   },
   card: {
     backgroundColor: COLORS.surface,

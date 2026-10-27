@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import CustomInput from './CustomInput';
+import AttachmentPicker from './AttachmentPicker';
+import { parseAttachments, serializeAttachments } from '../utils/attachments';
 
 const SubtypeFormLathe = ({ data, onChange }) => {
   const handleChange = (key, val) => {
@@ -33,17 +35,17 @@ const SubtypeFormLathe = ({ data, onChange }) => {
         value={data.material || ''}
         onChangeText={(text) => handleChange('material', text)}
       />
-      <CustomInput
-        label="Planos"
-        placeholder="URL o referencia del plano técnico"
-        value={data.planos || ''}
-        onChangeText={(text) => handleChange('planos', text)}
+      <AttachmentPicker
+        label="Planos (foto, PDF, DWG…)"
+        allowFiles
+        items={parseAttachments(data.planos)}
+        onChange={(items) => handleChange('planos', serializeAttachments(items))}
       />
-      <CustomInput
+      <AttachmentPicker
         label="Evidencia"
-        placeholder="URL o referencia de la evidencia"
-        value={data.evidencia || ''}
-        onChangeText={(text) => handleChange('evidencia', text)}
+        allowFiles
+        items={parseAttachments(data.evidencia)}
+        onChange={(items) => handleChange('evidencia', serializeAttachments(items))}
       />
       <CustomInput
         label="Adicionales"

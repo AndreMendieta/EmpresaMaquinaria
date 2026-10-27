@@ -13,6 +13,8 @@ import { createPart } from '../api/partsApi';
 import { getMachines } from '../api/machinesApi';
 import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
+import AttachmentPicker from '../components/AttachmentPicker';
+import { itemsToPhotos } from '../utils/attachments';
 import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormCylinder from '../components/SubtypeFormCylinder';
 import { COLORS } from '../constants/colors';
@@ -24,7 +26,7 @@ const CreateCylinderScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [fotoUrl, setFotoUrl] = useState('');
+  const [fotos, setFotos] = useState([]);
   const [subtipoData, setSubtipoData] = useState({
     diametro_camisa: '',
     diametro_vastago: '',
@@ -70,7 +72,7 @@ const CreateCylinderScreen = ({ onBack, onPartCreated, initialMachine }) => {
         nombre,
         tipo: 'cilindro',
         descripcion,
-        fotos: fotoUrl.trim() ? [fotoUrl.trim()] : [],
+        fotos: itemsToPhotos(fotos),
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'El cilindro hidráulico ha sido guardado en borrador.');
@@ -131,12 +133,10 @@ const CreateCylinderScreen = ({ onBack, onPartCreated, initialMachine }) => {
           <Text style={styles.sectionLabel}>DIMENSIONES Y PRESIÓN DE CILINDRO:</Text>
           <SubtypeFormCylinder data={subtipoData} onChange={setSubtipoData} />
 
-          <CustomInput
-            label="URL de Fotografía / Evidencia de Fugas"
-            placeholder="https://..."
-            value={fotoUrl}
-            onChangeText={setFotoUrl}
-            autoCapitalize="none"
+          <AttachmentPicker
+            label="Fotografías de la pieza"
+            items={fotos}
+            onChange={setFotos}
           />
 
           <CustomInput

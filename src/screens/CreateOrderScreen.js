@@ -16,6 +16,7 @@ import { getTechnicians } from '../api/usersApi';
 import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import AttachmentPicker from '../components/AttachmentPicker';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
 
@@ -45,7 +46,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
 
   // Evidencias iniciales
   const [evidencias, setEvidencias] = useState([]);
-  const [evidenciaUrl, setEvidenciaUrl] = useState('');
+  const [evidenciaFiles, setEvidenciaFiles] = useState([]);
   const [evidenciaDesc, setEvidenciaDesc] = useState('');
   const [evidenciaEtapa, setEvidenciaEtapa] = useState('antes');
 
@@ -85,18 +86,20 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
   }, [isSupervisorOrAdmin]);
 
   const handleAddEvidencia = () => {
-    if (!evidenciaDesc.trim() && !evidenciaUrl.trim()) return;
+    if (!evidenciaDesc.trim() && evidenciaFiles.length === 0) return;
 
-    const nueva = {
-      id: `evi_${Date.now()}`,
-      url: evidenciaUrl.trim() || null,
+    const base = Date.now();
+    const urls = evidenciaFiles.length > 0 ? evidenciaFiles.map((f) => f.url) : [null];
+    const nuevas = urls.map((url, i) => ({
+      id: `evi_${base}_${i}`,
+      url,
       descripcion: evidenciaDesc.trim(),
       etapa: evidenciaEtapa,
       creado_en: new Date().toISOString(),
-    };
+    }));
 
-    setEvidencias((prev) => [...prev, nueva]);
-    setEvidenciaUrl('');
+    setEvidencias((prev) => [...prev, ...nuevas]);
+    setEvidenciaFiles([]);
     setEvidenciaDesc('');
   };
 
@@ -311,7 +314,7 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
                   </View>
                   {item.url ? (
                     <Text style={styles.evidenciaUrl} numberOfLines={1}>
-                      {item.url}
+                      📎 {item.url.split('/').pop().slice(0, 8)}… adjunto
                     </Text>
                   ) : null}
                   <Text style={styles.evidenciaDesc}>{item.descripcion}</Text>
@@ -339,11 +342,11 @@ const CreateOrderScreen = ({ onBack, onOrderCreated }) => {
               </TouchableOpacity>
             </View>
 
-            <CustomInput
-              placeholder="Enlace o URL de foto de evidencia (opcional)..."
-              value={evidenciaUrl}
-              onChangeText={setEvidenciaUrl}
-              autoCapitalize="none"
+            <AttachmentPicker
+              label="Fotos o archivos"
+              allowFiles
+              items={evidenciaFiles}
+              onChange={setEvidenciaFiles}
             />
             <CustomInput
               placeholder="Descripción de la evidencia o condición encontrada..."

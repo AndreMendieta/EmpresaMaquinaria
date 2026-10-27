@@ -13,6 +13,8 @@ import { createPart } from '../api/partsApi';
 import { getMachines } from '../api/machinesApi';
 import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
+import AttachmentPicker from '../components/AttachmentPicker';
+import { itemsToPhotos } from '../utils/attachments';
 import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormLathe from '../components/SubtypeFormLathe';
 import { COLORS } from '../constants/colors';
@@ -24,7 +26,7 @@ const CreateLathePartScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [fotoUrl, setFotoUrl] = useState('');
+  const [fotos, setFotos] = useState([]);
   const [subtipoData, setSubtipoData] = useState({
     diametro: '',
     longitud: '',
@@ -70,7 +72,7 @@ const CreateLathePartScreen = ({ onBack, onPartCreated, initialMachine }) => {
         nombre,
         tipo: 'torno',
         descripcion,
-        fotos: fotoUrl.trim() ? [fotoUrl.trim()] : [],
+        fotos: itemsToPhotos(fotos),
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'La pieza de torno ha sido guardada en borrador.');
@@ -131,12 +133,10 @@ const CreateLathePartScreen = ({ onBack, onPartCreated, initialMachine }) => {
           <Text style={styles.sectionLabel}>COTAS Y ESPECIFICACIONES DE MECANIZADO:</Text>
           <SubtypeFormLathe data={subtipoData} onChange={setSubtipoData} />
 
-          <CustomInput
-            label="URL de Fotografía / Plano Técnico"
-            placeholder="https://..."
-            value={fotoUrl}
-            onChangeText={setFotoUrl}
-            autoCapitalize="none"
+          <AttachmentPicker
+            label="Fotografías de la pieza"
+            items={fotos}
+            onChange={setFotos}
           />
 
           <CustomInput

@@ -213,6 +213,38 @@ CREATE INDEX IF NOT EXISTS idx_piezas_prestadora ON piezas_multiempresa (empresa
 CREATE INDEX IF NOT EXISTS idx_piezas_maquinaria ON piezas_multiempresa (maquinaria_id);
 CREATE INDEX IF NOT EXISTS idx_ordenes_prestadora ON ordenes_servicio (empresa_prestadora_id);
 CREATE INDEX IF NOT EXISTS idx_ordenes_estado ON ordenes_servicio (empresa_prestadora_id, estado);
+
+-- Las piezas nuevas se guardan como borrador antes de enviarse a revisión
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'piezas_multiempresa_estado_validacion_check') THEN
+    ALTER TABLE piezas_multiempresa DROP CONSTRAINT piezas_multiempresa_estado_validacion_check;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_pieza_estado_validacion') THEN
+    ALTER TABLE piezas_multiempresa
+      ADD CONSTRAINT chk_pieza_estado_validacion
+      CHECK (estado_validacion IN ('borrador','pendiente','validada','rechazada'));
+  END IF;
+END $$;
+
+-- Planos y evidencias pueden incluir varios archivos (una URL por línea)
+ALTER TABLE piezas_manguera ALTER COLUMN evidencia TYPE TEXT;
+ALTER TABLE piezas_torno ALTER COLUMN planos TYPE TEXT;
+ALTER TABLE piezas_torno ALTER COLUMN evidencia TYPE TEXT;
+
+-- Archivos subidos desde la app (fotos, planos, evidencias). Se guardan en la base
+-- de datos porque el disco de Render gratuito se borra al reiniciar.
+CREATE TABLE IF NOT EXISTS archivos_multiempresa (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_prestadora_id UUID NOT NULL REFERENCES empresas_prestadoras(id) ON DELETE CASCADE,
+  nombre VARCHAR(255) NOT NULL,
+  tipo_mime VARCHAR(120) NOT NULL,
+  tamano INTEGER NOT NULL,
+  contenido BYTEA NOT NULL,
+  subido_por UUID,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_archivos_prestadora ON archivos_multiempresa (empresa_prestadora_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones_multiempresa (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_auditoria_prestadora ON registros_auditoria (empresa_prestadora_id);
 CREATE INDEX IF NOT EXISTS idx_auditoria_fecha ON registros_auditoria (empresa_prestadora_id, creado_en DESC);

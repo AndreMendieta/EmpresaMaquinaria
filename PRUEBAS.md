@@ -13,6 +13,7 @@ Guía de pruebas de HydroTech: app móvil React Native (Android), backend Node/E
 | Unitarias (backend) | Jest | Middleware de autenticación y roles | `backend/__tests__/auth.middleware.test.js` |
 | Unitarias (backend) | Jest | Registro/login con código de empresa | `backend/__tests__/auth.companyCode.test.js` |
 | Unitarias (app) | Jest | API de maquinaria (lista y creación) | `__tests__/machinesApi.test.js` |
+| Unitarias (backend) | Jest | Subida y descarga de archivos | `backend/__tests__/files.routes.test.js` |
 | Unitarias (backend) | `node:test` | Mailer y reporte PDF | `backend/__tests__/*.node.test.cjs` |
 | Compilación | Gradle | Build Android Debug | `android/gradlew :app:assembleDebug` |
 | Manuales | Preview web + dispositivo | Flujos por rol | Sección 5 |
@@ -68,6 +69,11 @@ cd android
 | 17 | `machinesApi.test.js` | Lista de máquinas | El backend envía `maquinarias`; la app lo expone como `maquinas` |
 | 18 | `machinesApi.test.js` | Lista de máquinas sin datos | Devuelve lista vacía |
 | 19 | `machinesApi.test.js` | Crear máquina | Código en mayúsculas y campos vacíos como `null` |
+| 20 | `files.routes.test.js` | Subir foto | 201 y URL `/api/v2/files/<id>` |
+| 21 | `files.routes.test.js` | Subir `.exe` | 415 y no se guarda nada |
+| 22 | `files.routes.test.js` | Subir sin archivo | 400 |
+| 23 | `files.routes.test.js` | Descargar imagen | Tipo `image/jpeg` y `inline` |
+| 24 | `files.routes.test.js` | Descargar inexistente | 404 |
 
 ---
 
@@ -104,6 +110,12 @@ La primera petición puede tardar hasta 1 minuto (la instancia gratuita se duerm
 | A5 | Sin accesos demo | Abrir el login | No aparece "Acceso rápido por rol (demo)" |
 | A6 | Código duplicado | Registrar otra empresa con `MAQ01` | Mensaje "Ese código de empresa ya existe" |
 | A7 | Crear máquina | Maquinaria > Crear Máquina, completar y guardar | Vuelve a la lista y la máquina aparece |
+| A8 | Crear pieza | Piezas > crear manguera/torno/cilindro y guardar | Queda en borrador y aparece en la lista |
+| A9 | Tomar foto | En una pieza, "📷 Tomar foto" y aceptar la cámara | Aparece la miniatura; al guardar se ve en el detalle |
+| A10 | Subir plano | En pieza de torno, "📎 Archivo" y elegir PDF/DWG | Aparece el archivo; en el detalle se puede abrir |
+| A11 | Evidencia de orden | Orden > Adjuntar Evidencia con foto y descripción | La evidencia muestra la imagen |
+| A12 | Editar empresa | Empresa cliente > "Editar datos" (admin), cambiar y guardar | Los datos nuevos se ven al instante |
+| A13 | Menú | Abrir el panel principal | Tarjetas en 2 columnas con iconos y texto legible |
 
 ---
 
@@ -112,7 +124,7 @@ La primera petición puede tardar hasta 1 minuto (la instancia gratuita se duerm
 - `npm run lint` sin errores.
 - Todas las pruebas automatizadas en verde.
 - `assembleDebug` termina con `BUILD SUCCESSFUL`.
-- Flujos manuales M1 a M8 y A1 a A7 sin errores bloqueantes.
+- Flujos manuales M1 a M8 y A1 a A13 sin errores bloqueantes.
 - No se versionan archivos `.env` ni credenciales.
 
 ---

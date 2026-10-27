@@ -15,6 +15,8 @@ import { getMachines } from '../api/machinesApi';
 import HeaderBar from '../components/HeaderBar';
 import Badge from '../components/Badge';
 import ForbiddenNotice from '../components/ForbiddenNotice';
+import CustomInput from '../components/CustomInput';
+import PrimaryButton from '../components/PrimaryButton';
 import { COLORS } from '../constants/colors';
 
 const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMachine }) => {
@@ -27,6 +29,53 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
   const [statusActive, setStatusActive] = useState(company?.activa ?? true);
   const [actionError, setActionError] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [info, setInfo] = useState(company || {});
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({});
+
+  const startEditing = () => {
+    setActionError('');
+    setForm({
+      razonSocial: info.razon_social || '',
+      nombreComercial: info.nombre_comercial || '',
+      identificacionFiscal: info.identificacion_fiscal || '',
+      correo: info.correo || '',
+      telefono: info.telefono || '',
+      direccion: info.direccion || '',
+    });
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!form.razonSocial.trim()) {
+      setActionError('La razón social es obligatoria.');
+      return;
+    }
+    setSaving(true);
+    setActionError('');
+    try {
+      const res = await updateClientCompany(company.id, {
+        razonSocial: form.razonSocial.trim(),
+        nombreComercial: form.nombreComercial.trim() || null,
+        identificacionFiscal: form.identificacionFiscal.trim() || null,
+        correo: form.correo.trim() || null,
+        telefono: form.telefono.trim() || null,
+        direccion: form.direccion.trim() || null,
+      });
+      setInfo(res.empresa_cliente || res.empresa || { ...info, ...res });
+      setEditing(false);
+      Alert.alert('Éxito', 'Datos de la empresa actualizados.');
+    } catch (err) {
+      if (err.isForbidden) {
+        setForbidden(true);
+      } else {
+        setActionError(err.message || 'No se pudo actualizar la empresa.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const loadCompanyMachines = useCallback(async () => {
     setLoadingMachines(true);
@@ -93,32 +142,55 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
         <View style={styles.detailCard}>
           <View style={styles.cardHeader}>
             <View style={styles.flex1}>
-              <Text style={styles.title}>{company?.razon_social}</Text>
-              {company?.nombre_comercial ? (
-                <Text style={styles.comercial}>{company?.nombre_comercial}</Text>
+              <Text style={styles.title}>{info.razon_social}</Text>
+              {info.nombre_comercial ? (
+                <Text style={styles.comercial}>{info.nombre_comercial}</Text>
               ) : null}
             </View>
             <Badge status={statusActive ? 'activa' : 'inactiva'} />
           </View>
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Identificación Fiscal:</Text>
-            <Text style={styles.fieldValue}>{company?.identificacion_fiscal || 'Sin registrar'}</Text>
-          </View>
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Correo de Contacto:</Text>
-            <Text style={styles.fieldValue}>{company?.correo || 'Sin registrar'}</Text>
-          </View>
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Teléfono:</Text>
-            <Text style={styles.fieldValue}>{company?.telefono || 'Sin registrar'}</Text>
-          </View>
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Dirección:</Text>
-            <Text style={styles.fieldValue}>{company?.direccion || 'Sin registrar'}</Text>
-          </View>
+          {editing ? (
+            <View>
+              <CustomInput label="Razón social *" value={form.razonSocial} onChangeText={(v) => setForm({ ...form, razonSocial: v })} />
+              <CustomInput label="Nombre comercial" value={form.nombreComercial} onChangeText={(v) => setForm({ ...form, nombreComercial: v })} />
+              <CustomInput label="Identificación fiscal (NIT)" value={form.identificacionFiscal} onChangeText={(v) => setForm({ ...form, identificacionFiscal: v })} />
+              <CustomInput label="Correo" value={form.correo} onChangeText={(v) => setForm({ ...form, correo: v })} autoCapitalize="none" keyboardType="email-address" />
+              <CustomInput label="Teléfono" value={form.telefono} onChangeText={(v) => setForm({ ...form, telefono: v })} keyboardType="phone-pad" />
+              <CustomInput label="Dirección" value={form.direccion} onChangeText={(v) => setForm({ ...form, direccion: v })} />
+              <PrimaryButton title="Guardar cambios" onPress={handleSaveEdit} loading={saving} />
+              <TouchableOpacity style={styles.cancelEditBtn} onPress={() => setEditing(false)} disabled={saving}>
+                <Text style={styles.cancelEditText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Identificación Fiscal:</Text>
+                <Text style={styles.fieldValue}>{info.identificacion_fiscal || 'Sin registrar'}</Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Correo de Contacto:</Text>
+                <Text style={styles.fieldValue}>{info.correo || 'Sin registrar'}</Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Teléfono:</Text>
+                <Text style={styles.fieldValue}>{info.telefono || 'Sin registrar'}</Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Dirección:</Text>
+                <Text style={styles.fieldValue}>{info.direccion || 'Sin registrar'}</Text>
+              </View>
 
-          {isAdmin ? (
+              {isAdmin ? (
+                <TouchableOpacity style={styles.editBtn} onPress={startEditing}>
+                  <Text style={styles.editBtnText}>✏️ Editar datos de la empresa</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          )}
+
+          {isAdmin && !editing ? (
             <TouchableOpacity
               style={[styles.statusToggleBtn, statusActive ? styles.btnDanger : styles.btnSuccess]}
               onPress={handleToggleStatus}>
@@ -189,6 +261,18 @@ const styles = StyleSheet.create({
   flex1: {
     flex: 1,
   },
+  editBtn: {
+    minHeight: 48,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: COLORS.orange,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editBtnText: { color: COLORS.orange, fontSize: 15, fontWeight: '700' },
+  cancelEditBtn: { minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  cancelEditText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
   loader: {
     marginVertical: 14,
   },

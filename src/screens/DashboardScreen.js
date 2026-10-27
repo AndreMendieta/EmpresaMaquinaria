@@ -20,6 +20,7 @@ const DashboardScreen = ({ onNavigate }) => {
   const menuItems = [
     {
       id: 'machines',
+      icon: '🚜',
       title: 'Maquinaria y Equipos',
       desc: 'Consulta de equipos autorizados, series y manuales en línea.',
       badge: 'HU-015',
@@ -27,6 +28,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'parts',
+      icon: '🔩',
       title: 'Catálogo y Fichas de Piezas',
       desc: 'Mangueras, piezas de torno, cilindros y fichas técnicas.',
       badge: 'HU-014',
@@ -34,6 +36,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'orders',
+      icon: '📋',
       title: 'Órdenes de Trabajo',
       desc: 'Seguimiento de servicios de mantenimiento y asignaciones.',
       badge: 'ORD',
@@ -41,6 +44,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'client_companies',
+      icon: '🏢',
       title: 'Empresas Clientes',
       desc: 'Empresas contratantes de servicios y flotas asociadas.',
       badge: 'CLIENTES',
@@ -48,6 +52,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'notifications',
+      icon: '🔔',
       title: 'Bandeja de Notificaciones',
       desc: 'Alertas de piezas por aprobar, rechazos y asignaciones.',
       badge: 'ALERTAS',
@@ -55,6 +60,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'reports',
+      icon: '📊',
       title: 'Reportes y Métricas',
       desc: 'Indicadores de producción, estados de piezas y órdenes.',
       badge: 'MÉTRICAS',
@@ -62,6 +68,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'users',
+      icon: '👥',
       title: 'Gestión de Personal',
       desc: 'Alta de colaboradores, asignación de roles y estados.',
       badge: 'ADMIN',
@@ -69,6 +76,7 @@ const DashboardScreen = ({ onNavigate }) => {
     },
     {
       id: 'profile',
+      icon: '👤',
       title: 'Mi Perfil y Configuración',
       desc: 'Detalles de la cuenta y empresa prestadora.',
       badge: 'CUENTA',
@@ -106,14 +114,9 @@ const DashboardScreen = ({ onNavigate }) => {
                 style={styles.cardItem}
                 activeOpacity={0.8}
                 onPress={() => onNavigate(item.id)}>
-                <View style={styles.cardHeaderRow}>
-                  <View style={styles.cardBadge}>
-                    <Text style={styles.cardBadgeText}>{item.badge}</Text>
-                  </View>
-                </View>
+                <Text style={styles.cardIcon}>{item.icon}</Text>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDesc}>{item.desc}</Text>
-                <Text style={styles.cardAction}>Ingresar →</Text>
+                <Text style={styles.cardDesc} numberOfLines={3}>{item.desc}</Text>
               </TouchableOpacity>
             ))}
         </View>
@@ -158,57 +161,41 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   sectionHeader: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '800',
     color: COLORS.silver,
     letterSpacing: 0.8,
     marginBottom: 12,
   },
   gridContainer: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
   },
   cardItem: {
+    width: '48%',
+    minHeight: 150,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    padding: 16,
+    borderColor: COLORS.orangeDim,
+    borderRadius: 16,
+    padding: 14,
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  cardIcon: {
+    fontSize: 38,
     marginBottom: 8,
   },
-  cardBadge: {
-    backgroundColor: 'rgba(255, 106, 0, 0.12)',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 106, 0, 0.3)',
-  },
-  cardBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: COLORS.orange,
-  },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: COLORS.textPrimary,
   },
   cardDesc: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     marginTop: 4,
-    lineHeight: 16,
-  },
-  cardAction: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.orange,
-    marginTop: 10,
+    lineHeight: 18,
   },
 });
 

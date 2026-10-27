@@ -7,6 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  Image,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
@@ -23,6 +25,8 @@ import Badge from '../components/Badge';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
 import ForbiddenNotice from '../components/ForbiddenNotice';
+import AttachmentPicker from '../components/AttachmentPicker';
+import { resolveFileUrl } from '../api/client';
 import { COLORS } from '../constants/colors';
 
 const ETAPAS = [
@@ -51,7 +55,7 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
 
   // Modal para agregar evidencia técnica
   const [modalEvidenceVisible, setModalEvidenceVisible] = useState(false);
-  const [evidenceUrl, setEvidenceUrl] = useState('');
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
   const [evidenceDesc, setEvidenceDesc] = useState('');
   const [evidenceEtapa, setEvidenceEtapa] = useState('despues');
   const [savingEvidence, setSavingEvidence] = useState(false);
@@ -154,24 +158,29 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
 
   // 3. Agregar Evidencia del trabajo realizado
   const handleAddEvidence = async () => {
-    if (!evidenceDesc.trim() && !evidenceUrl.trim()) {
-      setErrorMsg('Debes ingresar al menos una descripción o un enlace fotográfico.');
+    if (!evidenceDesc.trim() && evidenceFiles.length === 0) {
+      setErrorMsg('Debes ingresar una descripción o adjuntar al menos una foto o archivo.');
       return;
     }
 
     setSavingEvidence(true);
     setErrorMsg('');
     try {
-      const res = await addOrderEvidence(currentOrder.id, {
-        url: evidenceUrl,
-        descripcion: evidenceDesc,
-        etapa: evidenceEtapa,
-      });
+      // El backend guarda una URL por evidencia: se crea un registro por archivo
+      const entries = evidenceFiles.length > 0 ? evidenceFiles.map((f) => f.url) : [null];
+      let res;
+      for (const url of entries) {
+        res = await addOrderEvidence(currentOrder.id, {
+          url,
+          descripcion: evidenceDesc,
+          etapa: evidenceEtapa,
+        });
+      }
 
       setCurrentOrder(res.orden);
       setSuccessMsg('Evidencia técnica registrada satisfactoriamente.');
       setModalEvidenceVisible(false);
-      setEvidenceUrl('');
+      setEvidenceFiles([]);
       setEvidenceDesc('');
       setEvidenceEtapa('despues');
       if (onOrderUpdated) onOrderUpdated(res.orden);
@@ -373,9 +382,23 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
                     {evi.url ? (
                       <View style={styles.evidenceUrlContainer}>
                         <Text style={styles.evidenceUrlLabel}>Foto / Archivo:</Text>
-                        <Text style={styles.evidenceUrlLink} numberOfLines={1}>
-                          {evi.url}
-                        </Text>
+                        {/\.(jpe?g|png|webp|heic)$/i.test(evi.url) || evi.url.startsWith('/api/v2/files/') ? (
+                          <TouchableOpacity onPress={() => Linking.openURL(resolveFileUrl(evi.url))}>
+                            <Image
+                              source={{ uri: resolveFileUrl(evi.url) }}
+                              style={styles.evidenceImage}
+                              resizeMode="cover"
+                            />
+                            <Text style={styles.evidenceUrlLink}>Toca para abrir</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <Text
+                            style={styles.evidenceUrlLink}
+                            numberOfLines={1}
+                            onPress={() => Linking.openURL(evi.url)}>
+                            {evi.url}
+                          </Text>
+                        )}
                       </View>
                     ) : null}
 
@@ -533,12 +556,11 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
               })}
             </View>
 
-            <CustomInput
-              label="URL o Enlace de la Fotografía (opcional)"
-              placeholder="https://servidor.com/evidencias/foto.jpg"
-              value={evidenceUrl}
-              onChangeText={setEvidenceUrl}
-              autoCapitalize="none"
+            <AttachmentPicker
+              label="Fotos o archivos de la evidencia"
+              allowFiles
+              items={evidenceFiles}
+              onChange={setEvidenceFiles}
             />
 
             <CustomInput
@@ -813,6 +835,13 @@ const styles = StyleSheet.create({
   evidenceDate: {
     fontSize: 10,
     color: COLORS.textMuted,
+  },
+  evidenceImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface2,
+    marginTop: 6,
   },
   evidenceUrlContainer: {
     marginBottom: 6,

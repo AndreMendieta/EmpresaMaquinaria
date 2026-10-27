@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import CustomInput from './CustomInput';
+import AttachmentPicker from './AttachmentPicker';
+import { parseAttachments, serializeAttachments } from '../utils/attachments';
 
 const SubtypeFormHose = ({ data, onChange }) => {
   const handleChange = (key, val) => {
@@ -33,11 +35,11 @@ const SubtypeFormHose = ({ data, onChange }) => {
         value={data.terminales || data.tipo_conexion || ''}
         onChangeText={(text) => handleChange('terminales', text)}
       />
-      <CustomInput
+      <AttachmentPicker
         label="Evidencia"
-        placeholder="URL o referencia de la evidencia"
-        value={data.evidencia || ''}
-        onChangeText={(text) => handleChange('evidencia', text)}
+        allowFiles
+        items={parseAttachments(data.evidencia)}
+        onChange={(items) => handleChange('evidencia', serializeAttachments(items))}
       />
       <CustomInput
         label="Adicionales"

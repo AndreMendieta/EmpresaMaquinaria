@@ -19,6 +19,12 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 
+export function resolveFileUrl(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${BASE_URL.replace(/\/api\/v2$/, '')}${url}`;
+}
+
 export class ApiError extends Error {
   constructor(message, status, data = {}) {
     super(message);

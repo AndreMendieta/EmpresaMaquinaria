@@ -13,6 +13,8 @@ import { createPart } from '../api/partsApi';
 import { getMachines } from '../api/machinesApi';
 import HeaderBar from '../components/HeaderBar';
 import CustomInput from '../components/CustomInput';
+import AttachmentPicker from '../components/AttachmentPicker';
+import { itemsToPhotos } from '../utils/attachments';
 import PrimaryButton from '../components/PrimaryButton';
 import SubtypeFormHose from '../components/SubtypeFormHose';
 import { COLORS } from '../constants/colors';
@@ -24,7 +26,7 @@ const CreateHoseScreen = ({ onBack, onPartCreated, initialMachine }) => {
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [fotoUrl, setFotoUrl] = useState('');
+  const [fotos, setFotos] = useState([]);
   const [subtipoData, setSubtipoData] = useState({
     diametro_interior: '',
     diametro_exterior: '',
@@ -71,7 +73,7 @@ const CreateHoseScreen = ({ onBack, onPartCreated, initialMachine }) => {
         nombre,
         tipo: 'manguera',
         descripcion,
-        fotos: fotoUrl.trim() ? [fotoUrl.trim()] : [],
+        fotos: itemsToPhotos(fotos),
         subtipo: subtipoData,
       });
       Alert.alert('Ficha Creada', 'La manguera hidráulica ha sido guardada en borrador.');
@@ -132,12 +134,10 @@ const CreateHoseScreen = ({ onBack, onPartCreated, initialMachine }) => {
           <Text style={styles.sectionLabel}>ESPECIFICACIONES TÉCNICAS (MANGUERA):</Text>
           <SubtypeFormHose data={subtipoData} onChange={setSubtipoData} />
 
-          <CustomInput
-            label="URL de Fotografía / Evidencia"
-            placeholder="https://..."
-            value={fotoUrl}
-            onChangeText={setFotoUrl}
-            autoCapitalize="none"
+          <AttachmentPicker
+            label="Fotografías de la pieza"
+            items={fotos}
+            onChange={setFotos}
           />
 
           <CustomInput
