@@ -291,3 +291,27 @@ npx eslint .
    adb reverse tcp:3000 tcp:3000
    npx react-native run-android
    ```
+
+### 5. Despliegue de prueba en Render
+
+El archivo `render.yaml` configura el backend Node.js y una base PostgreSQL para pruebas.
+
+1. Sube el proyecto a GitHub y, en Render, crea un **Blueprint** conectado a ese repositorio. Render detectará `render.yaml` y mostrará los servicios que va a crear.
+2. Espera a que el backend y PostgreSQL estén disponibles. La URL pública del backend tendrá formato `https://hydrotech-api.onrender.com`; comprueba que `https://<tu-url>/health` responda con `ok: true`.
+3. Inicializa las tablas desde PowerShell en tu computadora. En Render, abre la base PostgreSQL, copia su **External Database URL** y úsala localmente; no la compartas ni la guardes en el repositorio:
+
+   ```powershell
+   Set-Location C:\dev\EmpresaMaquinaria\backend
+   $env:DATABASE_URL = Read-Host "Pega la External Database URL de Render"
+   npm run migrate
+   if ($LASTEXITCODE -eq 0) { npm run migrate:multitenant }
+   $migrationExitCode = $LASTEXITCODE
+   Remove-Item Env:DATABASE_URL
+   if ($migrationExitCode -ne 0) { throw "Falló la inicialización de la base de datos." }
+   ```
+
+   Ejecuta esta inicialización una sola vez sobre una base vacía. Si falla, revisa el error antes de volver a intentarlo.
+4. Para que el registro y la recuperación de contraseña envíen códigos, configura en el servicio de Render las variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` y `SMTP_PASS`. Sin SMTP, esos correos no se envían en producción.
+5. Cuando tengas la URL HTTPS, cambia la URL base de `src/api/client.js` para que la app use `https://<tu-url>/api/v2`; luego genera una nueva APK y pruébala en un teléfono.
+
+**Importante:** esta configuración usa recursos gratuitos solo para pruebas. Render indica que las bases gratuitas vencen a los 30 días; los servicios gratuitos pueden dormir por inactividad, y los archivos subidos al disco local (como fotos) no son persistentes. No la uses para datos reales ni para operación de negocio; antes necesitarás planes con persistencia y copias de seguridad, además de almacenamiento duradero para fotos. Revisa los [límites de Render gratuito](https://render.com/docs/free) antes de crear los recursos.

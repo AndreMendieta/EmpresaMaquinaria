@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: hydrotech-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hydrotech-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: hydrotech-db
+    databaseName: hydrotech
+    user: hydrotech
+    plan: free
