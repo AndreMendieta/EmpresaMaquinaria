@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -10,9 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
-import {registerCompany, registerUser} from '../services/authService';
+import {register as registerCompany} from '../api/authApi';
 import {COLORS} from '../constants/colors';
 
 const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
@@ -20,7 +20,6 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
   const [tab, setTab] = useState('company');
 
   // Campos
-  const [companyCode, setCompanyCode] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,16 +32,20 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
   const handleRegister = async () => {
     setErrorMessage('');
 
-    const cleanCode = companyCode.trim();
     const cleanEmail = email.trim();
     const cleanUserName = userName.trim();
 
-    if (!cleanCode || !cleanUserName || !cleanEmail || !password || !confirmPassword) {
+    if (tab !== 'company') {
+      setErrorMessage('El registro para unirse a una empresa se habilitará en la API v2 próximamente.');
+      return;
+    }
+
+    if (!cleanUserName || !cleanEmail || !password || !confirmPassword) {
       setErrorMessage('Por favor completa todos los campos.');
       return;
     }
 
-    if (tab === 'company' && !companyName.trim()) {
+    if (!companyName.trim()) {
       setErrorMessage('Ingresa el nombre de la empresa.');
       return;
     }
@@ -59,26 +62,23 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
 
     setLoading(true);
     try {
-      let data;
-      if (tab === 'company') {
-        data = await registerCompany({
-          companyCode: cleanCode,
-          companyName: companyName.trim(),
-          userName: cleanUserName,
-          email: cleanEmail,
-          password,
-        });
-      } else {
-        data = await registerUser({
-          companyCode: cleanCode,
-          userName: cleanUserName,
-          email: cleanEmail,
-          password,
-        });
-      }
+      const data = await registerCompany({
+        razonSocialEmpresa: companyName.trim(),
+        nombreCompleto: cleanUserName,
+        correo: cleanEmail,
+        password,
+      });
 
       if (onRegisterSuccess) {
-        onRegisterSuccess(data.usuario, data.token);
+        onRegisterSuccess({
+          email: cleanEmail,
+          companyId: data?.empresa?.id || data?.usuario?.empresa_prestadora_id,
+          devCode: data?.devCode,
+          emailSent: data?.emailSent,
+          message: data?.message,
+          usuario: data?.usuario,
+          token: data?.token,
+        });
       }
     } catch (error) {
       setErrorMessage(error.message || 'Error al procesar el registro.');
@@ -148,12 +148,6 @@ const RegisterScreen = ({onNavigateToLogin, onRegisterSuccess}) => {
             </Text>
 
             {/* Formulario */}
-            <CustomInput
-              placeholder="Código de empresa (ej: MAQ01)"
-              value={companyCode}
-              onChangeText={setCompanyCode}
-            />
-
             {tab === 'company' && (
               <CustomInput
                 placeholder="Nombre de la empresa (ej: Maquinaria S.A.)"
@@ -249,11 +243,6 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 10},
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 8,
   },
   eyebrowContainer: {
     flexDirection: 'row',

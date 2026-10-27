@@ -1,0 +1,83 @@
+@startuml C4_Nivel3_HydroTech
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title HydroTech - Modelo C4 Nivel 3: Componentes del Backend
+
+Container(mobile, "Aplicación móvil", "React Native / JavaScript", "Interfaz de usuario de HydroTech.")
+
+ContainerDb(db, "PostgreSQL / Neon", "PostgreSQL", "Persistencia de la información.")
+
+Container_Boundary(api, "API / Backend HydroTech - Node.js") {
+
+    Component(auth, "Autenticación", "Componente", "Valida credenciales y gestiona el acceso de los usuarios.")
+
+    Component(authorization, "Autorización", "Componente", "Controla permisos según el rol y el contexto de la empresa.")
+
+    Component(companies, "Gestión de empresas", "Componente", "Administra empresas prestadoras y empresas cliente.")
+
+    Component(users, "Gestión de usuarios", "Componente", "Administra usuarios, roles, estados y permisos.")
+
+    Component(machines, "Gestión de maquinaria", "Componente", "Registra, consulta, modifica y desactiva maquinaria.")
+
+    Component(parts, "Gestión de piezas", "Componente", "Gestiona los componentes técnicos registrados.")
+
+    Component(hoses, "Gestión de mangueras", "Componente", "Gestiona las características específicas de las mangueras.")
+
+    Component(lathe, "Gestión de piezas de torno", "Componente", "Gestiona información de piezas fabricadas mediante torno.")
+
+    Component(cylinders, "Gestión de cilindros", "Componente", "Gestiona información técnica de cilindros hidráulicos.")
+
+    Component(orders, "Gestión de órdenes de servicio", "Componente", "Gestiona creación, asignación, ejecución, validación y consulta de órdenes.")
+
+    Component(notifications, "Gestión de notificaciones", "Componente", "Gestiona avisos relacionados con órdenes y actividades.")
+
+    Component(reports, "Reportes", "Componente", "Genera información consolidada de la operación.")
+
+    Component(audit, "Auditoría", "Componente", "Registra las acciones realizadas por los usuarios.")
+
+    Component(ai, "Asistente de IA", "Componente", "Apoya consultas sobre la información técnica almacenada.")
+}
+
+Rel(mobile, auth, "Solicita autenticación")
+Rel(mobile, companies, "Gestiona empresas")
+Rel(mobile, users, "Gestiona usuarios")
+Rel(mobile, machines, "Gestiona maquinaria")
+Rel(mobile, parts, "Gestiona piezas")
+Rel(mobile, orders, "Gestiona órdenes")
+Rel(mobile, notifications, "Consulta notificaciones")
+Rel(mobile, reports, "Consulta reportes")
+Rel(mobile, ai, "Realiza consultas")
+
+Rel(auth, authorization, "Valida permisos")
+Rel(authorization, companies, "Controla acceso")
+Rel(authorization, users, "Controla acceso")
+Rel(authorization, machines, "Controla acceso")
+Rel(authorization, parts, "Controla acceso")
+Rel(authorization, orders, "Controla acceso")
+
+Rel(parts, hoses, "Gestiona")
+Rel(parts, lathe, "Gestiona")
+Rel(parts, cylinders, "Gestiona")
+
+Rel(companies, db, "Lee y escribe")
+Rel(users, db, "Lee y escribe")
+Rel(machines, db, "Lee y escribe")
+Rel(parts, db, "Lee y escribe")
+Rel(hoses, db, "Lee y escribe")
+Rel(lathe, db, "Lee y escribe")
+Rel(cylinders, db, "Lee y escribe")
+Rel(orders, db, "Lee y escribe")
+Rel(notifications, db, "Lee y escribe")
+Rel(reports, db, "Consulta")
+Rel(audit, db, "Registra")
+Rel(ai, db, "Consulta información")
+
+Rel(auth, audit, "Registra acceso")
+Rel(users, audit, "Registra operaciones")
+Rel(machines, audit, "Registra operaciones")
+Rel(parts, audit, "Registra operaciones")
+Rel(orders, audit, "Registra operaciones")
+
+@enduml

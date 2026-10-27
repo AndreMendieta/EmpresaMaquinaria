@@ -1,0 +1,31 @@
+@startuml C4_Nivel2_HydroTech
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title HydroTech - Modelo C4 Nivel 2: Contenedores
+
+Person(user, "Usuario", "Administrador, Supervisor o Técnico.")
+
+System_Boundary(hydrotech, "Sistema HydroTech") {
+
+    Container(app, "Aplicación móvil", "React Native / JavaScript", "Interfaz móvil para autenticación, empresas, usuarios, maquinaria, piezas, órdenes, notificaciones, reportes y consultas.")
+
+    Container(api, "API / Backend", "Node.js", "Gestiona la lógica de negocio, autenticación, autorización, operaciones multiempresa y comunicación con la base de datos.")
+
+    ContainerDb(db, "Base de datos", "PostgreSQL / Neon", "Almacena empresas, usuarios, maquinaria, piezas, órdenes de servicio, notificaciones y auditoría.")
+
+    Container(files, "Gestión de archivos", "Servicio externo / URLs", "Gestiona referencias a fotografías, planos y evidencias.")
+
+    Container(ai, "Asistente de IA", "Servicio de IA", "Apoya consultas relacionadas con la información técnica registrada.")
+}
+
+Rel(user, app, "Utiliza", "HTTPS")
+
+Rel(app, api, "Realiza solicitudes", "HTTPS / JSON")
+
+Rel(api, db, "Consulta y modifica información", "SQL")
+Rel(api, files, "Gestiona referencias de archivos", "HTTPS")
+Rel(api, ai, "Realiza consultas", "HTTPS")
+
+@enduml

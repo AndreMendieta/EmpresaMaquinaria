@@ -1,51 +1,76 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
-import {login} from '../services/authService';
-import {COLORS} from '../constants/colors';
+import { useAuth } from '../auth/useAuth';
+import { COLORS } from '../constants/colors';
 
-const LoginScreen = ({onNavigateToRegister, onLoginSuccess, initialMessage = ''}) => {
-  const [companyCode, setCompanyCode] = useState('');
-  const [email, setEmail] = useState('');
+const LoginScreen = ({
+  onNavigateToRegister,
+  onNavigateToForgotPassword,
+  onRequireVerification,
+  onLoginSuccess,
+}) => {
+  const { login } = useAuth();
+  const [serviceCompanyId, setServiceCompanyId] = useState('');
+  const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState(initialMessage);
+  const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setErrorMessage('');
-
-    const cleanCode = companyCode.trim();
-    const cleanEmail = email.trim();
-
-    if (!cleanCode || !cleanEmail || !password) {
-      setErrorMessage('Completa todos los campos.');
+    const cleanEmail = correo.trim().toLowerCase();
+    const cleanCompanyId = serviceCompanyId.trim();
+    if (!cleanCompanyId || !cleanEmail || !password) {
+      setErrorMessage('Ingresa el ID de la empresa, correo y contraseña.');
       return;
     }
 
     setLoading(true);
     try {
-      const data = await login({companyCode: cleanCode, email: cleanEmail, password});
-
+      await login({
+        serviceCompanyId: cleanCompanyId,
+        correo: cleanEmail,
+        password,
+      });
       if (onLoginSuccess) {
-        onLoginSuccess(data.usuario, data.token);
+        onLoginSuccess();
       }
     } catch (error) {
-      setErrorMessage(error.message || 'No se pudo iniciar sesión.');
+      if (error?.data?.requiereVerificacion) {
+        if (onRequireVerification) {
+          onRequireVerification({
+            email: error.data.correo || cleanEmail,
+            companyId: error.data.serviceCompanyId || cleanCompanyId,
+            devCode: error.data.devCode,
+            emailSent: error.data.emailSent,
+            message: error.message,
+          });
+          return;
+        }
+      }
+      setErrorMessage(error.message || 'Error al iniciar sesión.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickFill = (emailVal, passVal) => {
+    setCorreo(emailVal);
+    setPassword(passVal);
+    setServiceCompanyId('');
+    setErrorMessage('');
   };
 
   return (
@@ -56,40 +81,24 @@ const LoginScreen = ({onNavigateToRegister, onLoginSuccess, initialMessage = ''}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          
           <View style={styles.card}>
+            <Image
+              source={require('../../assets/brand/logo-icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="Logo HydroTech"
+            />
             <View style={styles.eyebrowContainer}>
               <View style={styles.eyebrowBar} />
-              <Text style={styles.eyebrowText}>GESTIÓN DE MAQUINARIA</Text>
+              <Text style={styles.eyebrowText}>SISTEMAS HIDRÁULICOS & FLUIDOS</Text>
             </View>
 
             <Text style={styles.title}>
-              EmpresaMaquinaria
+              Hydro<Text style={styles.titleOrange}>Tech</Text>
             </Text>
-
             <Text style={styles.subtitle}>
-              Sistema de gestión para operaciones y mantenimiento
+              Gestión de maquinaria industrial, repuestos y órdenes
             </Text>
-
-            <CustomInput
-              placeholder="Código de empresa"
-              value={companyCode}
-              onChangeText={setCompanyCode}
-            />
-
-            <CustomInput
-              placeholder="Correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-
-            <CustomInput
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
 
             {errorMessage ? (
               <View style={styles.errorContainer}>
@@ -97,26 +106,75 @@ const LoginScreen = ({onNavigateToRegister, onLoginSuccess, initialMessage = ''}
               </View>
             ) : null}
 
-            {loading ? (
-              <ActivityIndicator
-                size="large"
-                color={COLORS.orange}
-                style={styles.loader}
-              />
-            ) : (
-              <PrimaryButton
-                title="Iniciar Sesión"
-                onPress={handleLogin}
-              />
-            )}
+            <CustomInput
+              label="Empresa Prestadora (ID)"
+              placeholder="UUID de la empresa prestadora"
+              value={serviceCompanyId}
+              onChangeText={setServiceCompanyId}
+              autoCapitalize="none"
+            />
 
-            {/* Enlace para registrarse */}
-            <View style={styles.footerContainer}>
-              <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
-              <TouchableOpacity onPress={onNavigateToRegister}>
-                <Text style={styles.registerLink}>Regístrate aquí</Text>
+            <CustomInput
+              label="Correo Electrónico"
+              placeholder="ej: admin@demo.com"
+              value={correo}
+              onChangeText={setCorreo}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <CustomInput
+              label="Contraseña"
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+
+            {onNavigateToForgotPassword ? (
+              <TouchableOpacity
+                style={styles.forgotContainer}
+                onPress={() => onNavigateToForgotPassword(correo)}>
+                <Text style={styles.forgotText}>¿Olvidaste tu contraseña o ID de empresa?</Text>
               </TouchableOpacity>
+            ) : null}
+
+            <PrimaryButton
+              title="Iniciar Sesión"
+              onPress={handleLogin}
+              loading={loading}
+            />
+
+            {/* Accesos rápidos de desarrollo */}
+            <View style={styles.quickAccessSection}>
+              <Text style={styles.quickAccessTitle}>ACCESO RÁPIDO POR ROL (DEMO)</Text>
+              <View style={styles.quickAccessRow}>
+                <TouchableOpacity
+                  style={[styles.quickBtn, styles.quickBtnAdmin]}
+                  onPress={() => handleQuickFill('admin@demo.com', 'Admin123!')}>
+                  <Text style={styles.quickBtnText}>Admin</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickBtn, styles.quickBtnSupervisor]}
+                  onPress={() => handleQuickFill('supervisor@demo.com', 'Supervisor123!')}>
+                  <Text style={styles.quickBtnText}>Supervisor</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickBtn, styles.quickBtnTecnico]}
+                  onPress={() => handleQuickFill('tecnico@demo.com', 'Tecnico123!')}>
+                  <Text style={styles.quickBtnText}>Técnico</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
+            {onNavigateToRegister ? (
+              <View style={styles.footerLink}>
+                <Text style={styles.footerText}>¿Tu empresa aún no está registrada?</Text>
+                <TouchableOpacity onPress={onNavigateToRegister}>
+                  <Text style={styles.footerAction}>Crear Cuenta</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -135,90 +193,137 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 30,
+    padding: 20,
   },
   card: {
     backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 10},
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 8,
+    borderRadius: 18,
+    padding: 24,
+  },
+  logo: {
+    alignSelf: 'center',
+    width: 150,
+    height: 101,
+    marginBottom: 16,
   },
   eyebrowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   eyebrowBar: {
     width: 3,
-    height: 12,
+    height: 14,
     backgroundColor: COLORS.orange,
     marginRight: 8,
     borderRadius: 2,
   },
   eyebrowText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: COLORS.silver,
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    textAlign: 'center',
     letterSpacing: -0.5,
   },
   titleOrange: {
     color: COLORS.orange,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: 28,
-    marginTop: 6,
-  },
-  loader: {
-    marginTop: 14,
+    marginBottom: 20,
+    marginTop: 2,
   },
   errorContainer: {
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: 'rgba(239, 68, 68, 0.35)',
     borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 10,
     marginBottom: 14,
   },
   errorText: {
     color: COLORS.danger,
+    fontSize: 12,
     textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  footerContainer: {
+  quickAccessSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  quickAccessTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.silver,
+    letterSpacing: 0.6,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  quickAccessRow: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  quickBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  quickBtnAdmin: {
+    backgroundColor: 'rgba(255, 106, 0, 0.12)',
+    borderColor: 'rgba(255, 106, 0, 0.4)',
+  },
+  quickBtnSupervisor: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+  },
+  quickBtnTecnico: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  quickBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  forgotContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+    marginTop: -4,
+    paddingVertical: 4,
+  },
+  forgotText: {
+    fontSize: 11,
+    color: COLORS.silver,
+    fontWeight: '600',
+  },
+  footerLink: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 26,
+    marginTop: 18,
+    gap: 6,
   },
   footerText: {
+    fontSize: 12,
     color: COLORS.textSecondary,
-    fontSize: 14,
   },
-  registerLink: {
-    color: COLORS.orange,
-    fontSize: 14,
+  footerAction: {
+    fontSize: 12,
     fontWeight: '700',
+    color: COLORS.orange,
   },
 });
 

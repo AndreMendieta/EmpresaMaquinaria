@@ -6,8 +6,12 @@ import React from 'react';
 import ReactTestRenderer, {act} from 'react-test-renderer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../App';
-import {saveSession, getSession} from '../src/services/session';
-import {verifyToken} from '../src/services/authService';
+import {saveSession, getSession} from '../src/auth/session';
+import {getMe} from '../src/api/authApi';
+
+jest.mock('react-native-safe-area-context', () =>
+  require('react-native-safe-area-context/jest/mock').default,
+);
 
 const storage = {};
 
@@ -23,11 +27,10 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   }),
 }));
 
-jest.mock('../src/services/authService', () => ({
-  verifyToken: jest.fn(),
+jest.mock('../src/api/authApi', () => ({
+  getMe: jest.fn(),
   login: jest.fn(),
-  registerCompany: jest.fn(),
-  registerUser: jest.fn(),
+  register: jest.fn(),
 }));
 
 beforeEach(() => {
@@ -53,10 +56,10 @@ test('persists and restores the session', async () => {
   expect(session).toEqual({token: 'abc', user: {id: 1, nombre: 'Ana'}});
 });
 
-test('restores a valid session only after verifying the token', async () => {
-  const session = {token: 'valid-token', user: {id: 2, nombre: 'Luis'}};
+test('restores a valid session after refreshing the user', async () => {
+  const session = {token: 'valid-token', user: {id: 2, nombre_completo: 'Luis', rol: 'admin'}};
   await saveSession(session);
-  verifyToken.mockResolvedValue({ok: true, usuario: {...session.user, rol: 'admin'}});
+  getMe.mockResolvedValue({ok: true, usuario: session.user});
 
   let renderer;
   await act(async () => {
@@ -66,6 +69,6 @@ test('restores a valid session only after verifying the token', async () => {
     await Promise.resolve();
   });
 
-  expect(verifyToken).toHaveBeenCalledWith('valid-token');
+  expect(getMe).toHaveBeenCalledTimes(1);
   expect(renderer).toBeTruthy();
 });

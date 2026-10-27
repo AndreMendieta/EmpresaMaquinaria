@@ -1,0 +1,26 @@
+@startuml C4_Nivel1_HydroTech
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title HydroTech - Modelo C4 Nivel 1: Contexto del Sistema
+
+Person(admin, "Administrador", "Gestiona las empresas cliente, usuarios y la operación general.")
+Person(supervisor, "Supervisor", "Supervisa la información técnica, maquinaria, piezas y órdenes de servicio.")
+Person(tecnico, "Técnico", "Registra información técnica de componentes y ejecuta actividades asignadas.")
+
+System(hydrotech, "HydroTech", "Aplicación móvil para la identificación, registro, consulta y gestión de información técnica de componentes hidráulicos y metalmecánicos.")
+
+System_Ext(neon, "PostgreSQL / Neon", "Base de datos para la persistencia de la información.")
+System_Ext(storage, "Servicio de almacenamiento", "Almacena fotografías, planos y evidencias mediante referencias URL.")
+System_Ext(ai, "Servicio de IA", "Proporciona asistencia para consultas sobre la información registrada.")
+
+Rel(admin, hydrotech, "Gestiona la operación")
+Rel(supervisor, hydrotech, "Supervisa y gestiona información")
+Rel(tecnico, hydrotech, "Registra y consulta información técnica")
+
+Rel(hydrotech, neon, "Lee y escribe información")
+Rel(hydrotech, storage, "Gestiona referencias de archivos")
+Rel(hydrotech, ai, "Realiza consultas de asistencia")
+
+@enduml
