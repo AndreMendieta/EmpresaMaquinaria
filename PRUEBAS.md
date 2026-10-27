@@ -11,6 +11,8 @@ Guía de pruebas de HydroTech: app móvil React Native (Android), backend Node/E
 | Estático | ESLint | Calidad y estilo del código | `npm run lint` |
 | Unitarias (app) | Jest + React Test Renderer | Render y sesión persistida | `__tests__/App.test.tsx` |
 | Unitarias (backend) | Jest | Middleware de autenticación y roles | `backend/__tests__/auth.middleware.test.js` |
+| Unitarias (backend) | Jest | Registro/login con código de empresa | `backend/__tests__/auth.companyCode.test.js` |
+| Unitarias (app) | Jest | API de maquinaria (lista y creación) | `__tests__/machinesApi.test.js` |
 | Unitarias (backend) | `node:test` | Mailer y reporte PDF | `backend/__tests__/*.node.test.cjs` |
 | Compilación | Gradle | Build Android Debug | `android/gradlew :app:assembleDebug` |
 | Manuales | Preview web + dispositivo | Flujos por rol | Sección 5 |
@@ -31,7 +33,7 @@ Guía de pruebas de HydroTech: app móvil React Native (Android), backend Node/E
 ```bash
 # Raíz del proyecto
 npm run lint                  # análisis estático
-npm test -- --runInBand       # Jest: app + middleware de autenticación
+npm test -- --runInBand       # Jest: app, API de maquinaria, autenticación y código de empresa
 
 # Pruebas del backend con node:test
 node --test backend/__tests__/mailer.node.test.cjs backend/__tests__/companyReportPdf.node.test.cjs
@@ -57,6 +59,15 @@ cd android
 | 8 | `mailer.node.test.cjs` | SMTP ausente | Informa que el correo **no** se envió |
 | 9 | `mailer.node.test.cjs` | SMTP ausente en producción | No expone el código de verificación |
 | 10 | `companyReportPdf.node.test.cjs` | Generación de PDF | PDF válido con máquinas, piezas y órdenes agrupadas |
+| 11 | `auth.companyCode.test.js` | Registro con código de formato inválido | 400 con mensaje de código de empresa |
+| 12 | `auth.companyCode.test.js` | Registro con código ya existente | 409 y no crea la empresa |
+| 13 | `auth.companyCode.test.js` | Registro con código válido (`maq01`) | Se guarda como `MAQ01` y se devuelve en `companyCode` |
+| 14 | `auth.companyCode.test.js` | Login con código corto | El código se convierte al UUID de la empresa |
+| 15 | `auth.companyCode.test.js` | Login con código inexistente | 401, no coincide con ninguna empresa |
+| 16 | `auth.companyCode.test.js` | Login con UUID | Se usa tal cual, sin buscar por código |
+| 17 | `machinesApi.test.js` | Lista de máquinas | El backend envía `maquinarias`; la app lo expone como `maquinas` |
+| 18 | `machinesApi.test.js` | Lista de máquinas sin datos | Devuelve lista vacía |
+| 19 | `machinesApi.test.js` | Crear máquina | Código en mayúsculas y campos vacíos como `null` |
 
 ---
 
@@ -80,6 +91,20 @@ npm run preview                       # http://127.0.0.1:4173/preview.html
 | M7 | Reportes | Exportar PDF de máquinas, piezas y órdenes | Descarga un PDF con datos de la empresa |
 | M8 | Aislamiento multiempresa | Ingresar con otra empresa | No se ven datos de la primera |
 
+### Pruebas manuales en el APK (backend en Render)
+
+La primera petición puede tardar hasta 1 minuto (la instancia gratuita se duerme).
+
+| # | Flujo | Pasos | Resultado esperado |
+|---|---|---|---|
+| A1 | Registro con código | Crear cuenta con código `MAQ01`, empresa, nombre, correo y contraseña | Pasa a la pantalla de verificación; llega el correo con el código |
+| A2 | Contraseña visible | Pulsar Mostrar/Ocultar en los campos de contraseña | Alterna entre texto y puntos |
+| A3 | Verificar correo | Ingresar el código de 6 dígitos | Va al login con correo y código de empresa rellenados |
+| A4 | Login con código | Entrar con `MAQ01`, correo y contraseña | Ingresa al sistema |
+| A5 | Sin accesos demo | Abrir el login | No aparece "Acceso rápido por rol (demo)" |
+| A6 | Código duplicado | Registrar otra empresa con `MAQ01` | Mensaje "Ese código de empresa ya existe" |
+| A7 | Crear máquina | Maquinaria > Crear Máquina, completar y guardar | Vuelve a la lista y la máquina aparece |
+
 ---
 
 ## 6. Criterios de aceptación
@@ -87,7 +112,7 @@ npm run preview                       # http://127.0.0.1:4173/preview.html
 - `npm run lint` sin errores.
 - Todas las pruebas automatizadas en verde.
 - `assembleDebug` termina con `BUILD SUCCESSFUL`.
-- Flujos manuales M1 a M8 sin errores bloqueantes.
+- Flujos manuales M1 a M8 y A1 a A7 sin errores bloqueantes.
 - No se versionan archivos `.env` ni credenciales.
 
 ---
