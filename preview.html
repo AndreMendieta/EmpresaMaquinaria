@@ -1069,50 +1069,6 @@
 <body>
 
   <div class="app-layout">
-    <!-- Panel Lateral de Control HydroTech -->
-    <div class="control-panel">
-      <div class="eyebrow-bar">HYDROTECH INDUSTRIAL</div>
-      <div class="control-title">
-        Hydro<em>Tech</em>
-      </div>
-      <p class="control-desc">
-        Plataforma de gestión de fluidos, maquinaria y piezas de precisión.
-      </p>
-
-      <div id="backend-status-badge" class="status-badge status-offline">
-        <div class="status-dot"></div>
-        <span id="backend-status-text">Verificando Backend...</span>
-      </div>
-
-      <div class="quick-section">
-        <div class="quick-title">Navegación</div>
-        <button class="quick-btn" onclick="setView('login')">
-          <span>Iniciar Sesión</span>
-        </button>
-        <button class="quick-btn" onclick="setView('register')">
-          <span>Registrar Cuenta</span>
-        </button>
-        <button class="quick-btn" onclick="setView('verify_email')">
-          <span>Verificar Correo (6 Dígitos)</span>
-        </button>
-        <button class="quick-btn" onclick="setView('forgot_password')">
-          <span>Recuperar Clave / Empresa</span>
-        </button>
-      </div>
-
-      <div class="guide-card">
-        <strong>HU-014 (Técnico):</strong> Busca maquinaria autorizada. Consulta el manual técnico en línea. Busca y consulta la ficha técnica de piezas existentes o registra una nueva con medidas y fotos.
-      </div>
-
-      <div class="guide-card">
-        <strong>HU-015 (Supervisor):</strong> Registra maquinaria en la flota (con detección de duplicados). Revisa la bandeja de alertas y aprueba fichas registradas por técnicos.
-      </div>
-
-      <div class="help-hint" style="margin-top: 14px;">
-        Paleta: <span style="color: var(--orange); font-weight:700;">#FF6A00</span> · <span style="color: var(--silver); font-weight:700;">#C0C0C0</span> · <span style="color: #6B7280; font-weight:700;">#0D0D0D</span>.
-      </div>
-    </div>
-
     <!-- Teléfono Móvil Simulado -->
     <div class="phone-frame">
       <div class="phone-notch">
@@ -1349,26 +1305,6 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-
-    // Comprobar estado backend
-    async function checkBackend() {
-      const badge = document.getElementById('backend-status-badge');
-      const text = document.getElementById('backend-status-text');
-      try {
-        const res = await fetch('http://localhost:3000/health', { method: 'GET' });
-        if (res.ok) {
-          badge.className = 'status-badge status-online';
-          text.innerText = 'Backend Conectado (Puerto 3000)';
-        } else {
-          throw new Error();
-        }
-      } catch (e) {
-        badge.className = 'status-badge status-offline';
-        text.innerText = 'Backend Desconectado (npm run dev)';
-      }
-    }
-    checkBackend();
-    setInterval(checkBackend, 5000);
 
     function setView(view) {
       currentView = view;
