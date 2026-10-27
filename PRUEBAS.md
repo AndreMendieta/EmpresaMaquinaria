@@ -82,7 +82,7 @@ npm run preview                       # http://127.0.0.1:4173/preview.html
 
 | # | Flujo | Pasos | Resultado esperado |
 |---|---|---|---|
-| M1 | Login por rol | Acceso rápido Admin, Supervisor y Técnico | Cada rol ve solo sus módulos |
+| M1 | Login por rol | Iniciar sesión con cada usuario (admin, supervisor, técnico) | Cada rol ve solo sus módulos |
 | M2 | Registro y verificación | Registrar cuenta, ingresar código de 6 dígitos | Cuenta activada; si no hay SMTP, el mensaje lo indica |
 | M3 | Recuperar clave / empresa | Pestañas de contraseña y de ID de empresa | Mensaje de envío honesto |
 | M4 | Maquinaria | Crear máquina; repetir el mismo código | Detecta duplicado y pide confirmación |

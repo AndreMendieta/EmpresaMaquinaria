@@ -1085,22 +1085,6 @@
       </div>
 
       <div class="quick-section">
-        <div class="quick-title">Acceso Rápido por Rol</div>
-        <button class="quick-btn" onclick="quickLogin('admin@demo.com', 'Admin123!')">
-          <span>Admin Principal</span>
-          <span class="badge-pill badge-admin">ADMIN</span>
-        </button>
-        <button class="quick-btn" onclick="quickLogin('supervisor@demo.com', 'Supervisor123!')">
-          <span>Supervisor de Flota</span>
-          <span class="badge-pill badge-supervisor">SUPERVISOR</span>
-        </button>
-        <button class="quick-btn" onclick="quickLogin('tecnico@demo.com', 'Tecnico123!')">
-          <span>Técnico de Campo</span>
-          <span class="badge-pill badge-tecnico">TÉCNICO</span>
-        </button>
-      </div>
-
-      <div class="quick-section">
         <div class="quick-title">Navegación</div>
         <button class="quick-btn" onclick="setView('login')">
           <span>Iniciar Sesión</span>
@@ -3048,16 +3032,6 @@
       piezasList = [];
       notificacionesList = [];
       setView('login');
-    }
-
-    function quickLogin(email, password) {
-      setView('login');
-      setTimeout(() => {
-        document.getElementById('login-company').value = 'DEMO01';
-        document.getElementById('login-email').value = email;
-        document.getElementById('login-password').value = password;
-        handleLogin();
-      }, 50);
     }
 
     // Iniciar
