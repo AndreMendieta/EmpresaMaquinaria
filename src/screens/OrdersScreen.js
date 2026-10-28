@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     backgroundColor: COLORS.surface,
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 4,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: COLORS.orange,
-    borderRadius: 8,
+    borderRadius: 4,
   },
   btnCreateText: {
     color: '#FFF',
@@ -314,7 +314,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.orangeDim,
+    borderRadius: 4,
     padding: 14,
   },
   cardItemMine: {

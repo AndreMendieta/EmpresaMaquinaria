@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
+    borderRadius: 4,
     padding: 16,
     marginBottom: 16,
   },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 42,
     backgroundColor: COLORS.orange,
-    borderRadius: 8,
+    borderRadius: 4,
     marginTop: 12,
   },
   exportButtonDisabled: {
@@ -286,7 +286,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.orange,
+    borderRadius: 4,
     padding: 16,
   },
   sectionHeader: {

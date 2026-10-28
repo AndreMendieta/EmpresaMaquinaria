@@ -1,5 +1,4 @@
 // src/api/client.js
-import { Platform } from 'react-native';
 import { getSession, clearSession } from '../auth/session';
 
 let onSessionExpiredCallback = null;

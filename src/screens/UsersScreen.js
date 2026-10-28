@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     backgroundColor: COLORS.surface,
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 4,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -310,7 +310,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.orangeDim,
+    borderRadius: 4,
     padding: 14,
   },
   cardHeader: {
@@ -375,7 +377,7 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     backgroundColor: COLORS.surface,
-    borderRadius: 14,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 18,

@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface2,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     backgroundColor: COLORS.surface,
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',
@@ -263,7 +263,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.orangeDim,
+    borderRadius: 4,
     padding: 12,
   },
   cardTop: {

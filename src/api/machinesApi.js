@@ -5,10 +5,6 @@ export async function getMachines() {
   return {...res, maquinas: res?.maquinas || res?.maquinarias || []};
 }
 
-export async function getMachineById(id) {
-  return client.get(`/machines/${id}`);
-}
-
 export async function createMachine({
   empresaClienteId,
   codigo,
@@ -27,8 +23,4 @@ export async function createMachine({
     urlManual: urlManual?.trim() || null,
     descripcion: descripcion?.trim() || null,
   });
-}
-
-export async function updateMachine(id, data) {
-  return client.patch(`/machines/${id}`, data);
 }
