@@ -24,7 +24,9 @@ const styles = StyleSheet.create({
   button: {
     minHeight: 52,
     backgroundColor: COLORS.orange,
-    borderRadius: 10,
+    borderRadius: 4,
+    borderBottomWidth: 3,
+    borderBottomColor: COLORS.orangeDim,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
@@ -32,13 +34,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
 });
 

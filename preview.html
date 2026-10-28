@@ -18,12 +18,12 @@
       --orange: #FF6A00;
       --orange-dim: #C75300;
       --silver: #C0C0C0;
-      --black: #0D0D0D;
-      --surface: #161616;
-      --surface-2: #1E1E1E;
-      --border: rgba(192, 192, 192, 0.16);
-      --ink: #F3F2EF;
-      --ink-muted: #A9A9A6;
+      --black: #0B0C0E;
+      --surface: #15171A;
+      --surface-2: #1D2024;
+      --border: #2A2E33;
+      --ink: #F2F3F5;
+      --ink-muted: #9BA1A8;
 
       --role-admin: #FF6A00;
       --role-supervisor: #38BDF8;
@@ -1064,6 +1064,45 @@
         max-width: 410px;
       }
     }
+
+    /* ============================================
+       Estilo industrial (alineado con la app móvil)
+       ============================================ */
+    .rn-card, .user-profile-card, .selected-machine-card, .machine-item-card,
+    .pieza-item-card, .notif-card, .user-row-card, .detail-field-box,
+    .alert-notice-box, .modal-box, .guide-card, .quick-btn, .dash-action-btn,
+    .rn-input, .rn-btn, .dash-search-input, .manual-btn, .btn-change-maq,
+    .btn-validate-piece, .btn-toggle-active, .rn-tab-group, .rn-tab,
+    .role-pill-option, .already-exists-banner, .rn-error {
+      border-radius: 4px !important;
+    }
+    .val-badge, .mini-badge, .badge-pill, .role-badge-lg, .status-badge {
+      border-radius: 3px !important;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .rn-card { border-top: 4px solid var(--orange); }
+    .user-profile-card { border-left: 4px solid var(--orange); }
+    .machine-item-card, .pieza-item-card, .notif-card, .user-row-card {
+      border-left: 3px solid var(--orange-dim);
+    }
+    .dash-header {
+      background: #000;
+      border-bottom: 3px solid var(--orange);
+    }
+    .dash-brand, .dash-company, .profile-name, .rn-brand-title,
+    .dash-section-title, .machine-item-name, .pieza-name, .modal-title {
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .rn-input { border-left: 3px solid var(--orange-dim) !important; }
+    .rn-btn {
+      border-bottom: 3px solid var(--orange-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 800;
+    }
+    .dash-section-title { color: var(--orange); }
   </style>
 </head>
 <body>

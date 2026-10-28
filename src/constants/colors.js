@@ -10,15 +10,15 @@ export const COLORS = {
   black: '#0D0D0D',
 
   // Superficies Oscuras Elegantes
-  background: '#0D0D0D',
-  surface: '#161616',
-  surface2: '#1E1E1E',
-  surfaceCard: '#181818',
+  background: '#0B0C0E',
+  surface: '#15171A',
+  surface2: '#1D2024',
+  surfaceCard: '#181B1F',
 
   // Tipografía & Contrastes
-  textPrimary: '#F3F2EF',      // ink
-  textSecondary: '#A9A9A6',    // ink-muted
-  border: '#262626',
+  textPrimary: '#F2F3F5',      // ink
+  textSecondary: '#9BA1A8',    // ink-muted (acero)
+  border: '#2A2E33',
   borderHighlight: 'rgba(192, 192, 192, 0.22)',
 
   // Compatibilidad con componentes

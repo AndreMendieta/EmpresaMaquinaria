@@ -172,7 +172,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 18,
+    borderTopWidth: 4,
+    borderTopColor: COLORS.orange,
+    borderRadius: 4,
     padding: 24,
   },
   logo: {
@@ -200,10 +202,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '900',
     color: COLORS.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   titleOrange: {
     color: COLORS.orange,

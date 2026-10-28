@@ -61,9 +61,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.silver,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
     marginBottom: 6,
   },
   input: {
@@ -71,7 +73,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface2,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.orangeDim,
+    borderRadius: 4,
     paddingHorizontal: 16,
     fontSize: 15,
     color: COLORS.textPrimary,
@@ -94,7 +98,8 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#EF4444',
-    backgroundColor: '#FFF1F2',
+    borderLeftColor: '#EF4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.10)',
   },
   errorText: {
     color: '#EF4444',
