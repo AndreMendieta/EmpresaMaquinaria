@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../App';
 import {saveSession, getSession} from '../src/auth/session';
 import {getMe} from '../src/api/authApi';
+import {AuthContext, AuthProvider} from '../src/auth/AuthContext';
 
 jest.mock('react-native-safe-area-context', () =>
   require('react-native-safe-area-context/jest/mock').default,
@@ -71,4 +72,24 @@ test('restores a valid session after refreshing the user', async () => {
 
   expect(getMe).toHaveBeenCalledTimes(1);
   expect(renderer).toBeTruthy();
+});
+
+test('reports an error when refreshing without an active session', async () => {
+  let auth;
+  await act(async () => {
+    ReactTestRenderer.create(
+      <AuthProvider>
+        <AuthContext.Consumer>
+          {(value) => {
+            auth = value;
+            return null;
+          }}
+        </AuthContext.Consumer>
+      </AuthProvider>,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
+  await expect(auth.refreshSession()).rejects.toThrow('No hay una sesión activa para sincronizar.');
 });

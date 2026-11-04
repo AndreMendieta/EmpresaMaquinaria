@@ -68,16 +68,16 @@ async function request(path, options = {}) {
   const timeoutMs = options.timeout ?? 60000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  const token = await resolveToken(options.token);
-  const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
-
-  const headers = {
-    ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {}),
-  };
-
   try {
+    const token = await resolveToken(options.token);
+    const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+    const headers = {
+      ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    };
+
     const response = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,

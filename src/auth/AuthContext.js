@@ -84,16 +84,15 @@ export const AuthProvider = ({ children }) => {
   );
 
   const refreshSession = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await getMe();
-      if (res?.ok && res?.usuario) {
-        applySession(res.usuario, token);
-        await saveSession({ user: res.usuario, token });
-      }
-    } catch (e) {
-      console.error('Error refrescando sesión:', e);
+    if (!token) {
+      throw new Error('No hay una sesión activa para sincronizar.');
     }
+    const res = await getMe();
+    if (!res?.ok || !res?.usuario) {
+      throw new Error(res?.error || res?.message || 'No se pudo sincronizar la sesión.');
+    }
+    applySession(res.usuario, token);
+    await saveSession({ user: res.usuario, token });
   }, [token, applySession]);
 
   // Reemplaza los datos del usuario (p. ej. tras cambiar foto o logo) y los persiste
