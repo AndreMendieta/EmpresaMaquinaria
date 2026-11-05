@@ -9,6 +9,7 @@ const piezasRoutes = require('./routes/piezas.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
 const auditoriaRoutes = require('./routes/auditoria.routes');
 const asistenteRoutes = require('./routes/asistente.routes');
+const staticAssets = require('./middlewares/staticAssets');
 const v2App = require('./v2/app');
 const previewCompat = require('./v2/previewCompat');
 
@@ -23,6 +24,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/assets', staticAssets);
 
 // Ruta de salud, útil para verificar que el deploy en el hosting funciona
 app.get('/health', (req, res) => {
