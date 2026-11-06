@@ -3,6 +3,7 @@ const pool = require('../../db/pool');
 const auth = require('../middlewares/auth');
 const requireRole = require('../middlewares/requireRole');
 const {registrarAuditoria} = require('../utils/audit');
+const {validateClientCompanyFields} = require('../utils/clientCompanyValidation');
 
 const router = express.Router();
 router.use(auth);
@@ -20,6 +21,8 @@ router.post('/', requireRole('admin'), async (req, res) => {
   try {
     const {razonSocial, nombreComercial, identificacionFiscal, correo, telefono, direccion} = req.body;
     if (!razonSocial) return res.status(400).json({error: 'razonSocial es obligatorio'});
+    const validationError = validateClientCompanyFields(req.body);
+    if (validationError) return res.status(400).json({error: validationError});
     const {rows} = await pool.query(
       `INSERT INTO empresas_clientes
         (empresa_prestadora_id, razon_social, nombre_comercial, identificacion_fiscal, correo, telefono, direccion)
@@ -37,6 +40,8 @@ router.post('/', requireRole('admin'), async (req, res) => {
 router.patch('/:id', requireRole('admin'), async (req, res) => {
   try {
     const fields = {razonSocial: 'razon_social', nombreComercial: 'nombre_comercial', identificacionFiscal: 'identificacion_fiscal', correo: 'correo', telefono: 'telefono', direccion: 'direccion', activa: 'activa'};
+    const validationError = validateClientCompanyFields(req.body);
+    if (validationError) return res.status(400).json({error: validationError});
     const updates = [];
     const values = [req.params.id, req.user.service_company_id];
     for (const [input, column] of Object.entries(fields)) {

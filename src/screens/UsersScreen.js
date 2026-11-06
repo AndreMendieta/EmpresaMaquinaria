@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
@@ -188,8 +189,8 @@ const UsersScreen = ({ onBack }) => {
 
       {/* Modal Crear Usuario */}
       <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
+          <ScrollView style={styles.modalBox} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>Registrar Nuevo Usuario</Text>
 
             <CustomInput
@@ -245,8 +246,8 @@ const UsersScreen = ({ onBack }) => {
                 loading={creating}
               />
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

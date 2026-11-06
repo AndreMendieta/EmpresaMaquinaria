@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
   Image,
   Linking,
 } from 'react-native';
@@ -505,8 +506,8 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
       </ScrollView>
 
       <Modal visible={modalEditVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
+          <ScrollView style={styles.modalBox} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>Modificar Orden</Text>
             <CustomInput label="Título" value={editTitle} onChangeText={setEditTitle} />
             <CustomInput label="Descripción" value={editDescription} onChangeText={setEditDescription} multiline numberOfLines={3} />
@@ -524,16 +525,16 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
               </TouchableOpacity>
               <CustomButton title="Guardar" onPress={handleEditOrder} loading={loadingAction} />
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ======================================================== */}
       {/* MODAL: AGREGAR EVIDENCIA DEL TRABAJO REALIZADO           */}
       {/* ======================================================== */}
       <Modal visible={modalEvidenceVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
+          <ScrollView style={styles.modalBox} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>Adjuntar Evidencia Técnica</Text>
             <Text style={styles.modalSubtitle}>
               Registra evidencias de la condición del equipo o del trabajo ejecutado:
@@ -584,8 +585,8 @@ const OrderDetailScreen = ({ order, onBack, onOrderUpdated }) => {
                 loading={savingEvidence}
               />
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ======================================================== */}

@@ -19,6 +19,14 @@ import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import Icon from '../components/Icon';
 import { COLORS } from '../constants/colors';
+import {
+  LIMITS,
+  PHONE_MAX,
+  sanitizePhone,
+  sanitizeTaxId,
+  validatePhone,
+  validateEmail,
+} from '../utils/fieldRules';
 
 const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMachine }) => {
   const { role } = useAuth();
@@ -51,6 +59,11 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
   const handleSaveEdit = async () => {
     if (!form.razonSocial.trim()) {
       setActionError('La razón social es obligatoria.');
+      return;
+    }
+    const fieldError = validateEmail(form.correo) || validatePhone(form.telefono);
+    if (fieldError) {
+      setActionError(fieldError);
       return;
     }
     setSaving(true);
@@ -153,12 +166,12 @@ const ClientCompanyDetailScreen = ({ company, onBack, onSelectMachine, onAddMach
 
           {editing ? (
             <View>
-              <CustomInput label="Razón social *" value={form.razonSocial} onChangeText={(v) => setForm({ ...form, razonSocial: v })} />
-              <CustomInput label="Nombre comercial" value={form.nombreComercial} onChangeText={(v) => setForm({ ...form, nombreComercial: v })} />
-              <CustomInput label="Identificación fiscal (NIT)" value={form.identificacionFiscal} onChangeText={(v) => setForm({ ...form, identificacionFiscal: v })} />
-              <CustomInput label="Correo" value={form.correo} onChangeText={(v) => setForm({ ...form, correo: v })} autoCapitalize="none" keyboardType="email-address" />
-              <CustomInput label="Teléfono" value={form.telefono} onChangeText={(v) => setForm({ ...form, telefono: v })} keyboardType="phone-pad" />
-              <CustomInput label="Dirección" value={form.direccion} onChangeText={(v) => setForm({ ...form, direccion: v })} />
+              <CustomInput label="Razón social *" value={form.razonSocial} onChangeText={(v) => setForm({ ...form, razonSocial: v })} maxLength={LIMITS.razonSocial} />
+              <CustomInput label="Nombre comercial" value={form.nombreComercial} onChangeText={(v) => setForm({ ...form, nombreComercial: v })} maxLength={LIMITS.nombreComercial} />
+              <CustomInput label="Identificación fiscal (NIT)" value={form.identificacionFiscal} onChangeText={(v) => setForm({ ...form, identificacionFiscal: sanitizeTaxId(v) })} keyboardType="numbers-and-punctuation" maxLength={LIMITS.identificacionFiscal} />
+              <CustomInput label="Correo" value={form.correo} onChangeText={(v) => setForm({ ...form, correo: v })} autoCapitalize="none" keyboardType="email-address" maxLength={LIMITS.correo} />
+              <CustomInput label="Teléfono" value={form.telefono} onChangeText={(v) => setForm({ ...form, telefono: sanitizePhone(v) })} keyboardType="number-pad" maxLength={PHONE_MAX} helperText={`Solo números (7 a ${PHONE_MAX} dígitos)`} />
+              <CustomInput label="Dirección" value={form.direccion} onChangeText={(v) => setForm({ ...form, direccion: v })} maxLength={LIMITS.direccion} />
               <PrimaryButton title="Guardar cambios" onPress={handleSaveEdit} loading={saving} />
               <TouchableOpacity style={styles.cancelEditBtn} onPress={() => setEditing(false)} disabled={saving}>
                 <Text style={styles.cancelEditText}>Cancelar</Text>

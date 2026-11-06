@@ -5,6 +5,7 @@ const pool = require('../db/pool');
 const auth = require('./middlewares/auth');
 const requireRole = require('./middlewares/requireRole');
 const {registrarAuditoria} = require('./utils/audit');
+const {validateClientCompanyFields} = require('./utils/clientCompanyValidation');
 const {crearNotificacion} = require('./utils/notifications');
 
 const {
@@ -581,6 +582,8 @@ router.get('/client-companies', async (req, res) => {
 router.post('/client-companies', requireRole('admin'), async (req, res) => {
   const {razonSocial, nombreComercial, identificacionFiscal, correo, telefono, direccion} = req.body;
   if (!razonSocial) return res.status(400).json({message: 'La razón social es obligatoria.'});
+  const validationError = validateClientCompanyFields(req.body);
+  if (validationError) return res.status(400).json({message: validationError});
   try {
     const {rows} = await pool.query(
       `INSERT INTO empresas_clientes

@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
@@ -17,6 +18,14 @@ import PrimaryButton from '../components/PrimaryButton';
 import Badge from '../components/Badge';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
+import {
+  LIMITS,
+  PHONE_MAX,
+  sanitizePhone,
+  sanitizeTaxId,
+  validatePhone,
+  validateEmail,
+} from '../utils/fieldRules';
 
 const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
   const { role } = useAuth();
@@ -65,6 +74,11 @@ const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
     setModalError('');
     if (!razonSocial.trim()) {
       setModalError('La razón social es obligatoria.');
+      return;
+    }
+    const fieldError = validateEmail(correo) || validatePhone(telefono);
+    if (fieldError) {
+      setModalError(fieldError);
       return;
     }
 
@@ -172,7 +186,7 @@ const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
 
       {/* Modal para Crear Empresa Cliente (Solo Admin) */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
           <View style={styles.modalCard}>
             <ScrollView keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>Nueva Empresa Cliente</Text>
@@ -189,18 +203,22 @@ const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
                 placeholder="ej: Minera Los Andes S.A.S."
                 value={razonSocial}
                 onChangeText={setRazonSocial}
+                maxLength={LIMITS.razonSocial}
               />
               <CustomInput
                 label="Nombre Comercial"
                 placeholder="ej: Mina Los Andes"
                 value={nombreComercial}
                 onChangeText={setNombreComercial}
+                maxLength={LIMITS.nombreComercial}
               />
               <CustomInput
                 label="Identificación Fiscal (NIT / RUC)"
                 placeholder="ej: 900.123.456-7"
                 value={identificacionFiscal}
-                onChangeText={setIdentificacionFiscal}
+                onChangeText={(v) => setIdentificacionFiscal(sanitizeTaxId(v))}
+                keyboardType="numbers-and-punctuation"
+                maxLength={LIMITS.identificacionFiscal}
               />
               <CustomInput
                 label="Correo de Contacto"
@@ -208,19 +226,23 @@ const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
                 value={correo}
                 onChangeText={setCorreo}
                 keyboardType="email-address"
+                maxLength={LIMITS.correo}
               />
               <CustomInput
                 label="Teléfono"
-                placeholder="ej: +57 300 123 4567"
+                placeholder="ej: 3001234567"
                 value={telefono}
-                onChangeText={setTelefono}
-                keyboardType="phone-pad"
+                onChangeText={(v) => setTelefono(sanitizePhone(v))}
+                keyboardType="number-pad"
+                maxLength={PHONE_MAX}
+                helperText={`Solo números (7 a ${PHONE_MAX} dígitos)`}
               />
               <CustomInput
                 label="Dirección"
                 placeholder="ej: Km 12 Vía al Llano"
                 value={direccion}
                 onChangeText={setDireccion}
+                maxLength={LIMITS.direccion}
               />
 
               <PrimaryButton
@@ -236,7 +258,7 @@ const ClientCompaniesScreen = ({ onBack, onSelectCompany }) => {
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
