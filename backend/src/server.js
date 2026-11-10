@@ -20,6 +20,18 @@ if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
 }
 
 const app = express();
+const canonicalOrigin = 'https://hydrotech-api-c2bs.onrender.com';
+
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    const forwardedProtocol = req.get('x-forwarded-proto')?.split(',')[0].trim();
+    const canonicalHost = new URL(canonicalOrigin).host;
+    if (forwardedProtocol !== 'https' || req.get('host') !== canonicalHost) {
+      return res.redirect(301, `${canonicalOrigin}${req.originalUrl}`);
+    }
+  }
+  return next();
+});
 
 app.use(cors());
 app.use(express.json());
@@ -33,7 +45,7 @@ app.get('/health', (req, res) => {
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(
-    'User-agent: *\nAllow: /\nSitemap: https://hydrotech-api-c2bs.onrender.com/sitemap.xml\n',
+    `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /uploads/\nSitemap: ${canonicalOrigin}/sitemap.xml\n`,
   );
 });
 
@@ -41,7 +53,7 @@ app.get('/sitemap.xml', (req, res) => {
   res.type('application/xml').send(
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-      '  <url><loc>https://hydrotech-api-c2bs.onrender.com/</loc></url>\n' +
+      `  <url><loc>${canonicalOrigin}/</loc></url>\n` +
       '</urlset>\n',
   );
 });
@@ -56,12 +68,19 @@ app.use('/api/asistente', asistenteRoutes);
 app.use('/api/v2', v2App);
 app.use('/api/preview', previewCompat);
 
-// Servir visor interactivo HydroTech en la raíz y en /preview
+// Servir una sola URL indexable para el visor.
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../../preview.html'));
 });
-app.get('/preview', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../preview.html'));
+app.get(['/preview', '/preview.html'], (req, res) => {
+  res.redirect(301, '/');
+});
+
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ ok: false, message: 'Ruta no encontrada.' });
+  }
+  return res.status(404).sendFile(path.join(__dirname, '../../404.html'));
 });
 
 const PORT = process.env.PORT || 3000;

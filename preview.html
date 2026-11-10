@@ -33,9 +33,6 @@
       "image": "https://hydrotech-api-c2bs.onrender.com/assets/brand/app-icon-512.png"
     }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     /* ============================================
        HydroTech — Guía de Marca Oficial
@@ -44,6 +41,8 @@
     :root {
       --orange: #FF6A00;
       --orange-dim: #C75300;
+      --orange-action: #B84D00;
+      --orange-action-hover: #A84300;
       --silver: #C0C0C0;
       --black: #0B0C0E;
       --surface: #15171A;
@@ -61,12 +60,12 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Roboto', sans-serif;
+      font-family: Roboto, "Segoe UI", Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
     h1, h2, h3, .font-display, .brand-title {
-      font-family: 'Montserrat', sans-serif;
+      font-family: Montserrat, "Segoe UI", Arial, sans-serif;
       font-weight: 800;
       letter-spacing: -0.02em;
     }
@@ -83,7 +82,22 @@
       overflow-x: hidden;
     }
 
-        .app-layout {
+    .skip-link {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 1000;
+      padding: 10px 14px;
+      background: #FFFFFF;
+      color: #0B0C0E;
+      transform: translateY(-160%);
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .app-layout {
       display: flex;
       flex-direction: row;
       gap: 36px;
@@ -391,13 +405,13 @@
     }
 
     .rn-input::placeholder {
-      color: #6B7280;
+      color: var(--ink-muted);
     }
 
     .rn-btn {
       width: 100%;
       height: 46px;
-      background: var(--orange);
+      background: var(--orange-action);
       border: none;
       border-radius: 10px;
       color: #FFFFFF;
@@ -413,7 +427,7 @@
     }
 
     .rn-btn:hover {
-      background: var(--orange-dim);
+      background: var(--orange-action-hover);
     }
 
     .rn-btn:active {
@@ -421,8 +435,8 @@
     }
 
     .rn-btn-disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+      background: var(--orange-action-hover);
+      cursor: wait;
     }
 
     .rn-error {
@@ -450,8 +464,17 @@
     .rn-link-action {
       color: var(--orange);
       font-weight: 700;
+      font: inherit;
       cursor: pointer;
       text-decoration: none;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      text-align: inherit;
+    }
+
+    .rn-link-action:hover {
+      text-decoration: underline;
     }
 
     /* Tabs de Registro */
@@ -467,6 +490,8 @@
     .rn-tab {
       flex: 1;
       padding: 8px 0;
+      border: 0;
+      background: transparent;
       text-align: center;
       font-size: 12px;
       font-weight: 600;
@@ -477,7 +502,7 @@
     }
 
     .rn-tab.active {
-      background: var(--orange);
+      background: var(--orange-action);
       color: #FFFFFF;
       font-weight: 700;
     }
@@ -593,7 +618,7 @@
     }
 
     .dash-action-btn {
-      background: var(--orange);
+      background: var(--orange-action);
       color: #FFF;
       border: none;
       padding: 5px 10px;
@@ -606,7 +631,7 @@
     }
 
     .dash-action-btn:hover {
-      background: var(--orange-dim);
+      background: var(--orange-action-hover);
     }
 
     .dash-search-input {
@@ -697,7 +722,7 @@
     }
 
     .manual-btn:hover {
-      background: var(--orange);
+      background: var(--orange-action);
       color: #FFF;
     }
 
@@ -724,13 +749,29 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      cursor: pointer;
       transition: all 0.15s;
     }
 
     .machine-item-card:hover {
       border-color: var(--orange);
       transform: translateX(2px);
+    }
+
+    .machine-item-select,
+    .pieza-open-btn {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
     }
 
     .machine-item-code {
@@ -789,7 +830,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      cursor: pointer;
       transition: border-color 0.15s;
     }
 
@@ -878,7 +918,7 @@
     }
 
     .btn-validate-piece {
-      background: #10B981;
+      background: #047857;
       color: #FFF;
       border: none;
       padding: 5px 12px;
@@ -889,7 +929,7 @@
     }
 
     .btn-validate-piece:hover {
-      background: #059669;
+      background: #065F46;
     }
 
     /* Personal Row */
@@ -1003,6 +1043,7 @@
     .role-pill-option {
       flex: 1;
       padding: 6px 0;
+      appearance: none;
       text-align: center;
       font-size: 10px;
       font-weight: 700;
@@ -1066,6 +1107,18 @@
       color: #38BDF8;
       text-align: center;
       line-height: 1.4;
+    }
+
+    :focus-visible {
+      outline: 3px solid #FFFFFF;
+      outline-offset: 3px;
+    }
+
+    .rn-input:focus-visible,
+    .dash-search-input:focus-visible {
+      outline-color: var(--orange);
+      outline-offset: 1px;
+      box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.3);
     }
 
     .spinner {
@@ -1134,7 +1187,8 @@
 </head>
 <body>
 
-  <div class="app-layout">
+  <a class="skip-link" href="#screen-container">Saltar al contenido principal</a>
+  <main class="app-layout" id="main-content">
     <!-- Teléfono Móvil Simulado -->
     <div class="phone-frame">
       <div class="phone-notch">
@@ -1149,16 +1203,16 @@
         </div>
 
         <!-- Contenedor dinámico de pantalla -->
-        <div class="screen-content" id="screen-container">
+        <div class="screen-content" id="screen-container" tabindex="-1">
           <!-- Inyección dinámica -->
         </div>
 
         <!-- ========================================== -->
         <!-- MODAL 1: Crear Usuario (Solo Admin)        -->
         <!-- ========================================== -->
-        <div id="create-user-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box">
-            <h3 class="modal-title">Crear Nuevo Colaborador</h3>
+        <div id="create-user-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-user-title" style="display: none;">
+          <div class="modal-box" tabindex="-1">
+            <h3 class="modal-title" id="create-user-title">Crear Nuevo Colaborador</h3>
             <p class="modal-subtitle">Asignación a la empresa activa.</p>
 
             <input id="modal-new-name" class="rn-input" placeholder="Nombre completo">
@@ -1166,10 +1220,10 @@
             <input id="modal-new-pass" class="rn-input" placeholder="Contraseña temporal (mín. 6)" type="password">
 
             <label class="selector-label">ROL EN EL EQUIPO:</label>
-            <div class="role-pills-row">
-              <div id="pill-tecnico" class="role-pill-option selected" onclick="selectModalRole('tecnico')">TÉCNICO</div>
-              <div id="pill-supervisor" class="role-pill-option" onclick="selectModalRole('supervisor')">SUPERVISOR</div>
-              <div id="pill-admin" class="role-pill-option" onclick="selectModalRole('admin')">ADMIN</div>
+            <div class="role-pills-row" role="group" aria-label="Rol del colaborador">
+              <button type="button" id="pill-tecnico" class="role-pill-option selected" aria-pressed="true" onclick="selectModalRole('tecnico')">TÉCNICO</button>
+              <button type="button" id="pill-supervisor" class="role-pill-option" aria-pressed="false" onclick="selectModalRole('supervisor')">SUPERVISOR</button>
+              <button type="button" id="pill-admin" class="role-pill-option" aria-pressed="false" onclick="selectModalRole('admin')">ADMIN</button>
             </div>
 
             <div id="modal-user-error" class="rn-error" style="display: none;"></div>
@@ -1179,9 +1233,9 @@
           </div>
         </div>
 
-        <div id="create-client-company-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box">
-            <h3 class="modal-title">Nueva Empresa Cliente</h3>
+        <div id="create-client-company-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-client-company-title" style="display: none;">
+          <div class="modal-box" tabindex="-1">
+            <h3 class="modal-title" id="create-client-company-title">Nueva Empresa Cliente</h3>
             <p class="modal-subtitle">Empresa a la que se le prestará servicio.</p>
             <input id="modal-client-razon" class="rn-input" placeholder="Razón social *">
             <input id="modal-client-comercial" class="rn-input" placeholder="Nombre comercial (opcional)">
@@ -1191,13 +1245,13 @@
           </div>
         </div>
 
-        <div id="create-order-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box">
-            <h3 class="modal-title">Nueva Orden de Trabajo</h3>
+        <div id="create-order-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-order-title" style="display: none;">
+          <div class="modal-box" tabindex="-1">
+            <h3 class="modal-title" id="create-order-title">Nueva Orden de Trabajo</h3>
             <p class="modal-subtitle">Registra y asigna una labor de mantenimiento.</p>
             <input id="modal-order-title" class="rn-input" placeholder="Título de la orden *">
             <input id="modal-order-description" class="rn-input" placeholder="Descripción del trabajo">
-            <select id="modal-order-priority" class="rn-input">
+            <select id="modal-order-priority" class="rn-input" aria-label="Prioridad de la orden">
               <option value="normal">Prioridad normal</option>
               <option value="baja">Prioridad baja</option>
               <option value="alta">Prioridad alta</option>
@@ -1212,12 +1266,12 @@
         <!-- ========================================== -->
         <!-- MODAL 2: Registrar Maquinaria (HU-015)     -->
         <!-- ========================================== -->
-        <div id="create-maquina-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box">
-            <h3 class="modal-title">Registrar Maquinaria</h3>
+        <div id="create-maquina-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-machine-title" style="display: none;">
+          <div class="modal-box" tabindex="-1">
+            <h3 class="modal-title" id="create-machine-title">Registrar Maquinaria</h3>
             <p class="modal-subtitle">Poner equipo a disposición de los técnicos.</p>
 
-            <select id="modal-maq-cliente" class="rn-input">
+            <select id="modal-maq-cliente" class="rn-input" aria-label="Empresa cliente de la maquinaria">
               <option value="">Flota interna (sin empresa cliente)</option>
             </select>
             <input id="modal-maq-codigo" class="rn-input" placeholder="Código de la máquina (ej: CAT-320D)">
@@ -1236,22 +1290,22 @@
         <!-- ========================================== -->
         <!-- MODAL 3: Registrar Pieza (HU-014)          -->
         <!-- ========================================== -->
-        <div id="create-pieza-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box">
-            <h3 class="modal-title">Nueva Ficha de Pieza</h3>
+        <div id="create-pieza-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-piece-title" style="display: none;">
+          <div class="modal-box" tabindex="-1">
+            <h3 class="modal-title" id="create-piece-title">Nueva Ficha de Pieza</h3>
             <p id="modal-pieza-subtitle" class="modal-subtitle">Asociada a la máquina activa.</p>
 
             <input id="modal-pieza-codigo" class="rn-input" placeholder="Código de la pieza (ej: MANG-4SP-02)">
             <input id="modal-pieza-nombre" class="rn-input" placeholder="Nombre de la pieza (ej: Manguera 3/4)">
 
             <label class="selector-label">TIPO DE COMPONENTE:</label>
-            <div class="role-pills-row">
-              <div id="pill-tipo-Manguera" class="role-pill-option selected" onclick="selectPiezaTipo('Manguera')">Manguera</div>
-              <div id="pill-tipo-Racor" class="role-pill-option" onclick="selectPiezaTipo('Racor')">Racor</div>
-              <div id="pill-tipo-Acople" class="role-pill-option" onclick="selectPiezaTipo('Acople')">Acople</div>
-              <div id="pill-tipo-Valvula" class="role-pill-option" onclick="selectPiezaTipo('Válvula')">Válvula</div>
-              <div id="pill-tipo-Torno" class="role-pill-option" onclick="selectPiezaTipo('PiezaTorno')">Pieza Torno</div>
-              <div id="pill-tipo-Cilindro" class="role-pill-option" onclick="selectPiezaTipo('CilindroHidráulico')">Cilindro Hidráulico</div>
+            <div class="role-pills-row" role="group" aria-label="Tipo de componente">
+              <button type="button" id="pill-tipo-Manguera" class="role-pill-option selected" aria-pressed="true" onclick="selectPiezaTipo('Manguera')">Manguera</button>
+              <button type="button" id="pill-tipo-Racor" class="role-pill-option" aria-pressed="false" onclick="selectPiezaTipo('Racor')">Racor</button>
+              <button type="button" id="pill-tipo-Acople" class="role-pill-option" aria-pressed="false" onclick="selectPiezaTipo('Acople')">Acople</button>
+              <button type="button" id="pill-tipo-Valvula" class="role-pill-option" aria-pressed="false" onclick="selectPiezaTipo('Válvula')">Válvula</button>
+              <button type="button" id="pill-tipo-Torno" class="role-pill-option" aria-pressed="false" onclick="selectPiezaTipo('PiezaTorno')">Pieza Torno</button>
+              <button type="button" id="pill-tipo-Cilindro" class="role-pill-option" aria-pressed="false" onclick="selectPiezaTipo('CilindroHidráulico')">Cilindro Hidráulico</button>
             </div>
 
             <div id="pieza-fields-hose">
@@ -1303,19 +1357,19 @@
         <!-- ========================================== -->
         <!-- MODAL 4: Ficha Completa de Pieza (HU-014)  -->
         <!-- ========================================== -->
-        <div id="detail-pieza-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box" id="detail-pieza-content">
+        <div id="detail-pieza-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Detalle de pieza" style="display: none;">
+          <div class="modal-box" id="detail-pieza-content" tabindex="-1">
             <!-- Inyección dinámica de la ficha -->
           </div>
         </div>
 
-        <div id="preview-splash" class="preview-splash" aria-label="HydroTech iniciando">
-          <img src="assets/brand/logo-full.png" alt="HydroTech">
+        <div id="preview-splash" class="preview-splash" role="status" aria-live="polite" aria-label="Cargando HydroTech">
+          <img src="assets/brand/logo-full.webp" alt="" width="495" height="436">
         </div>
 
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     const API_URL = 'http://localhost:3000/api/preview';
@@ -1351,6 +1405,118 @@
     let editingMachineId = null;
     let editingPiezaId = null;
     let companyUsersList = [];
+    let activeModal = null;
+    let modalReturnFocus = null;
+    let lastActionElement = null;
+
+    document.addEventListener('click', event => {
+      const action = event.target.closest('button, a[href], [role="tab"], [role="button"]');
+      if (action && !action.closest('.modal-backdrop')) {
+        lastActionElement = action;
+      }
+    }, true);
+
+    document.addEventListener('keydown', event => {
+      if (activeModal && activeModal.style.display !== 'none') {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeActiveModal();
+          return;
+        }
+
+        if (event.key === 'Tab') {
+          const focusable = getFocusableElements(activeModal);
+          if (!focusable.length) {
+            event.preventDefault();
+            activeModal.querySelector('.modal-box')?.focus();
+            return;
+          }
+
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && (document.activeElement === first || !activeModal.contains(document.activeElement))) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && (document.activeElement === last || !activeModal.contains(document.activeElement))) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      }
+
+      const tab = event.target.closest('[role="tab"]');
+      if (tab && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        const tabs = Array.from(tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]'));
+        const index = tabs.indexOf(tab);
+        const nextIndex = (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+        event.preventDefault();
+        tabs[nextIndex].click();
+        requestAnimationFrame(() => {
+          const updatedTabs = Array.from(document.querySelectorAll('[role="tablist"]'))
+            .flatMap(group => Array.from(group.querySelectorAll('[role="tab"]')));
+          updatedTabs.find(item => item.getAttribute('aria-selected') === 'true')?.focus();
+        });
+      }
+    });
+
+    function getFocusableElements(container) {
+      return Array.from(container.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter(element => element.getClientRects().length > 0);
+    }
+
+    function showModal(id, initialFocusId) {
+      const modal = document.getElementById(id);
+      modalReturnFocus = lastActionElement || document.activeElement;
+      activeModal = modal;
+      modal.style.display = 'flex';
+      const focusTarget = (initialFocusId && document.getElementById(initialFocusId)) ||
+        getFocusableElements(modal)[0] ||
+        modal.querySelector('.modal-box');
+      focusTarget?.focus();
+    }
+
+    function hideModal(id) {
+      const modal = document.getElementById(id);
+      modal.style.display = 'none';
+      if (activeModal === modal) {
+        activeModal = null;
+        const returnTarget = modalReturnFocus;
+        modalReturnFocus = null;
+        if (returnTarget?.isConnected) returnTarget.focus();
+        else document.getElementById('screen-container')?.focus();
+      }
+    }
+
+    function closeActiveModal() {
+      const closeModalById = {
+        'create-user-modal': closeUserModal,
+        'create-client-company-modal': closeClientCompanyModal,
+        'create-order-modal': closeOrderModal,
+        'create-maquina-modal': closeMaquinaModal,
+        'create-pieza-modal': closePiezaModal,
+        'detail-pieza-modal': closePiezaDetailModal,
+      };
+      closeModalById[activeModal?.id]?.();
+    }
+
+    function exposeStatusMessages(root) {
+      if (root.matches?.('.rn-error')) {
+        root.setAttribute('role', 'alert');
+        root.setAttribute('aria-live', 'assertive');
+      }
+      root.querySelectorAll?.('.rn-error').forEach(message => {
+        message.setAttribute('role', 'alert');
+        message.setAttribute('aria-live', 'assertive');
+      });
+    }
+
+    exposeStatusMessages(document);
+    new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) exposeStatusMessages(node);
+      }));
+    }).observe(document.body, { childList: true, subtree: true });
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -1375,11 +1541,19 @@
     function setView(view) {
       currentView = view;
       render();
+      requestAnimationFrame(() => {
+        const heading = document.querySelector('#screen-container h1, #screen-container h2');
+        if (heading) {
+          heading.tabIndex = -1;
+          heading.focus();
+        }
+      });
     }
 
     function setRegisterTab(tab) {
       registerTab = tab;
       render();
+      requestAnimationFrame(() => document.querySelector('[role="tab"][aria-selected="true"]')?.focus());
     }
 
     // ==========================================
@@ -1392,12 +1566,12 @@
         container.innerHTML = `
           <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div class="rn-card">
-              <img src="assets/brand/logo-icon.png" alt="Logo HydroTech" style="display: block; width: 150px; margin: 0 auto 16px;">
+              <img src="assets/brand/logo-icon.webp" alt="" width="495" height="332" style="display: block; width: 150px; height: auto; margin: 0 auto 16px;">
               <div style="text-align: center; margin-bottom: 6px;">
                 <span class="eyebrow-bar" style="font-size: 10px;">SISTEMAS HIDRÁULICOS & FLUIDOS</span>
               </div>
-              <h1 class="rn-brand-title">Hydro<em>Tech</em></h1>
-              <p class="rn-brand-subtitle">Gestión de maquinaria y repuestos</p>
+              <h1 class="rn-brand-title">HydroTech | Maquinaria y mantenimiento</h1>
+              <p class="rn-brand-subtitle">Repuestos hidráulicos y mantenimiento industrial</p>
 
               <div id="login-error" class="rn-error" style="display: none;"></div>
 
@@ -1410,12 +1584,12 @@
               </button>
 
               <div style="text-align: right; margin-top: 6px; margin-bottom: 12px;">
-                <span class="rn-link-action" style="font-size: 11px; color: var(--silver); text-decoration: underline;" onclick="setView('forgot_password')">¿Olvidaste tu contraseña o ID de empresa?</span>
+                <button type="button" class="rn-link-action" style="font-size: 11px; color: var(--silver); text-decoration: underline;" onclick="setView('forgot_password')">¿Olvidaste tu contraseña o ID de empresa?</button>
               </div>
 
               <div class="rn-footer-link">
                 <span>¿No tienes una cuenta?</span>
-                <span class="rn-link-action" onclick="setView('register')">Regístrate</span>
+                <button type="button" class="rn-link-action" onclick="setView('register')">Regístrate</button>
               </div>
             </div>
           </div>
@@ -1440,8 +1614,8 @@
 
               <div id="verify-error" class="rn-error" style="display: none;"></div>
 
-              <div style="text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</div>
-              <input id="verify-code-input" class="rn-input" placeholder="000000" maxlength="6" value="${escapeHtml(verifyDevCode || '')}" style="text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 6px; font-family: monospace;">
+              <label for="verify-code-input" style="display: block; text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</label>
+              <input id="verify-code-input" class="rn-input" aria-label="Código de verificación de 6 dígitos" placeholder="000000" maxlength="6" value="${escapeHtml(verifyDevCode || '')}" style="text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 6px; font-family: monospace;">
 
               <button id="verify-btn" class="rn-btn" onclick="handleVerifyEmail()">
                 <span>Confirmar y Activar Cuenta</span>
@@ -1449,11 +1623,11 @@
 
               <div style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-muted);">
                 <span>¿No recibiste el correo?</span>
-                <span class="rn-link-action" style="color: var(--orange); font-weight: 700;" onclick="handleResendVerification()">Reenviar código</span>
+                <button type="button" class="rn-link-action" style="color: var(--orange); font-weight: 700;" onclick="handleResendVerification()">Reenviar código</button>
               </div>
 
               <div class="rn-footer-link" style="margin-top: 14px;">
-                <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</span>
+                <button type="button" class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</button>
               </div>
             </div>
           </div>
@@ -1469,13 +1643,13 @@
                 ${forgotTab === 'password' ? 'Te enviaremos un código de seguridad para crear una nueva clave.' : '¿Olvidaste tu ID de empresa o usuario? Te enviamos tus accesos.'}
               </p>
 
-              <div class="rn-tab-group" style="margin-bottom: 14px;">
-                <div class="rn-tab ${forgotTab === 'password' ? 'active' : ''}" onclick="setForgotTab('password')">
+              <div class="rn-tab-group" role="tablist" aria-label="Tipo de recuperación" style="margin-bottom: 14px;">
+                <button type="button" role="tab" aria-selected="${forgotTab === 'password'}" tabindex="${forgotTab === 'password' ? 0 : -1}" class="rn-tab ${forgotTab === 'password' ? 'active' : ''}" onclick="setForgotTab('password')">
                   Restablecer Clave
-                </div>
-                <div class="rn-tab ${forgotTab === 'user' ? 'active' : ''}" onclick="setForgotTab('user')">
+                </button>
+                <button type="button" role="tab" aria-selected="${forgotTab === 'user'}" tabindex="${forgotTab === 'user' ? 0 : -1}" class="rn-tab ${forgotTab === 'user' ? 'active' : ''}" onclick="setForgotTab('user')">
                   Recuperar Empresa / ID
-                </div>
+                </button>
               </div>
 
               <div id="forgot-error" class="rn-error" style="display: none;"></div>
@@ -1493,15 +1667,15 @@
                     <div style="color: var(--ink-muted);">Código enviado a:</div>
                     <div style="color: var(--orange); font-weight: 700;">${escapeHtml(forgotEmail)}</div>
                   </div>
-                  <div style="text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</div>
-                  <input id="reset-code-input" class="rn-input" placeholder="000000" maxlength="6" value="${escapeHtml(forgotDevCode || '')}" style="text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 5px; font-family: monospace;">
+                  <label for="reset-code-input" style="display: block; text-align: left; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--silver);">Código de 6 dígitos</label>
+                  <input id="reset-code-input" class="rn-input" aria-label="Código de recuperación de 6 dígitos" placeholder="000000" maxlength="6" value="${escapeHtml(forgotDevCode || '')}" style="text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 5px; font-family: monospace;">
                   <input id="reset-new-pass" class="rn-input" placeholder="Nueva Contraseña (mín. 6)" type="password">
                   <input id="reset-confirm-pass" class="rn-input" placeholder="Confirmar Nueva Contraseña" type="password">
                   <button id="reset-confirm-btn" class="rn-btn" onclick="handleConfirmResetPassword()">
                     <span>Actualizar Contraseña</span>
                   </button>
                   <div style="text-align: center; margin-top: 10px;">
-                    <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setForgotStep(1)">← Solicitar nuevo código</span>
+                    <button type="button" class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setForgotStep(1)">← Solicitar nuevo código</button>
                   </div>
                 `}
               ` : `
@@ -1515,7 +1689,7 @@
               `}
 
               <div class="rn-footer-link" style="margin-top: 16px;">
-                <span class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</span>
+                <button type="button" class="rn-link-action" style="font-size: 11px; color: var(--silver);" onclick="setView('login')">← Volver a Iniciar Sesión</button>
               </div>
             </div>
           </div>
@@ -1527,16 +1701,16 @@
               <div style="text-align: center; margin-bottom: 4px;">
                 <span class="eyebrow-bar" style="font-size: 10px;">ALTA DE CUENTA</span>
               </div>
-              <h1 class="rn-brand-title" style="font-size: 24px;">Hydro<em>Tech</em></h1>
+              <h1 class="rn-brand-title" style="font-size: 24px;">HydroTech | Maquinaria y mantenimiento</h1>
               <p class="rn-brand-subtitle" style="margin-bottom: 12px;">Registro técnico de empresa</p>
 
-              <div class="rn-tab-group">
-                <div class="rn-tab ${registerTab === 'company' ? 'active' : ''}" onclick="setRegisterTab('company')">
+              <div class="rn-tab-group" role="tablist" aria-label="Tipo de registro">
+                <button type="button" role="tab" aria-selected="${registerTab === 'company'}" tabindex="${registerTab === 'company' ? 0 : -1}" class="rn-tab ${registerTab === 'company' ? 'active' : ''}" onclick="setRegisterTab('company')">
                   Nueva Empresa
-                </div>
-                <div class="rn-tab ${registerTab === 'user' ? 'active' : ''}" onclick="setRegisterTab('user')">
+                </button>
+                <button type="button" role="tab" aria-selected="${registerTab === 'user'}" tabindex="${registerTab === 'user' ? 0 : -1}" class="rn-tab ${registerTab === 'user' ? 'active' : ''}" onclick="setRegisterTab('user')">
                   Unirme a Empresa
-                </div>
+                </button>
               </div>
 
               <div class="rn-hint">
@@ -1562,7 +1736,7 @@
 
               <div class="rn-footer-link">
                 <span>¿Ya tienes cuenta?</span>
-                <span class="rn-link-action" onclick="setView('login')">Inicia sesión</span>
+                <button type="button" class="rn-link-action" onclick="setView('login')">Inicia sesión</button>
               </div>
             </div>
           </div>
@@ -1781,13 +1955,15 @@
       return `
         <div class="machine-list-grid">
           ${maquinasList.map(m => `
-            <div class="machine-item-card" onclick="selectMaquina('${m.id}')">
-              <div>
-                <div class="machine-item-code">${escapeHtml(m.codigo)}</div>
-                <div class="machine-item-name">${escapeHtml(m.nombre)}</div>
-                <div class="machine-item-type">${escapeHtml(m.tipo)} • ${Number(m.total_piezas) || 0} piezas registradas</div>
-              </div>
-              <div class="select-arrow">Seleccionar →</div>
+            <div class="machine-item-card">
+              <button type="button" class="machine-item-select" aria-label="Seleccionar máquina ${escapeHtml(m.nombre)}" onclick="selectMaquina('${m.id}')">
+                <span>
+                  <span class="machine-item-code">${escapeHtml(m.codigo)}</span><br>
+                  <span class="machine-item-name">${escapeHtml(m.nombre)}</span><br>
+                  <span class="machine-item-type">${escapeHtml(m.tipo)} • ${Number(m.total_piezas) || 0} piezas registradas</span>
+                </span>
+                <span class="select-arrow">Seleccionar →</span>
+              </button>
               ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openMaquinaModal('${m.id}')">Modificar</button>` : ''}
             </div>
           `).join('')}
@@ -1813,18 +1989,20 @@
       return piezasList.map(p => {
         const isValid = p.estado_validacion === 'validada';
         return `
-          <div class="pieza-item-card" onclick="openPiezaDetailModal('${p.id}')">
-            <div>
-              <div class="pieza-header-row">
+          <div class="pieza-item-card">
+            <button type="button" class="pieza-open-btn" aria-label="Ver ficha de ${escapeHtml(p.nombre)}" onclick="openPiezaDetailModal('${p.id}')">
+              <span>
+              <span class="pieza-header-row">
                 <span class="pieza-code">[${escapeHtml(p.codigo)}]</span>
                 <span class="val-badge ${isValid ? 'val-validada' : 'val-pendiente'}">
                   ${isValid ? 'VALIDADA' : 'PENDIENTE'}
                 </span>
-              </div>
-              <div class="pieza-name">${escapeHtml(p.nombre)}</div>
-              <div class="pieza-tipo">Tipo: ${escapeHtml(p.tipo)}</div>
-            </div>
-            <div class="view-sheet-link">Ver Ficha →</div>
+              </span>
+              <span class="pieza-name">${escapeHtml(p.nombre)}</span>
+              <span class="pieza-tipo">Tipo: ${escapeHtml(p.tipo)}</span>
+              </span>
+              <span class="view-sheet-link">Ver ficha →</span>
+            </button>
             ${['admin', 'supervisor'].includes(currentUser.rol) ? `<button class="btn-toggle-active" onclick="event.stopPropagation(); openPiezaModalById('${p.id}')">Modificar</button>` : ''}
           </div>
         `;
@@ -1925,11 +2103,12 @@
       document.getElementById('modal-order-priority').value = order?.prioridad || 'normal';
       document.getElementById('modal-order-error').style.display = 'none';
       document.getElementById('modal-submit-order-btn').innerText = orderId ? 'Guardar Cambios' : 'Crear Orden';
-      document.getElementById('create-order-modal').style.display = 'flex';
+      document.getElementById('create-order-title').innerText = orderId ? 'Editar Orden de Trabajo' : 'Nueva Orden de Trabajo';
+      showModal('create-order-modal', 'modal-order-title');
     }
 
     function closeOrderModal() {
-      document.getElementById('create-order-modal').style.display = 'none';
+      hideModal('create-order-modal');
       editingOrderId = null;
     }
 
@@ -1993,11 +2172,11 @@
       document.getElementById('modal-client-razon').value = '';
       document.getElementById('modal-client-comercial').value = '';
       document.getElementById('modal-client-error').style.display = 'none';
-      document.getElementById('create-client-company-modal').style.display = 'flex';
+      showModal('create-client-company-modal', 'modal-client-razon');
     }
 
     function closeClientCompanyModal() {
-      document.getElementById('create-client-company-modal').style.display = 'none';
+      hideModal('create-client-company-modal');
     }
 
     async function submitCreateClientCompany() {
@@ -2104,7 +2283,7 @@
             </div>
             ${!isSelf ? `
               <button class="btn-toggle-active" onclick="toggleUserActive(${u.id}, ${u.activo})">
-                ${u.activo ? '<span style="color: #EF4444;">Desactivar</span>' : '<span style="color: #10B981;">Activar</span>'}
+                ${u.activo ? '<span style="color: #F87171;">Desactivar</span>' : '<span style="color: #10B981;">Activar</span>'}
               </button>
             ` : ''}
           </div>
@@ -2234,7 +2413,8 @@
       selectPiezaTipo(pieceType);
       document.getElementById('modal-pieza-desc').value = piece?.descripcion || '';
       document.getElementById('modal-submit-pieza-btn').innerText = editingPiezaId ? 'Guardar Modificación' : 'Guardar Ficha y Notificar';
-      document.getElementById('create-pieza-modal').style.display = 'flex';
+      document.getElementById('create-piece-title').innerText = editingPiezaId ? 'Editar Ficha de Pieza' : 'Nueva Ficha de Pieza';
+      showModal('create-pieza-modal', 'modal-pieza-codigo');
     }
 
     function openPiezaModalById(pieceId) {
@@ -2243,7 +2423,7 @@
     }
 
     function closePiezaModal() {
-      document.getElementById('create-pieza-modal').style.display = 'none';
+      hideModal('create-pieza-modal');
       editingPiezaId = null;
     }
 
@@ -2260,7 +2440,11 @@
 
       Object.entries(tipoIds).forEach(([tipoNombre, tipoId]) => {
         const el = document.getElementById(`pill-tipo-${tipoId}`);
-        if (el) el.classList.toggle('selected', tipoNombre === tipo);
+        if (el) {
+          const isSelected = tipoNombre === tipo;
+          el.classList.toggle('selected', isSelected);
+          el.setAttribute('aria-pressed', String(isSelected));
+        }
       });
 
       document.getElementById('pieza-fields-hose').style.display = tipo === 'Manguera' ? 'block' : 'none';
@@ -2367,7 +2551,7 @@
     async function openPiezaDetailModal(piezaId) {
       const modal = document.getElementById('detail-pieza-modal');
       const content = document.getElementById('detail-pieza-content');
-      modal.style.display = 'flex';
+      showModal('detail-pieza-modal');
       content.innerHTML = '<div style="text-align:center; padding: 20px;" class="spinner"></div>';
 
       try {
@@ -2449,7 +2633,7 @@
     }
 
     function closePiezaDetailModal() {
-      document.getElementById('detail-pieza-modal').style.display = 'none';
+      hideModal('detail-pieza-modal');
     }
 
     // ==========================================
@@ -2466,11 +2650,12 @@
       document.getElementById('modal-maq-desc').value = machine?.descripcion || '';
       const clientSelect = document.getElementById('modal-maq-cliente');
       clientSelect.innerHTML = '<option value="">Flota interna (sin empresa cliente)</option>' + clientCompaniesList.map(company => `<option value="${company.id}">${company.razon_social}</option>`).join('');
-      document.getElementById('create-maquina-modal').style.display = 'flex';
+      document.getElementById('create-machine-title').innerText = machineId ? 'Editar Maquinaria' : 'Registrar Maquinaria';
+      showModal('create-maquina-modal', 'modal-maq-codigo');
     }
 
     function closeMaquinaModal() {
-      document.getElementById('create-maquina-modal').style.display = 'none';
+      hideModal('create-maquina-modal');
     }
 
     async function submitCreateMaquina(confirmarDuplicado = false) {
@@ -2726,6 +2911,7 @@
     function setForgotTab(tab) {
       forgotTab = tab;
       render();
+      requestAnimationFrame(() => document.querySelector('[role="tab"][aria-selected="true"]')?.focus());
     }
 
     function setForgotStep(step) {
@@ -2958,18 +3144,22 @@
       document.getElementById('modal-new-email').value = '';
       document.getElementById('modal-new-pass').value = '';
       selectModalRole('tecnico');
-      document.getElementById('create-user-modal').style.display = 'flex';
+      showModal('create-user-modal', 'modal-new-name');
     }
 
     function closeUserModal() {
-      document.getElementById('create-user-modal').style.display = 'none';
+      hideModal('create-user-modal');
     }
 
     function selectModalRole(role) {
       selectedModalRole = role;
       ['tecnico', 'supervisor', 'admin'].forEach(r => {
         const el = document.getElementById(`pill-${r}`);
-        if (el) el.classList.toggle('selected', r === role);
+        if (el) {
+          const isSelected = r === role;
+          el.classList.toggle('selected', isSelected);
+          el.setAttribute('aria-pressed', String(isSelected));
+        }
       });
     }
 

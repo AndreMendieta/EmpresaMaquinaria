@@ -39,6 +39,8 @@ describe('static assets route', () => {
   test.each([
     ['brand/logo-full.png', 'image/png'],
     ['brand/logo-icon.png', 'image/png'],
+    ['brand/logo-full.webp', 'image/webp'],
+    ['brand/logo-icon.webp', 'image/webp'],
     ['brand/app-icon-512.png', 'image/png'],
   ])('serves %s as %s', async (assetPath, contentType) => {
     const response = await request(assetPath);

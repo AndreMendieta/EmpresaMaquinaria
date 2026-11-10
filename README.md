@@ -257,7 +257,8 @@ EmpresaMaquinaria/
 │   ├── navigation/                  # AppNavigator.js con stack por roles
 │   └── screens/                     # 24 pantallas de la aplicación
 ├── App.js                           # Punto de entrada envuelto en AuthProvider
-├── preview.html                     # Visor web interactivo para pruebas rápidas
+├── preview.html                     # Visor web interactivo y accesible
+├── 404.html                         # Página de error para rutas inexistentes
 ├── package.json                     # Configuración del frontend
 └── README.md                        # Documentación técnica del proyecto
 ```
@@ -337,6 +338,12 @@ El archivo `render.yaml` configura el backend Node.js y una base PostgreSQL para
 
 ### 6. SEO del visor web
 
-El visor publicado en [https://hydrotech-api-c2bs.onrender.com](https://hydrotech-api-c2bs.onrender.com) incluye título y descripción, URL canónica, metadatos para compartir en redes, datos estructurados y los endpoints `robots.txt` y `sitemap.xml`. Estos cambios se publican al desplegar el backend y el archivo `preview.html`.
+El visor publicado en [https://hydrotech-api-c2bs.onrender.com](https://hydrotech-api-c2bs.onrender.com) incluye título y descripción, URL canónica, metadatos para compartir en redes, datos estructurados, imágenes WebP optimizadas, una página 404 y los endpoints `robots.txt` y `sitemap.xml`. Las rutas duplicadas `/preview` y `/preview.html` redirigen a la URL principal. Estos cambios se publican al desplegar el backend y el archivo `preview.html`.
 
 El puntaje SEO depende de la herramienta de análisis, el contenido indexable, el rendimiento y la disponibilidad del sitio; estos cambios no garantizan un porcentaje específico. Vuelve a analizar el sitio después del despliegue y atiende las advertencias restantes.
+
+No se incluye Google Analytics porque requiere un identificador de medición y una decisión sobre consentimiento y privacidad.
+
+### 7. Accesibilidad del visor web
+
+El visor incorpora un punto de referencia `<main>`, enlace para saltar al contenido, foco visible, botones de teclado para acciones, etiquetas de estado, y diálogos con foco inicial, navegación contenida y retorno del foco al cerrarse. Los colores de botones se ajustaron para cumplir el contraste mínimo del texto normal. Complementa las auditorías automáticas con pruebas manuales de teclado y lector de pantalla; los resultados automatizados no sustituyen una evaluación completa.
