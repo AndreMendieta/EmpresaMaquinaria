@@ -4,6 +4,22 @@ Plataforma integral móvil (React Native) y backend (Node.js + PostgreSQL) orien
 
 - **Repositorio:** [https://github.com/AndreMendieta/EmpresaMaquinaria](https://github.com/AndreMendieta/EmpresaMaquinaria)
 - **Diseño de Arquitectura:** Basado en el **Modelo C4** (Contexto, Contenedores y Componentes, diagramados en `docs/diagrams/`).
+- **Manuales:** [Manual de usuario](docs/MANUAL_USUARIO.md) y [Manual técnico](docs/MANUAL_TECNICO.md), con imágenes y diagramas integrados en cada documento.
+- **Historial:** [Cambios y evolución del proyecto](docs/HISTORIAL_MODIFICACIONES.md).
+
+## Contenido
+
+1. [Resumen y arquitectura](#1-resumen-ejecutivo-y-arquitectura-técnica)
+2. [Evolución del proyecto](#2-evolución-del-proyecto-fases-1-a-4)
+3. [Roles y permisos](#3-matriz-de-roles-y-control-de-acceso-rbac)
+4. [Órdenes de trabajo](#4-formularios-y-gestión-de-órdenes-de-trabajo)
+5. [Limpieza de código](#5-depuración-y-eliminación-de-código-muerto-code-cleanup)
+6. [Soluciones técnicas](#6-dificultades-técnicas-encontradas-y-soluciones-de-ingeniería)
+7. [Pantallas móviles](#7-catálogo-de-pantallas-de-la-fase-4-srcscreens)
+8. [Estructura](#8-estructura-del-repositorio)
+9. [Instalación, pruebas y despliegue](#9-guía-de-instalación-pruebas-y-despliegue)
+
+Para instrucciones operativas y de desarrollo detalladas, consulta el [manual de usuario](docs/MANUAL_USUARIO.md), el [manual técnico](docs/MANUAL_TECNICO.md) y el [historial de modificaciones](docs/HISTORIAL_MODIFICACIONES.md).
 
 ---
 
@@ -69,7 +85,7 @@ El desarrollo del proyecto se consolidó de manera incremental siguiendo especif
   - `src/api/`: Cliente HTTP centralizado (`client.js`) con interceptores para JWT, timeout de 15s con `AbortController` y detección de errores `401` y `403`.
   - `src/navigation/`: Navegador tipo pila con histórico (`AppNavigator.js`), condicionado al rol activo (`admin`, `supervisor`, `tecnico`).
   - `src/components/`: Componentes UI reutilizables con la guía de marca oficial HydroTech (`HeaderBar`, `Badge`, `ForbiddenNotice`, `CustomInput`, formularios de subtipos).
-  - `src/screens/`: 21 pantallas implementadas para cubrir todo el ciclo operativo.
+  - `src/screens/`: 24 pantallas implementadas para cubrir todo el ciclo operativo.
 
 ---
 
@@ -89,7 +105,7 @@ La plataforma aplica permisos tanto a nivel de API como en interfaz móvil:
 | **Gestión de Personal** | Crear usuarios, Activar/Desactivar | Consultar técnicos | ❌ Bloqueado |
 | **Reportes y Métricas** | Métricas Globales de Taller | Métricas Globales de Taller | Solo tareas y piezas propias |
 
-> **Seguridad Defensiva en Frontend:** Cada pantalla que consume rutas restringidas captura automáticamente el código `403 Forbidden` (`err.isForbidden`) y renderiza el componente [ForbiddenNotice.js](file:///c:/dev/EmpresaMaquinaria/src/components/ForbiddenNotice.js), impidiendo que la aplicación sufra cierres forzados (*crashes*).
+> **Seguridad defensiva en frontend:** Las pantallas muestran un aviso de acceso denegado cuando la API responde `403 Forbidden`; consulta [ForbiddenNotice.js](src/components/ForbiddenNotice.js).
 
 ---
 
@@ -118,14 +134,14 @@ Durante la consolidación de la Fase 4, se realizó una auditoría y saneamiento
 
 | Archivo / Carpeta Eliminada | Motivo de Depuración | Sustituto Oficial Fase 4 |
 |---|---|---|
-| `src/screens/MaquinariaListScreen.js` | Pantalla v1 obsoleta, endpoints legacy `/api/maquinas`. | [MachinesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachinesScreen.js) |
-| `src/screens/MaquinariaDetailScreen.js` | Detalle v1 sin soporte para subtipos de ingeniería. | [MachineDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachineDetailScreen.js) |
-| `src/screens/PiezaFormScreen.js` | Formulario genérico v1 sin campos específicos por familia. | [CreateHoseScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateHoseScreen.js), [CreateLathePartScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateLathePartScreen.js), [CreateCylinderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateCylinderScreen.js) |
-| `src/screens/NotificacionesScreen.js` | Bandeja v1 sin distinción de órdenes ni scope UUID. | [NotificationsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/NotificationsScreen.js) |
-| `src/services/` *(carpeta completa)* | Capa de servicios legacy v1 con URLs cableadas (`api.js`, `authService.js`, `maquinaService.js`, `piezaService.js`, `session.js`, `userService.js`). | Capa centralizada modular: [src/api/](file:///c:/dev/EmpresaMaquinaria/src/api/) y [src/auth/](file:///c:/dev/EmpresaMaquinaria/src/auth/) |
+| `src/screens/MaquinariaListScreen.js` | Pantalla v1 obsoleta, endpoints legacy `/api/maquinas`. | [MachinesScreen.js](src/screens/MachinesScreen.js) |
+| `src/screens/MaquinariaDetailScreen.js` | Detalle v1 sin soporte para subtipos de ingeniería. | [MachineDetailScreen.js](src/screens/MachineDetailScreen.js) |
+| `src/screens/PiezaFormScreen.js` | Formulario genérico v1 sin campos específicos por familia. | Formularios especializados: [CreateHoseScreen.js](src/screens/CreateHoseScreen.js), [CreateLathePartScreen.js](src/screens/CreateLathePartScreen.js) y [CreateCylinderScreen.js](src/screens/CreateCylinderScreen.js) |
+| `src/screens/NotificacionesScreen.js` | Bandeja v1 sin distinción de órdenes ni scope UUID. | [NotificationsScreen.js](src/screens/NotificationsScreen.js) |
+| `src/services/` *(carpeta completa)* | Capa de servicios legacy v1 con URLs cableadas (`api.js`, `authService.js`, `maquinaService.js`, `piezaService.js`, `session.js`, `userService.js`). | Capa centralizada modular: [src/api/](src/api/) y [src/auth/](src/auth/) |
 
 ### Resultados del Saneamiento
-- **0 advertencias en ESLint:** Verificado con `npx eslint .` en todo el proyecto.
+- **ESLint:** El comando de validación es `npm run lint` desde la raíz.
 - **Desacoplamiento total:** Ningún componente activo referencia módulos heredados.
 - **Reducción de tamaño del paquete:** Eliminadas más de 1,200 líneas de código muerto.
 
@@ -163,7 +179,7 @@ Durante el desarrollo e integración se superaron diversos desafíos técnicos r
 
 ### 4. Navegación Dinámica por Roles sin Fallas Nativas
 - **Problema:** El uso de librerías nativas complejas de navegación en entornos híbridos Windows / Android suele presentar conflictos de enlace nativo (*native linking*) con versiones recientes de React Native (0.86+).
-- **Solución:** Se diseñó un enrutador por estado reactivo tipo pila (`navStack`) dentro de [AppNavigator.js](file:///c:/dev/EmpresaMaquinaria/src/navigation/AppNavigator.js), que gestiona transiciones, paso de parámetros entre pantallas y botón de retroceso (`goBack`), integrado transparentemente con `useAuth()`.
+- **Solución:** Se diseñó un enrutador por estado reactivo tipo pila (`navStack`) dentro de [AppNavigator.js](src/navigation/AppNavigator.js), que gestiona transiciones, paso de parámetros entre pantallas y botón de retroceso (`goBack`), integrado con `useAuth()`.
 
 ### 5. Control Estricto de Calidad (Anti Auto-aprobación)
 - **Problema:** Riesgo de fraude o negligencia técnica si un usuario aprueba sus propias reparaciones.
@@ -179,29 +195,32 @@ Durante el desarrollo e integración se superaron diversos desafíos técnicos r
 
 ## 7. Catálogo de Pantallas de la Fase 4 (`src/screens/`)
 
-La aplicación móvil cuenta con 21 pantallas optimizadas:
+La aplicación móvil cuenta con 24 pantallas:
 
-1. [LoginScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/LoginScreen.js): Autenticación con ID de empresa prestadora (UUID), correo y contraseña.
-2. [RegisterScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/RegisterScreen.js): Registro de colaboradores con validaciones de contraseña.
-3. [DashboardScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/DashboardScreen.js): Panel principal con accesos rápidos condicionados al rol.
-4. [ClientCompaniesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ClientCompaniesScreen.js): Catálogo de clientes contratantes.
-5. [ClientCompanyDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ClientCompanyDetailScreen.js): Ficha del cliente y flota asociada.
-6. [MachinesScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachinesScreen.js): Listado de maquinaria con buscador y filtro.
-7. [MachineDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/MachineDetailScreen.js): Ficha de equipo, manual oficial enlazado y despiece.
-8. [CreateMachineScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateMachineScreen.js): Alta de maquinaria autorizada (Supervisor/Admin).
-9. [PartsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartsScreen.js): Catálogo de repuestos con chips de estado (`borrador`, `pendiente`, `validada`, `rechazada`).
-10. [PartDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartDetailScreen.js): Ficha técnica de pieza, galería fotográfica y botón para enviar a revisión.
-11. [PartReviewScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/PartReviewScreen.js): Panel de control de calidad para validación/rechazo de piezas.
-12. [CreateHoseScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateHoseScreen.js): Formulario técnico de mangueras (diámetros, presión, conexiones).
-13. [CreateLathePartScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateLathePartScreen.js): Formulario técnico de piezas de torno (tolerancias, roscas, material).
-14. [CreateCylinderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateCylinderScreen.js): Formulario técnico de cilindros (camisa, vástago, carrera, sellos).
-15. [OrdersScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/OrdersScreen.js): Listado de órdenes con filtros de estado y resumen de evidencias.
-16. [CreateOrderScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/CreateOrderScreen.js): Formulario de orden con cliente, máquina, técnico, prioridad y evidencias iniciales.
-17. [OrderDetailScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/OrderDetailScreen.js): Gestión completa de la orden, avance de estado, reasignación y modal de evidencias.
-18. [NotificationsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/NotificationsScreen.js): Centro de alertas operativas con marcado de lectura.
-19. [ReportsScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ReportsScreen.js): Tablero analítico con métricas consolidadas de órdenes, piezas y maquinaria.
-20. [UsersScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/UsersScreen.js): Panel de administración de colaboradores y activación de cuentas.
-21. [ProfileScreen.js](file:///c:/dev/EmpresaMaquinaria/src/screens/ProfileScreen.js): Datos del usuario, sincronización de credenciales y cierre de sesión seguro.
+1. [LoginScreen.js](src/screens/LoginScreen.js): Inicio de sesión con empresa, correo y contraseña.
+2. [RegisterScreen.js](src/screens/RegisterScreen.js): Registro de colaboradores.
+3. [VerifyEmailScreen.js](src/screens/VerifyEmailScreen.js): Verificación de correo.
+4. [ForgotPasswordScreen.js](src/screens/ForgotPasswordScreen.js): Recuperación de acceso.
+5. [DashboardScreen.js](src/screens/DashboardScreen.js): Panel principal condicionado al rol.
+6. [ClientCompaniesScreen.js](src/screens/ClientCompaniesScreen.js): Catálogo de empresas clientes.
+7. [ClientCompanyDetailScreen.js](src/screens/ClientCompanyDetailScreen.js): Ficha del cliente y su flota.
+8. [MachinesScreen.js](src/screens/MachinesScreen.js): Listado de maquinaria.
+9. [MachineDetailScreen.js](src/screens/MachineDetailScreen.js): Ficha del equipo y manual enlazado.
+10. [CreateMachineScreen.js](src/screens/CreateMachineScreen.js): Alta de maquinaria.
+11. [PartsScreen.js](src/screens/PartsScreen.js): Catálogo de piezas y estados.
+12. [PartDetailScreen.js](src/screens/PartDetailScreen.js): Ficha técnica y evidencias de la pieza.
+13. [EditPartScreen.js](src/screens/EditPartScreen.js): Edición de una pieza.
+14. [PartReviewScreen.js](src/screens/PartReviewScreen.js): Revisión y validación de piezas.
+15. [CreateHoseScreen.js](src/screens/CreateHoseScreen.js): Formulario técnico de mangueras.
+16. [CreateLathePartScreen.js](src/screens/CreateLathePartScreen.js): Formulario técnico de piezas de torno.
+17. [CreateCylinderScreen.js](src/screens/CreateCylinderScreen.js): Formulario técnico de cilindros.
+18. [OrdersScreen.js](src/screens/OrdersScreen.js): Listado de órdenes de trabajo.
+19. [CreateOrderScreen.js](src/screens/CreateOrderScreen.js): Creación de órdenes.
+20. [OrderDetailScreen.js](src/screens/OrderDetailScreen.js): Seguimiento y gestión de una orden.
+21. [NotificationsScreen.js](src/screens/NotificationsScreen.js): Alertas operativas.
+22. [ReportsScreen.js](src/screens/ReportsScreen.js): Métricas e informes.
+23. [UsersScreen.js](src/screens/UsersScreen.js): Administración de colaboradores.
+24. [ProfileScreen.js](src/screens/ProfileScreen.js): Perfil y preferencias de cuenta.
 
 ---
 
@@ -225,14 +244,18 @@ EmpresaMaquinaria/
 │   ├── test-suite.js                # Pruebas automatizadas de integración
 │   └── package.json
 ├── docs/
-│   └── diagrams/                    # Modelos C4 en PlantUML (Nivel 1, 2 y 3)
+│   ├── diagrams/                    # Modelos C4 en PlantUML (Nivel 1, 2 y 3)
+│   ├── images/                      # Capturas usadas por la documentación
+│   ├── MANUAL_USUARIO.md
+│   ├── MANUAL_TECNICO.md
+│   └── HISTORIAL_MODIFICACIONES.md
 ├── src/                             # Código fuente móvil React Native
 │   ├── api/                         # Cliente HTTP y llamadas a la API v2
 │   ├── auth/                        # Contexto de sesión, persistencia y hooks
 │   ├── components/                  # Componentes reutilizables y formularios
 │   ├── constants/                   # colors.js (paleta oficial HydroTech)
 │   ├── navigation/                  # AppNavigator.js con stack por roles
-│   └── screens/                     # 21 pantallas de la aplicación
+│   └── screens/                     # 24 pantallas de la aplicación
 ├── App.js                           # Punto de entrada envuelto en AuthProvider
 ├── preview.html                     # Visor web interactivo para pruebas rápidas
 ├── package.json                     # Configuración del frontend
@@ -270,21 +293,16 @@ npm run dev
 # Ejecutar suite de pruebas de integración del backend (17 casos de prueba)
 npm test
 
-# Ejecutar verificación de estilo y calidad de código (0 warnings)
+# Ejecutar verificación de estilo y calidad de código
 npx eslint .
 ```
 
-### 3. Credenciales de Prueba (HydroTech S.A.S.)
-- **ID Empresa Prestadora:** `16818a8e-7f9f-4456-92b1-ba15aeb882e3` (o código `DEMO01` en el preview)
+### 3. Cuentas de prueba
 
-| Rol | Correo Electrónico | Contraseña |
-|---|---|---|
-| **Administrador** | `admin@demo.com` | `Admin123!` |
-| **Supervisor** | `supervisor@demo.com` | `Supervisor123!` |
-| **Técnico** | `tecnico@demo.com` | `Tecnico123!` |
+Usa cuentas creadas para un entorno local o de pruebas. No publiques contraseñas, tokens ni identificadores de empresas en el repositorio. Solicita las credenciales de prueba por un canal privado o crea cuentas de prueba desde el flujo de registro.
 
 ### 4. Métodos para Probar la Interfaz
-1. **Visor Web Interactivo (`preview.html`):** Mantén corriendo el backend y abre `preview.html` en el navegador para validar la interacción visual inmediata de todos los roles.
+1. **Visor Web Interactivo (`preview.html`):** Inicia el servidor con `npm run preview`, mantén corriendo el backend y abre `http://127.0.0.1:4173/preview.html`.
 2. **Dispositivo Físico o Emulador Android:**
    ```bash
    adb reverse tcp:8081 tcp:8081
@@ -297,11 +315,11 @@ npx eslint .
 El archivo `render.yaml` configura el backend Node.js y una base PostgreSQL para pruebas.
 
 1. Sube el proyecto a GitHub y, en Render, crea un **Blueprint** conectado a ese repositorio. Render detectará `render.yaml` y mostrará los servicios que va a crear.
-2. Espera a que el backend y PostgreSQL estén disponibles. La URL pública del backend tendrá formato `https://hydrotech-api.onrender.com`; comprueba que `https://<tu-url>/health` responda con `ok: true`.
+2. Espera a que el backend y PostgreSQL estén disponibles. La URL pública configurada actualmente es `https://hydrotech-api-c2bs.onrender.com`; comprueba que `https://<tu-url>/health` responda con `ok: true`.
 3. Inicializa las tablas desde PowerShell en tu computadora. En Render, abre la base PostgreSQL, copia su **External Database URL** y úsala localmente; no la compartas ni la guardes en el repositorio:
 
    ```powershell
-   Set-Location C:\dev\EmpresaMaquinaria\backend
+   Set-Location .\backend
    $env:DATABASE_URL = Read-Host "Pega la External Database URL de Render"
    npm run migrate
    if ($LASTEXITCODE -eq 0) { npm run migrate:multitenant }
@@ -313,5 +331,12 @@ El archivo `render.yaml` configura el backend Node.js y una base PostgreSQL para
    Ejecuta esta inicialización una sola vez sobre una base vacía. Si falla, revisa el error antes de volver a intentarlo.
 4. Para que el registro y la recuperación de contraseña envíen códigos, configura en el servicio de Render las variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` y `SMTP_PASS`. Sin SMTP, esos correos no se envían en producción.
 5. Cuando tengas la URL HTTPS, cambia la URL base de `src/api/client.js` para que la app use `https://<tu-url>/api/v2`; luego genera una nueva APK y pruébala en un teléfono.
+6. El sitio público incluye metadatos para buscadores y redes sociales, datos estructurados y los endpoints `https://<tu-url>/robots.txt` y `https://<tu-url>/sitemap.xml`. Después de desplegar cambios SEO, vuelve a ejecutar el analizador; el puntaje depende también de sus criterios y de la indexación del sitio.
 
 **Importante:** esta configuración usa recursos gratuitos solo para pruebas. Render indica que las bases gratuitas vencen a los 30 días; los servicios gratuitos pueden dormir por inactividad, y los archivos subidos al disco local (como fotos) no son persistentes. No la uses para datos reales ni para operación de negocio; antes necesitarás planes con persistencia y copias de seguridad, además de almacenamiento duradero para fotos. Revisa los [límites de Render gratuito](https://render.com/docs/free) antes de crear los recursos.
+
+### 6. SEO del visor web
+
+El visor publicado en [https://hydrotech-api-c2bs.onrender.com](https://hydrotech-api-c2bs.onrender.com) incluye título y descripción, URL canónica, metadatos para compartir en redes, datos estructurados y los endpoints `robots.txt` y `sitemap.xml`. Estos cambios se publican al desplegar el backend y el archivo `preview.html`.
+
+El puntaje SEO depende de la herramienta de análisis, el contenido indexable, el rendimiento y la disponibilidad del sitio; estos cambios no garantizan un porcentaje específico. Vuelve a analizar el sitio después del despliegue y atiende las advertencias restantes.
