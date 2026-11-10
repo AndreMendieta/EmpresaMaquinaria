@@ -1,6 +1,6 @@
 # Pruebas de Software - HydroTech
 
-Guía de pruebas de HydroTech: app móvil React Native (Android), backend Node/Express con PostgreSQL y preview web.
+Guía de pruebas de HydroTech: aplicación web y móvil React Native, backend Node/Express y PostgreSQL.
 
 ---
 
@@ -16,7 +16,7 @@ Guía de pruebas de HydroTech: app móvil React Native (Android), backend Node/E
 | Unitarias (backend) | Jest | Subida y descarga de archivos | `backend/__tests__/files.routes.test.js` |
 | Unitarias (backend) | `node:test` | Mailer y reporte PDF | `backend/__tests__/*.node.test.cjs` |
 | Compilación | Gradle | Build Android Debug | `android/gradlew :app:assembleDebug` |
-| Manuales | Preview web + dispositivo | Flujos por rol | Sección 5 |
+| Manuales | Aplicación web + dispositivo | Flujos por rol | Sección 5 |
 
 ---
 
@@ -81,13 +81,13 @@ cd android
 
 ---
 
-## 5. Pruebas manuales (preview web)
+## 5. Pruebas manuales (aplicación web)
 
-Iniciar servicios:
+Iniciar el backend y la aplicación web en terminales separadas, desde la raíz del proyecto:
 
 ```bash
-cd backend && node src/server.js      # API en el puerto 3000
-npm run preview                       # http://127.0.0.1:4173/preview.html
+npm --prefix backend start            # Terminal 1: API en el puerto 3000
+npm run preview                       # Terminal 2: http://127.0.0.1:4173
 ```
 
 | # | Flujo | Pasos | Resultado esperado |
@@ -165,4 +165,3 @@ La primera petición puede tardar hasta 1 minuto (la instancia gratuita se duerm
 | **GA4** | Usuarios, fuentes de tráfico, tasa de conversión, eventos clave |
 | **HubSpot** | Leads, oportunidades, clientes, CAC, ciclo de ventas, ingresos |
 | **VWO** | Resultados de tests A/B, mapas de calor, conversión por variante |
-

@@ -72,6 +72,6 @@ Durante estas pruebas se recomienda anotar si la persona completa cada tarea sin
 
 ## Estado resumido
 
-Al cierre del historial revisado, HydroTech cuenta con una aplicación móvil Android, un backend Node.js/Express, una base de datos PostgreSQL multiempresa, autenticación y permisos por rol, módulos de maquinaria, piezas, clientes y órdenes, carga de archivos, informes PDF, recuperación de cuenta, un visor web y pruebas automatizadas.
+Al cierre del historial revisado, HydroTech cuenta con una aplicación web y móvil Android que comparten pantallas, cuentas y datos mediante un backend Node.js/Express y una base de datos PostgreSQL multiempresa. Incluye autenticación y permisos por rol, módulos de maquinaria, piezas, clientes y órdenes, carga de archivos, informes PDF, recuperación de cuenta y pruebas automatizadas. La aplicación web sustituye el visor de validación mencionado en las etapas anteriores.
 
 El desarrollo continúa sujeto a validación en dispositivos y al despliegue de los cambios en el servicio remoto. La generación de un APK permite probar una compilación, pero no equivale por sí sola a publicar la aplicación en Google Play.

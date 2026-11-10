@@ -3,9 +3,8 @@ services:
     name: hydrotech-api
     runtime: node
     plan: free
-    rootDir: backend
-    buildCommand: npm ci
-    startCommand: npm run migrate && npm run migrate:multitenant && npm start
+    buildCommand: npm ci && npm --prefix backend ci && npm run build:web
+    startCommand: npm --prefix backend run migrate && npm --prefix backend run migrate:multitenant && npm --prefix backend start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV

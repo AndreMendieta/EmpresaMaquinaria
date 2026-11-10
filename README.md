@@ -1,6 +1,6 @@
 # HydroTech — Plataforma Multiempresa de Gestión de Maquinaria y Servicios Técnicos
 
-Plataforma integral móvil (React Native) y backend (Node.js + PostgreSQL) orientada a la administración de maquinaria pesada, componentes y repuestos hidráulicos (mangueras, racores, torneado, cilindros) y órdenes de trabajo bajo una arquitectura multi-inquilino (*multi-tenant*) con aislamiento estricto por empresa prestadora.
+Plataforma web y móvil (React Native / React Native Web) con backend (Node.js + PostgreSQL) para administrar maquinaria, repuestos hidráulicos y órdenes de trabajo bajo una arquitectura multiempresa con aislamiento por empresa prestadora.
 
 - **Repositorio:** [https://github.com/AndreMendieta/EmpresaMaquinaria](https://github.com/AndreMendieta/EmpresaMaquinaria)
 - **Diseño de Arquitectura:** Basado en el **Modelo C4** (Contexto, Contenedores y Componentes, diagramados en `docs/diagrams/`).
@@ -29,7 +29,7 @@ El sistema implementa una arquitectura desacoplada cliente-servidor con segurida
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                 HydroTech Mobile (React Native)             │
+│       HydroTech Web y Mobile (React Native / RN Web)         │
 │   src/auth/ · src/api/ · src/navigation/ · src/screens/     │
 └──────────────────────────────┬──────────────────────────────┘
                                │ HTTPS / REST (JWT Bearer)
@@ -45,10 +45,10 @@ El sistema implementa una arquitectura desacoplada cliente-servidor con segurida
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **Frontend Móvil:** React Native 0.86.2, `react-native-safe-area-context`, `@react-native-async-storage/async-storage`.
+- **Frontend Web y móvil:** React Native 0.86.2 y React Native Web; ambas plataformas comparten autenticación, pantallas y cliente API.
 - **Backend API:** Node.js, Express, `pg` (PostgreSQL Pool), `bcryptjs`, `jsonwebtoken` (JWT), `cors`, `dotenv`.
 - **Base de Datos:** PostgreSQL con extensiones criptográficas (`pgcrypto`), claves foráneas en cascada, índices compuestos por empresa prestadora (`empresa_prestadora_id`), columnas `JSONB` para subtipos técnicos y evidencias fotográficas, y restricciones `CHECK` para integridad estricta de estados y roles.
-- **Visor Web de Validación:** Simulador web interactivo (`preview.html`) con endpoints de compatibilidad (`/api/preview`) para pruebas ágiles de diseño y flujos de usuario en escritorio.
+- **Aplicación Web:** Compilación con Vite servida por el backend. Comparte las pantallas, roles, cuentas y API v2 con la APK.
 
 ---
 
@@ -79,7 +79,7 @@ El desarrollo del proyecto se consolidó de manera incremental siguiendo especif
   - `requireCompanyScope`: Bloqueo de acceso cruzado entre empresas inquilinas (*cross-tenant leakage*).
 - Prevención de auto-aprobación en piezas: un usuario no puede validar sus propias piezas (`creado_por <> $4`).
 
-### Fase 4: Frontend Móvil React Native (Carpeta `src/`)
+### Fase 4: Aplicación compartida React Native (Carpeta `src/`)
 - Reorganización total de la arquitectura frontend:
   - `src/auth/`: Contexto de autenticación (`AuthContext.js`, `useAuth.js`) y persistencia local (`session.js`).
   - `src/api/`: Cliente HTTP centralizado (`client.js`) con interceptores para JWT, timeout de 15s con `AbortController` y detección de errores `401` y `403`.
@@ -239,7 +239,6 @@ EmpresaMaquinaria/
 │   │   │   ├── routes/              # auth, clientCompanies, users, machines, parts, orders, notifications, reports
 │   │   │   ├── utils/               # audit.js, notifications.js
 │   │   │   ├── app.js               # Enrutador central v2
-│   │   │   └── previewCompat.js     # Endpoints de compatibilidad para preview.html
 │   │   └── server.js                # Servidor principal (puerto 3000)
 │   ├── test-suite.js                # Pruebas automatizadas de integración
 │   └── package.json
@@ -249,7 +248,7 @@ EmpresaMaquinaria/
 │   ├── MANUAL_USUARIO.md
 │   ├── MANUAL_TECNICO.md
 │   └── HISTORIAL_MODIFICACIONES.md
-├── src/                             # Código fuente móvil React Native
+├── src/                             # Pantallas y lógica compartidas por web y Android
 │   ├── api/                         # Cliente HTTP y llamadas a la API v2
 │   ├── auth/                        # Contexto de sesión, persistencia y hooks
 │   ├── components/                  # Componentes reutilizables y formularios
@@ -257,7 +256,8 @@ EmpresaMaquinaria/
 │   ├── navigation/                  # AppNavigator.js con stack por roles
 │   └── screens/                     # 24 pantallas de la aplicación
 ├── App.js                           # Punto de entrada envuelto en AuthProvider
-├── preview.html                     # Visor web interactivo y accesible
+├── index.web.js                     # Entrada web de las pantallas compartidas
+├── vite.config.js                   # Compilación web
 ├── 404.html                         # Página de error para rutas inexistentes
 ├── package.json                     # Configuración del frontend
 └── README.md                        # Documentación técnica del proyecto
@@ -318,10 +318,10 @@ Estos códigos son datos de ejemplo para pruebas locales; no son credenciales ni
 | `CAT-320D` | Maquinaria incluida en los datos de demostración creados por `npm run seed`. |
 | `MANG-4SP-01` | Pieza de demostración y de integración asociada a una máquina. Se usa para probar registro y detección de duplicados. |
 
-Para más detalle sobre comandos y resultados esperados, consulta la [guía de pruebas](PRUEBAS.md). La guía incluye casos automatizados y recorridos manuales para el visor web y la APK.
+Para más detalle sobre comandos y resultados esperados, consulta la [guía de pruebas](PRUEBAS.md). Incluye recorridos manuales para la aplicación web y la APK.
 
 ### 4. Métodos para Probar la Interfaz
-1. **Visor Web Interactivo (`preview.html`):** Inicia el servidor con `npm run preview`, mantén corriendo el backend y abre `http://127.0.0.1:4173/preview.html`.
+1. **Aplicación Web:** Inicia el backend en el puerto 3000 en una terminal y, desde la raíz, ejecuta `npm run preview` en otra; abre `http://127.0.0.1:4173`.
 2. **Dispositivo Físico o Emulador Android:**
    ```bash
    adb reverse tcp:8081 tcp:8081
@@ -349,19 +349,19 @@ El archivo `render.yaml` configura el backend Node.js y una base PostgreSQL para
 
    Ejecuta esta inicialización una sola vez sobre una base vacía. Si falla, revisa el error antes de volver a intentarlo.
 4. Para que el registro y la recuperación de contraseña envíen códigos, configura en el servicio de Render las variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` y `SMTP_PASS`. Sin SMTP, esos correos no se envían en producción.
-5. Cuando tengas la URL HTTPS, cambia la URL base de `src/api/client.js` para que la app use `https://<tu-url>/api/v2`; luego genera una nueva APK y pruébala en un teléfono.
-6. El sitio público incluye metadatos para buscadores y redes sociales, datos estructurados y los endpoints `https://<tu-url>/robots.txt` y `https://<tu-url>/sitemap.xml`. Después de desplegar cambios SEO, vuelve a ejecutar el analizador; el puntaje depende también de sus criterios y de la indexación del sitio.
+5. La aplicación web usa `/api/v2` en el mismo origen. La APK ya está configurada para la API publicada; genera una nueva APK solo si cambias la URL del backend.
+6. El sitio público incluye título y descripción para buscadores, además de `https://<tu-url>/robots.txt` y `https://<tu-url>/sitemap.xml`. Después de desplegar cambios, comprueba los endpoints y vuelve a ejecutar el analizador; el puntaje también depende de sus criterios y de la indexación del sitio.
 
 **Importante:** esta configuración usa recursos gratuitos solo para pruebas. Render indica que las bases gratuitas vencen a los 30 días; los servicios gratuitos pueden dormir por inactividad, y los archivos subidos al disco local (como fotos) no son persistentes. No la uses para datos reales ni para operación de negocio; antes necesitarás planes con persistencia y copias de seguridad, además de almacenamiento duradero para fotos. Revisa los [límites de Render gratuito](https://render.com/docs/free) antes de crear los recursos.
 
-### 6. SEO del visor web
+### 6. Sitio web
 
-El visor publicado en [https://hydrotech-api-c2bs.onrender.com](https://hydrotech-api-c2bs.onrender.com) incluye título y descripción, URL canónica, metadatos para compartir en redes, datos estructurados, imágenes WebP optimizadas, una página 404 y los endpoints `robots.txt` y `sitemap.xml`. Las rutas duplicadas `/preview` y `/preview.html` redirigen a la URL principal. Estos cambios se publican al desplegar el backend y el archivo `preview.html`.
+La aplicación publicada en [https://hydrotech-api-c2bs.onrender.com](https://hydrotech-api-c2bs.onrender.com) comparte la API v2 y los datos con la APK. El backend sirve la compilación web, la página 404 y los endpoints `robots.txt` y `sitemap.xml`.
 
 El puntaje SEO depende de la herramienta de análisis, el contenido indexable, el rendimiento y la disponibilidad del sitio; estos cambios no garantizan un porcentaje específico. Vuelve a analizar el sitio después del despliegue y atiende las advertencias restantes.
 
 No se incluye Google Analytics porque requiere un identificador de medición y una decisión sobre consentimiento y privacidad.
 
-### 7. Accesibilidad del visor web
+### 7. Accesibilidad
 
-El visor incorpora un punto de referencia `<main>`, enlace para saltar al contenido, foco visible, botones de teclado para acciones, etiquetas de estado, y diálogos con foco inicial, navegación contenida y retorno del foco al cerrarse. Los colores de botones se ajustaron para cumplir el contraste mínimo del texto normal. Complementa las auditorías automáticas con pruebas manuales de teclado y lector de pantalla; los resultados automatizados no sustituyen una evaluación completa.
+Las pantallas web comparten componentes accesibles con React Native. Complementa las auditorías automáticas con pruebas manuales de teclado y lector de pantalla; los resultados automatizados no sustituyen una evaluación completa.

@@ -57,6 +57,7 @@ backend/uploads/
 **/fastlane/test_output
 
 # Bundle artifact
+web-build/
 *.jsbundle
 
 # Ruby / CocoaPods

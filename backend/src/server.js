@@ -11,7 +11,6 @@ const auditoriaRoutes = require('./routes/auditoria.routes');
 const asistenteRoutes = require('./routes/asistente.routes');
 const staticAssets = require('./middlewares/staticAssets');
 const v2App = require('./v2/app');
-const previewCompat = require('./v2/previewCompat');
 
 if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
   console.error('Faltan variables de entorno: DATABASE_URL y JWT_SECRET.');
@@ -21,6 +20,7 @@ if (!process.env.DATABASE_URL || !process.env.JWT_SECRET) {
 
 const app = express();
 const canonicalOrigin = 'https://hydrotech-api-c2bs.onrender.com';
+const webBuildPath = path.join(__dirname, '../../web-build');
 
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
@@ -36,6 +36,7 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(webBuildPath, { index: false }));
 app.use('/assets', staticAssets);
 
 // Ruta de salud, útil para verificar que el deploy en el hosting funciona
@@ -66,14 +67,9 @@ app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/asistente', asistenteRoutes);
 app.use('/api/v2', v2App);
-app.use('/api/preview', previewCompat);
 
-// Servir una sola URL indexable para el visor.
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../preview.html'));
-});
-app.get(['/preview', '/preview.html'], (req, res) => {
-  res.redirect(301, '/');
+  res.sendFile(path.join(webBuildPath, 'index.html'));
 });
 
 app.use((req, res) => {

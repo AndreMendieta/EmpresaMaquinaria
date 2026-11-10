@@ -14,6 +14,7 @@ import CustomInput from '../components/CustomInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { useAuth } from '../auth/useAuth';
 import { COLORS } from '../constants/colors';
+import logo from '../../assets/brand/logo-icon.png';
 
 const LoginScreen = ({
   initialEmail = '',
@@ -78,7 +79,7 @@ const LoginScreen = ({
           keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
             <Image
-              source={require('../../assets/brand/logo-icon.png')}
+              source={logo}
               style={styles.logo}
               resizeMode="contain"
               accessibilityLabel="Logo HydroTech"

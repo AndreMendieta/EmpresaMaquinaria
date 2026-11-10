@@ -11,7 +11,7 @@ const getBaseUrl = () => {
   const isWeb = typeof window !== 'undefined' && window.location && window.location.protocol;
 
   if (isWeb) {
-    return 'http://localhost:3000/api/v2';
+    return '/api/v2';
   }
   return 'https://hydrotech-api-c2bs.onrender.com/api/v2';
 };

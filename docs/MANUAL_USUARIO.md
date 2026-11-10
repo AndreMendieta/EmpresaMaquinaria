@@ -1,19 +1,19 @@
 # Manual de usuario de HydroTech
 
-![Logo de HydroTech](../assets/brand/logo-full.png)
+![Logo de HydroTech](../assets/brand/logo-full.webp)
 
 **Versión:** 1.0 · **Fecha:** 4 de noviembre de 2026
 **Público:** administradores, supervisores y técnicos
 
 ## 1. Presentación
 
-HydroTech es una aplicación Android para consultar maquinaria, documentar piezas hidráulicas y coordinar órdenes de servicio. Las opciones que aparecen dependen del rol asignado a la cuenta y de la empresa asociada.
+HydroTech es una aplicación web y Android para consultar maquinaria, documentar piezas hidráulicas y coordinar órdenes de servicio. Ambas versiones usan las mismas cuentas y datos; las opciones que aparecen dependen del rol asignado a la cuenta y de la empresa asociada.
 
-Esta guía describe los flujos previstos en la aplicación. Algunas acciones requieren que el backend y los servicios de correo estén disponibles.
+Esta guía describe los flujos principales, que se comparten entre la web y Android. Algunas acciones requieren que el backend y los servicios de correo estén disponibles.
 
 ## 2. Antes de empezar
 
-- Ten a mano un dispositivo Android, conexión a internet y el APK proporcionado por la persona administradora.
+- Usa el sitio web configurado por tu organización o un dispositivo Android con el APK proporcionado por la persona administradora.
 - Necesitas el código de empresa, correo y contraseña de tu cuenta.
 - Instala APK únicamente de una fuente de confianza.
 - La primera conexión puede tardar si el servicio remoto está iniciando.
@@ -25,10 +25,6 @@ Esta guía describe los flujos previstos en la aplicación. Algunas acciones req
 3. Pulsa **Iniciar sesión**.
 4. Si todavía no tienes cuenta, pulsa **Regístrate**, completa el formulario y sigue las instrucciones de verificación.
 5. Si olvidaste la contraseña o el identificador de empresa, usa el enlace de recuperación en la pantalla de acceso.
-
-![Inicio de sesión de HydroTech](./images/preview-login.png)
-
-*Figura 1. Pantalla del visor web de validación; es ilustrativa y puede variar ligeramente respecto al APK instalado.*
 
 ## 4. Roles
 

@@ -7,12 +7,12 @@
 
 ## 1. Alcance y arquitectura
 
-HydroTech está compuesto por una aplicación móvil React Native, un backend REST en Node.js/Express y una base de datos PostgreSQL. El visor `preview.html` sirve para validar la interfaz y algunos flujos web; no sustituye la validación del APK.
+HydroTech ofrece una aplicación móvil Android y una aplicación web construidas con las mismas pantallas React Native. Ambas consumen la API REST v2 en Node.js/Express y la misma base de datos PostgreSQL.
 
 ```mermaid
 flowchart LR
-    M[Aplicación Android<br/>React Native] -->|HTTPS / JSON / JWT| API[API REST<br/>Node.js + Express]
-    W[Visor web<br/>preview.html] -->|API de compatibilidad| API
+    M[Aplicación Android<br/>React Native] -->|HTTPS / JSON / JWT| API[API REST v2<br/>Node.js + Express]
+    W[Aplicación web<br/>React Native Web] -->|HTTPS / JSON / JWT| API
     API -->|SQL parametrizado| DB[(PostgreSQL)]
     API --> MAIL[SMTP opcional<br/>verificación y recuperación]
     API --> FILES[Archivos y reportes PDF]
@@ -22,14 +22,16 @@ flowchart LR
 
 | Área | Tecnología configurada |
 |---|---|
-| Aplicación | React Native 0.86.2, React 19, JavaScript |
+| Aplicaciones | React Native 0.86.2, React Native Web, React 19, JavaScript |
 | API | Node.js, Express 4, `pg`, JWT |
 | Base de datos | PostgreSQL |
 | Pruebas | Jest, `node:test`, ESLint |
 | Android | Gradle, JDK y Android SDK |
-| Despliegue | Render y HTTPS |
+| Web / despliegue | Vite, Render y HTTPS |
 
 El `package.json` raíz solicita Node.js `>=22.11.0`. Para compilar Android se necesita JDK y Android SDK compatibles con la configuración Gradle del proyecto.
+
+Para compilar la web ejecuta `npm run build:web`; `npm run preview` compila y sirve el resultado en el puerto 4173. Durante la vista previa local, Vite reenvía `/api` y `/uploads` al backend en el puerto 3000. En producción, el backend sirve la compilación desde la raíz y comparte origen con la API.
 
 ## 3. Estructura del repositorio
 
@@ -40,6 +42,8 @@ src/
   components/   componentes reutilizables
   navigation/   navegación de la aplicación
   screens/      pantallas por función
+index.web.js    entrada web que registra las mismas pantallas de la app
+vite.config.js  compilación web y proxy local para /api
 backend/src/
   db/           conexión, esquemas, semillas y migraciones
   v2/           API REST actual, middlewares y rutas
@@ -71,7 +75,7 @@ Los diagramas C4 en PlantUML están en [`docs/diagrams`](./diagrams/).
 
 ## 5. API REST
 
-La app móvil se conecta al prefijo `/api/v2`. Las rutas protegidas requieren autenticación JWT mediante la cabecera de autorización. La autorización de archivos depende de la ruta y sus middlewares; revisa su implementación antes de cambiar permisos.
+La aplicación web y la APK se conectan al prefijo `/api/v2`. Las rutas protegidas requieren autenticación JWT mediante la cabecera de autorización. La autorización de archivos depende de la ruta y sus middlewares; revisa su implementación antes de cambiar permisos.
 
 | Prefijo | Funcionalidad |
 |---|---|
@@ -123,13 +127,13 @@ npm run migrate:multitenant
 npm start
 ```
 
-Iniciar el visor desde la raíz:
+Iniciar la aplicación web desde la raíz:
 
 ```powershell
 npm run preview
 ```
 
-Abrir `http://127.0.0.1:4173/preview.html`. Los flujos conectados necesitan API y base de datos de desarrollo.
+Abrir `http://127.0.0.1:4173`. Los flujos conectados necesitan API y base de datos de desarrollo.
 
 ## 7. Autenticación, roles y seguridad
 

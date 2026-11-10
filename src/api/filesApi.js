@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import client from './client';
 
 const MIME_BY_EXTENSION = {
@@ -32,7 +33,12 @@ export function guessMimeType(name, fallback = 'application/octet-stream') {
 export async function uploadFile({ uri, name, type }) {
   const mime = type || guessMimeType(name);
   const form = new FormData();
-  form.append('archivo', { uri, name: ensureFileName(name, mime), type: mime });
+  if (Platform.OS === 'web') {
+    // El navegador envía el objeto File; React Native requiere el descriptor { uri, name, type }.
+    form.append('archivo', uri, ensureFileName(name, mime));
+  } else {
+    form.append('archivo', { uri, name: ensureFileName(name, mime), type: mime });
+  }
   const res = await client.upload('/files', form, { timeout: 120000 });
   return res.archivo;
 }
