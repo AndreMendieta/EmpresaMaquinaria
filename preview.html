@@ -1183,6 +1183,141 @@
       font-weight: 800;
     }
     .dash-section-title { color: var(--orange); }
+
+    body {
+      min-height: 100dvh;
+      padding: 0;
+      align-items: stretch;
+    }
+
+    .app-layout {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100dvh;
+      align-items: stretch;
+    }
+
+    .phone-frame {
+      width: 100%;
+      height: 100dvh;
+      min-height: 100dvh;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .phone-notch,
+    .status-bar {
+      display: none;
+    }
+
+    .screen-container {
+      border-radius: 0;
+    }
+
+    .screen-content {
+      padding: 20px;
+    }
+
+    .rn-card {
+      padding: 24px;
+    }
+
+    .rn-brand-title {
+      text-align: left;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: 1px;
+    }
+
+    .rn-brand-subtitle {
+      text-align: left;
+      font-size: 12px;
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+
+    .auth-field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--silver);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .auth-field {
+      position: relative;
+    }
+
+    .auth-field .rn-input {
+      height: 52px;
+      margin-bottom: 14px;
+      padding-left: 16px;
+      font-size: 15px;
+    }
+
+    .auth-password-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 52px;
+      padding: 0 16px;
+      border: 0;
+      background: transparent;
+      color: var(--orange);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .rn-btn {
+      height: 52px;
+      margin-top: 10px;
+      font-size: 14px;
+      letter-spacing: 0.1em;
+    }
+
+    .rn-footer-link {
+      gap: 6px;
+      margin-top: 18px;
+      font-size: 12px;
+    }
+
+    .user-profile-card {
+      padding: 16px;
+    }
+
+    .profile-greeting {
+      margin-bottom: 4px;
+      color: var(--silver);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dash-logout {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--orange);
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 520px) {
+      .app-layout {
+        max-width: none;
+      }
+
+      .screen-content {
+        padding: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1558,6 +1693,14 @@
       requestAnimationFrame(() => document.querySelector('[role="tab"][aria-selected="true"]')?.focus());
     }
 
+    function toggleLoginPassword(button) {
+      const passwordInput = document.getElementById('login-password');
+      const passwordVisible = passwordInput.type === 'text';
+      passwordInput.type = passwordVisible ? 'password' : 'text';
+      button.textContent = passwordVisible ? 'Mostrar' : 'Ocultar';
+      button.setAttribute('aria-label', passwordVisible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    }
+
     // ==========================================
     // RENDER PRINCIPAL DE PANTALLAS
     // ==========================================
@@ -1568,18 +1711,28 @@
         container.innerHTML = `
           <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div class="rn-card">
-              <img src="assets/brand/logo-icon.webp" alt="" width="495" height="332" style="display: block; width: 150px; height: auto; margin: 0 auto 16px;">
-              <div style="text-align: center; margin-bottom: 6px;">
+              <img src="assets/brand/logo-icon.png" alt="Logo HydroTech" width="495" height="332" style="display: block; width: 150px; height: 101px; object-fit: contain; margin: 0 auto 16px;">
+              <div style="text-align: left; margin-bottom: 6px;">
                 <span class="eyebrow-bar" style="font-size: 10px;">SISTEMAS HIDRÁULICOS & FLUIDOS</span>
               </div>
-              <h1 class="rn-brand-title">HydroTech | Maquinaria y mantenimiento</h1>
-              <p class="rn-brand-subtitle">Repuestos hidráulicos y mantenimiento industrial</p>
+              <h1 class="rn-brand-title">Hydro<em>Tech</em></h1>
+              <p class="rn-brand-subtitle">Gestión de maquinaria industrial, repuestos y órdenes</p>
 
               <div id="login-error" class="rn-error" style="display: none;"></div>
 
-              <input id="login-company" class="rn-input" placeholder="Código de empresa (ej: MAQ01)">
-              <input id="login-email" class="rn-input" placeholder="Correo electrónico" type="email">
-              <input id="login-password" class="rn-input" placeholder="Contraseña" type="password">
+              <label class="auth-field-label" for="login-company">Código de empresa</label>
+              <div class="auth-field">
+                <input id="login-company" class="rn-input" placeholder="ej: MAQ01 (o el ID de la empresa)" autocomplete="organization" autocapitalize="none">
+              </div>
+              <label class="auth-field-label" for="login-email">Correo Electrónico</label>
+              <div class="auth-field">
+                <input id="login-email" class="rn-input" placeholder="correo@empresa.com" type="email" autocomplete="email" autocapitalize="none">
+              </div>
+              <label class="auth-field-label" for="login-password">Contraseña</label>
+              <div class="auth-field">
+                <input id="login-password" class="rn-input" placeholder="Ingresa tu contraseña" type="password" autocomplete="current-password" style="padding-right: 84px;">
+                <button type="button" class="auth-password-toggle" onclick="toggleLoginPassword(this)" aria-label="Mostrar contraseña">Mostrar</button>
+              </div>
 
               <button id="login-btn" class="rn-btn" onclick="handleLogin()">
                 <span>Iniciar Sesión</span>
@@ -1590,8 +1743,8 @@
               </div>
 
               <div class="rn-footer-link">
-                <span>¿No tienes una cuenta?</span>
-                <button type="button" class="rn-link-action" onclick="setView('register')">Regístrate</button>
+                <span>¿Tu empresa aún no está registrada?</span>
+                <button type="button" class="rn-link-action" onclick="setView('register')">Crear Cuenta</button>
               </div>
             </div>
           </div>
@@ -1767,6 +1920,7 @@
           <!-- Perfil del usuario activo -->
           <div class="user-profile-card">
             <div>
+              <div class="profile-greeting">Bienvenido al Sistema,</div>
               <div class="profile-name">${currentUser.nombre}</div>
               <div class="profile-email">${currentUser.email}</div>
             </div>
