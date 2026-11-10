@@ -300,7 +300,25 @@ npx eslint .
 
 ### 3. Cuentas de prueba
 
-Usa cuentas creadas para un entorno local o de pruebas. No publiques contraseñas, tokens ni identificadores de empresas en el repositorio. Solicita las credenciales de prueba por un canal privado o crea cuentas de prueba desde el flujo de registro.
+Usa cuentas creadas para un entorno local o de pruebas. No publiques contraseñas ni tokens; crea las cuentas desde el flujo de registro o solicita las credenciales de prueba por un canal privado.
+
+#### Códigos de prueba y demostración
+
+Estos códigos son datos de ejemplo para pruebas locales; no son credenciales ni deben usarse como datos de producción.
+
+| Código | Uso |
+|---|---|
+| `TEST_REG_01` | Código temporal de empresa que crea la suite de integración del backend. La suite elimina sus datos al terminar. |
+| `MAQ01` | Código utilizado en las pruebas de registro e inicio de sesión por código de empresa. El registro normaliza `maq01` a `MAQ01`. |
+| `DEMO01` | Código de la empresa de demostración creada por `npm run seed` desde `backend/`. |
+| `CAT-320` | Código de maquinaria utilizado por la suite de integración. |
+| `CAT-320-OTRA` | Código de maquinaria utilizado para probar la detección de duplicados por nombre. |
+| `MAQ-PROHIBIDA` | Código usado para comprobar que se rechazan operaciones no autorizadas sobre maquinaria. |
+| `MAQ-BAJA` | Código usado para probar la baja lógica y la consulta de maquinaria inactiva. |
+| `CAT-320D` | Maquinaria incluida en los datos de demostración creados por `npm run seed`. |
+| `MANG-4SP-01` | Pieza de demostración y de integración asociada a una máquina. Se usa para probar registro y detección de duplicados. |
+
+Para más detalle sobre comandos y resultados esperados, consulta la [guía de pruebas](PRUEBAS.md). La guía incluye casos automatizados y recorridos manuales para el visor web y la APK.
 
 ### 4. Métodos para Probar la Interfaz
 1. **Visor Web Interactivo (`preview.html`):** Inicia el servidor con `npm run preview`, mantén corriendo el backend y abre `http://127.0.0.1:4173/preview.html`.

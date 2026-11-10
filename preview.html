@@ -1372,7 +1372,9 @@
   </main>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/preview';
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? `${window.location.protocol}//${window.location.hostname}:3000/api/preview`
+      : '/api/preview';
     let currentView = 'login'; // 'login', 'register', 'verify_email', 'forgot_password', 'dashboard'
     let currentUser = null;
     let currentToken = null;
