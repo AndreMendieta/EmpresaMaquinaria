@@ -5,6 +5,7 @@ function selectImage(source) {
     input.accept = 'image/*';
     if (source === 'camera') input.capture = 'environment';
     input.onchange = () => resolve(input.files?.[0] || null);
+    input.oncancel = () => resolve(null);
     input.click();
   });
 }

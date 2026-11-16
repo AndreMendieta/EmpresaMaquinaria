@@ -10,6 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
 import { getNotifications, markNotificationRead } from '../api/notificationsApi';
+import { getParts } from '../api/partsApi';
+import { getOrderById } from '../api/ordersApi';
 import HeaderBar from '../components/HeaderBar';
 import ForbiddenNotice from '../components/ForbiddenNotice';
 import { COLORS } from '../constants/colors';
@@ -20,6 +22,7 @@ const NotificationsScreen = ({ onBack, onNavigateOrder, onNavigatePart }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const [openingId, setOpeningId] = useState(null);
 
   const loadNotifications = useCallback(async () => {
     setLoading(true);
@@ -43,15 +46,33 @@ const NotificationsScreen = ({ onBack, onNavigateOrder, onNavigatePart }) => {
     loadNotifications();
   }, [loadNotifications]);
 
-  const handleMarkAsRead = async (item) => {
-    if (item.leida_en) return;
+  const handleOpenNotification = async (item) => {
+    if (openingId) return;
+    setOpeningId(item.id);
+    setErrorMsg('');
     try {
-      await markNotificationRead(item.id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, leida_en: new Date().toISOString() } : n))
-      );
-    } catch {
-      // Ignorar fallo de lectura silenciosamente
+      let destination;
+      if (item.orden_id && onNavigateOrder) {
+        const res = await getOrderById(item.orden_id);
+        if (!res.orden) throw new Error('No se encontró la orden de esta notificación.');
+        destination = () => onNavigateOrder(res.orden);
+      } else if (item.pieza_id && onNavigatePart) {
+        const res = await getParts();
+        const part = res.piezas?.find((p) => String(p.id) === String(item.pieza_id));
+        if (!part) throw new Error('No se encontró la pieza de esta notificación.');
+        destination = () => onNavigatePart(part);
+      }
+      if (!item.leida_en) {
+        const res = await markNotificationRead(item.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === item.id ? res.notificacion : n))
+        );
+      }
+      if (destination) destination();
+    } catch (err) {
+      setErrorMsg(err.message || 'No se pudo abrir la notificación.');
+    } finally {
+      setOpeningId(null);
     }
   };
 
@@ -105,14 +126,9 @@ const NotificationsScreen = ({ onBack, onNavigateOrder, onNavigatePart }) => {
                   key={item.id}
                   style={[styles.cardItem, isUnread && styles.cardItemUnread]}
                   activeOpacity={0.7}
-                  onPress={() => {
-                    handleMarkAsRead(item);
-                    if (item.orden_id && onNavigateOrder) {
-                      onNavigateOrder(item.orden_id);
-                    } else if (item.pieza_id && onNavigatePart) {
-                      onNavigatePart(item.pieza_id);
-                    }
-                  }}>
+                  accessibilityRole="button"
+                  disabled={openingId !== null}
+                  onPress={() => handleOpenNotification(item)}>
                   <View style={styles.cardHeader}>
                     <View style={styles.flex1}>
                       <View style={styles.titleRow}>

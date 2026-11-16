@@ -36,6 +36,8 @@ Esta guía describe los flujos principales, que se comparten entre la web y Andr
 
 El servidor también comprueba los permisos. Si no ves una opción o recibes un aviso de acceso denegado, consulta al administrador de tu empresa.
 
+En los módulos, **Volver** regresa a la pantalla anterior y **Menú principal** regresa directamente al panel. Antes de ir al menú se solicita confirmación porque los cambios que no hayas guardado se perderán.
+
 ## 5. Tareas principales
 
 ### Consultar una máquina

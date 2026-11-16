@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../auth/useAuth';
 import Avatar from './Avatar';
 import { COLORS } from '../constants/colors';
+import { NavigationContext } from '../navigation/NavigationContext';
+import confirmHome from '../utils/confirmHome';
 
 const ROLE_LABELS = {
   admin: { label: 'ADMIN', color: COLORS.roleAdmin, bg: 'rgba(255, 106, 0, 0.15)' },
@@ -20,8 +22,10 @@ const HeaderBar = ({
 }) => {
   const roleInfo = ROLE_LABELS[role] || null;
   const { user } = useAuth();
+  const goHome = useContext(NavigationContext);
 
   return (
+    <View>
     <View style={styles.header}>
       <View style={styles.leftContainer}>
         {onBack ? (
@@ -62,6 +66,18 @@ const HeaderBar = ({
           </TouchableOpacity>
         ) : null}
       </View>
+    </View>
+    {onBack && goHome ? (
+      <View style={styles.homeRow}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Ir al menú principal"
+          onPress={() => confirmHome(goHome)}
+          style={styles.homeButton}>
+          <Text style={styles.homeText}>Menú principal</Text>
+        </TouchableOpacity>
+      </View>
+    ) : null}
     </View>
   );
 };
@@ -150,6 +166,25 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '800',
+  },
+  homeRow: {
+    backgroundColor: COLORS.black,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  homeButton: {
+    minHeight: 40,
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: COLORS.orange,
+    borderRadius: 4,
+  },
+  homeText: {
+    color: COLORS.orange,
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

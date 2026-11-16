@@ -7,8 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
-  Alert,
 } from 'react-native';
+import Alert from '../utils/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
 import { getParts } from '../api/partsApi';

@@ -38,6 +38,7 @@ const CustomInput = forwardRef(({
           autoCapitalize={autoCapitalize}
           autoComplete={autoComplete}
           textContentType={textContentType}
+          accessibilityLabel={label || placeholder}
           {...props}
         />
         {secureTextEntry ? (

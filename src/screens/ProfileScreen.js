@@ -7,6 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
@@ -23,6 +25,7 @@ const ProfileScreen = ({ onBack }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [savingImage, setSavingImage] = useState(false);
   const [msg, setMsg] = useState('');
+  const [imageTarget, setImageTarget] = useState(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -59,6 +62,10 @@ const ProfileScreen = ({ onBack }) => {
   };
 
   const chooseImage = (target) => {
+    if (Platform.OS === 'web') {
+      setImageTarget(target);
+      return;
+    }
     const current = target === 'logo' ? user?.empresa_logo_url : user?.foto_url;
     const buttons = [
       { text: 'Tomar foto', onPress: () => saveImage(target, 'camera') },
@@ -75,6 +82,45 @@ const ProfileScreen = ({ onBack }) => {
     <SafeAreaView style={styles.container}>
       <HeaderBar title="Mi Perfil" role={role} onBack={onBack} />
 
+      <Modal
+        visible={imageTarget !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageTarget(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.imageMenu} accessibilityViewIsModal>
+            <Text style={styles.sectionTitle}>
+              {imageTarget === 'logo' ? 'Logo de la empresa' : 'Foto de perfil'}
+            </Text>
+            {[
+              { label: 'Tomar foto', source: 'camera' },
+              { label: 'Elegir de la galería', source: 'gallery' },
+              ...((imageTarget === 'logo' ? user?.empresa_logo_url : user?.foto_url)
+                ? [{ label: 'Quitar imagen', source: 'remove' }]
+                : []),
+            ].map(({ label, source }) => (
+              <TouchableOpacity
+                key={source}
+                style={styles.imageMenuButton}
+                accessibilityRole="button"
+                onPress={() => {
+                  const target = imageTarget;
+                  setImageTarget(null);
+                  saveImage(target, source);
+                }}>
+                <Text style={styles.btnSecondaryText}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.imageMenuButton}
+              accessibilityRole="button"
+              onPress={() => setImageTarget(null)}>
+              <Text style={styles.btnSecondaryText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {msg ? (
           <View style={styles.msgBox}>
@@ -86,6 +132,8 @@ const ProfileScreen = ({ onBack }) => {
         <View style={styles.avatarCard}>
           <TouchableOpacity
             style={styles.avatarWrap}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar foto de perfil"
             onPress={() => chooseImage('photo')}
             disabled={savingImage}>
             <Avatar uri={user?.foto_url} name={user?.nombre_completo || user?.nombre} size={96} />
@@ -187,6 +235,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  imageMenu: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 420,
+    padding: 20,
+    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+  },
+  imageMenuButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   scrollContent: {
     padding: 16,

@@ -27,6 +27,7 @@ const AttachmentPicker = ({ label, items, onChange, allowFiles = false, max = 10
     input.multiple = multiple;
     if (capture) input.capture = 'environment';
     input.onchange = () => resolve(Array.from(input.files || []));
+    input.oncancel = () => resolve([]);
     input.click();
   });
 
@@ -78,7 +79,7 @@ const AttachmentPicker = ({ label, items, onChange, allowFiles = false, max = 10
         {allowFiles ? (
           <TouchableOpacity
             style={[styles.btn, disabled && styles.btnDisabled]}
-            onPress={() => handlePick('.pdf,image/*', true)}
+            onPress={() => handlePick('.pdf,.dwg,.dxf,.doc,.docx,.xls,.xlsx,.txt,image/*', true)}
             disabled={disabled}>
             <Icon name="file" size={20} color={COLORS.orange} />
             <Text style={styles.btnText}>Archivo</Text>

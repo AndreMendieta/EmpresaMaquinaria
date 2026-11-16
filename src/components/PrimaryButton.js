@@ -10,6 +10,7 @@ const PrimaryButton = ({title, onPress, loading = false, disabled = false}) => {
       style={[styles.button, isDisabled && styles.buttonDisabled]}
       onPress={isDisabled ? null : onPress}
       activeOpacity={isDisabled ? 1 : 0.85}
+      accessibilityRole="button"
       disabled={isDisabled}>
       {loading ? (
         <ActivityIndicator size="small" color="#FFFFFF" />

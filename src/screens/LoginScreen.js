@@ -130,6 +130,7 @@ const LoginScreen = ({
             {onNavigateToForgotPassword ? (
               <TouchableOpacity
                 style={styles.forgotContainer}
+                accessibilityRole="button"
                 onPress={() => onNavigateToForgotPassword(correo)}>
                 <Text style={styles.forgotText}>¿Olvidaste tu contraseña o ID de empresa?</Text>
               </TouchableOpacity>
@@ -144,7 +145,7 @@ const LoginScreen = ({
             {onNavigateToRegister ? (
               <View style={styles.footerLink}>
                 <Text style={styles.footerText}>¿Tu empresa aún no está registrada?</Text>
-                <TouchableOpacity onPress={onNavigateToRegister}>
+                <TouchableOpacity accessibilityRole="button" onPress={onNavigateToRegister}>
                   <Text style={styles.footerAction}>Crear Cuenta</Text>
                 </TouchableOpacity>
               </View>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '../auth/useAuth';
 import { COLORS } from '../constants/colors';
+import { NavigationContext } from './NavigationContext';
 
 // 20 Pantallas de Fase 4
 import LoginScreen from '../screens/LoginScreen';
@@ -127,8 +128,8 @@ const AppNavigator = () => {
     );
   }
 
-  // 3. Renderizado de la pantalla activa
-  switch (currentRoute.name) {
+  const renderScreen = () => {
+    switch (currentRoute.name) {
     case 'dashboard':
       return (
         <DashboardScreen
@@ -302,12 +303,8 @@ const AppNavigator = () => {
       return (
         <NotificationsScreen
           onBack={goBack}
-          onNavigateOrder={(ordenId) =>
-            navigate('order_detail', { order: { id: ordenId, numero_orden: `OT #${ordenId}` } })
-          }
-          onNavigatePart={(piezaId) =>
-            navigate('part_detail', { part: { id: piezaId, codigo: `PZ #${piezaId}` } })
-          }
+          onNavigateOrder={(order) => navigate('order_detail', { order })}
+          onNavigatePart={(part) => navigate('part_detail', { part })}
         />
       );
 
@@ -326,7 +323,14 @@ const AppNavigator = () => {
           onNavigate={(target) => navigate(target)}
         />
       );
-  }
+    }
+  };
+
+  return (
+    <NavigationContext.Provider value={() => resetTo('dashboard')}>
+      {renderScreen()}
+    </NavigationContext.Provider>
+  );
 };
 
 const styles = StyleSheet.create({

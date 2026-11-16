@@ -5,10 +5,16 @@ export async function getReportsSummary() {
   return client.get('/reports/summary');
 }
 
-async function throwDownloadError(response) {
-  const data = await response.json().catch(() => ({}));
-  if (response.status === 401) await handleUnauthorizedResponse();
-  throw new ApiError(data.error || 'No se pudo descargar el reporte PDF.', response.status, data);
+async function throwDownloadError(response, status = response.status) {
+  if (status === 401) await handleUnauthorizedResponse();
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    console.warn('No se pudo leer la respuesta de error del reporte:', error.message);
+    data = {};
+  }
+  throw new ApiError(data.error || 'No se pudo descargar el reporte PDF.', status, data);
 }
 
 export async function downloadCompanyReport() {
@@ -46,7 +52,7 @@ export async function downloadCompanyReport() {
       },
     }).fetch('GET', url, headers);
     if (download.info().status < 200 || download.info().status >= 300) {
-      await throwDownloadError(download);
+      await throwDownloadError(download, download.info().status);
     }
     return { message: 'El PDF se guardó en Descargas.' };
   }
@@ -55,7 +61,7 @@ export async function downloadCompanyReport() {
     path: `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${filename}`,
   }).fetch('GET', url, headers);
   if (download.info().status < 200 || download.info().status >= 300) {
-    await throwDownloadError(download);
+    await throwDownloadError(download, download.info().status);
   }
   await Share.share({
     title: 'Reporte de máquinas, piezas y órdenes',
