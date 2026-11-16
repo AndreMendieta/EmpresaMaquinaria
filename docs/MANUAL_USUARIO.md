@@ -47,6 +47,8 @@ En los módulos, **Volver** regresa a la pantalla anterior y **Menú principal**
 3. Toca la máquina para consultar el detalle, la serie, la descripción y el manual disponible.
 4. Las acciones para crear o modificar dependen de tu rol.
 
+Los administradores y supervisores pueden pulsar **Editar maquinaria** en la ficha para actualizar el nombre, tipo, número de serie, manual y descripción. El código y la empresa cliente no se modifican desde este formulario.
+
 ### Crear una ficha de pieza
 
 1. Abre **Catálogo y Fichas de Piezas** y elige crear.

@@ -177,6 +177,12 @@ const AppNavigator = () => {
           onCreateHose={(machine) => navigate('create_hose', { machine })}
           onCreateLathePart={(machine) => navigate('create_lathe', { machine })}
           onCreateCylinder={(machine) => navigate('create_cylinder', { machine })}
+          onMachineUpdated={(machine) => {
+            setNavStack((prev) => [
+              ...prev.slice(0, -1),
+              { ...prev[prev.length - 1], params: { ...prev[prev.length - 1].params, machine } },
+            ]);
+          }}
         />
       );
 

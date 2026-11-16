@@ -24,3 +24,13 @@ export async function createMachine({
     descripcion: descripcion?.trim() || null,
   });
 }
+
+export async function updateMachine(id, { nombre, tipo, numeroSerie, urlManual, descripcion }) {
+  return client.patch(`/machines/${id}`, {
+    nombre: nombre.trim(),
+    tipo: tipo.trim(),
+    numeroSerie: numeroSerie?.trim() || null,
+    urlManual: urlManual?.trim() || null,
+    descripcion: descripcion?.trim() || null,
+  });
+}

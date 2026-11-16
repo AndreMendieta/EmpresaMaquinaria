@@ -12,8 +12,11 @@ import Alert from '../utils/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/useAuth';
 import { getParts } from '../api/partsApi';
+import { updateMachine } from '../api/machinesApi';
 import HeaderBar from '../components/HeaderBar';
 import Badge from '../components/Badge';
+import CustomInput from '../components/CustomInput';
+import PrimaryButton from '../components/PrimaryButton';
 import { COLORS } from '../constants/colors';
 
 const MachineDetailScreen = ({
@@ -23,8 +26,15 @@ const MachineDetailScreen = ({
   onCreateHose,
   onCreateLathePart,
   onCreateCylinder,
+  onMachineUpdated,
 }) => {
   const { role } = useAuth();
+  const canEdit = role === 'admin' || role === 'supervisor';
+  const [currentMachine, setCurrentMachine] = useState(machine);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [form, setForm] = useState({});
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -59,7 +69,39 @@ const MachineDetailScreen = ({
     });
   };
 
-  const manualUrl = machine?.url_manual || machine?.manual_url;
+  const startEditing = () => {
+    setErrorMsg('');
+    setForm({
+      nombre: currentMachine.nombre || '',
+      tipo: currentMachine.tipo || '',
+      numeroSerie: currentMachine.numero_serie || '',
+      urlManual: currentMachine.url_manual || currentMachine.manual_url || '',
+      descripcion: currentMachine.descripcion || '',
+    });
+    setEditing(true);
+  };
+
+  const handleSave = async () => {
+    setErrorMsg('');
+    if (!form.nombre.trim() || !form.tipo.trim()) {
+      setErrorMsg('El nombre y el tipo de maquinaria son obligatorios.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await updateMachine(currentMachine.id, form);
+      setCurrentMachine(res.maquinaria);
+      if (onMachineUpdated) onMachineUpdated(res.maquinaria);
+      setEditing(false);
+      Alert.alert('Maquinaria actualizada', 'Los cambios se guardaron correctamente.');
+    } catch (err) {
+      setErrorMsg(err.message || 'No se pudo actualizar la maquinaria.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const manualUrl = currentMachine?.url_manual || currentMachine?.manual_url;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,23 +112,48 @@ const MachineDetailScreen = ({
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+        {editing ? (
+          <View style={styles.card}>
+            <CustomInput label="Nombre o Modelo *" value={form.nombre}
+              onChangeText={(value) => setForm((prev) => ({ ...prev, nombre: value }))} />
+            <CustomInput label="Tipo de Maquinaria *" value={form.tipo}
+              onChangeText={(value) => setForm((prev) => ({ ...prev, tipo: value }))} />
+            <CustomInput label="Número de Serie" value={form.numeroSerie}
+              onChangeText={(value) => setForm((prev) => ({ ...prev, numeroSerie: value }))} />
+            <CustomInput label="URL del Manual Técnico" value={form.urlManual} keyboardType="url"
+              onChangeText={(value) => setForm((prev) => ({ ...prev, urlManual: value }))} />
+            <CustomInput label="Descripción" value={form.descripcion} multiline
+              onChangeText={(value) => setForm((prev) => ({ ...prev, descripcion: value }))} />
+            <PrimaryButton title="Guardar cambios" onPress={handleSave} loading={saving} />
+            <TouchableOpacity style={styles.manualButton} disabled={saving} accessibilityRole="button"
+              onPress={() => { setEditing(false); setErrorMsg(''); }}>
+              <Text style={styles.manualButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
         {/* Tarjeta del Equipo */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.flex1}>
-              <Text style={styles.code}>[{machine?.codigo}]</Text>
-              <Text style={styles.name}>{machine?.nombre}</Text>
+              <Text style={styles.code}>[{currentMachine?.codigo}]</Text>
+              <Text style={styles.name}>{currentMachine?.nombre}</Text>
               <Text style={styles.type}>
-                {machine?.tipo} • N° Serie: {machine?.numero_serie || 'No registrado'}
+                {currentMachine?.tipo} • N° Serie: {currentMachine?.numero_serie || 'No registrado'}
               </Text>
             </View>
-            <Badge status={machine?.estado || 'activa'} />
+            <Badge status={currentMachine?.estado || 'activa'} />
           </View>
 
-          {machine?.descripcion ? (
-            <Text style={styles.desc}>{machine.descripcion}</Text>
+          {currentMachine?.descripcion ? (
+            <Text style={styles.desc}>{currentMachine.descripcion}</Text>
           ) : null}
 
+          {canEdit && !editing ? (
+            <TouchableOpacity style={styles.manualButton} accessibilityRole="button" onPress={startEditing}>
+              <Text style={styles.manualButtonText}>Editar maquinaria</Text>
+            </TouchableOpacity>
+          ) : null}
           {/* Enlace Manual Técnico HU-014 */}
           {manualUrl ? (
             <TouchableOpacity
@@ -110,19 +177,19 @@ const MachineDetailScreen = ({
         <View style={styles.typesRow}>
           <TouchableOpacity
             style={styles.typeBtn}
-            onPress={() => onCreateHose && onCreateHose(machine)}>
+            onPress={() => onCreateHose && onCreateHose(currentMachine)}>
             <Text style={styles.typeLabel}>Manguera</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.typeBtn}
-            onPress={() => onCreateLathePart && onCreateLathePart(machine)}>
+            onPress={() => onCreateLathePart && onCreateLathePart(currentMachine)}>
             <Text style={styles.typeLabel}>Torno / Eje</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.typeBtn}
-            onPress={() => onCreateCylinder && onCreateCylinder(machine)}>
+            onPress={() => onCreateCylinder && onCreateCylinder(currentMachine)}>
             <Text style={styles.typeLabel}>Cilindro</Text>
           </TouchableOpacity>
         </View>
@@ -168,6 +235,11 @@ const MachineDetailScreen = ({
 };
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: COLORS.danger,
+    marginBottom: 12,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

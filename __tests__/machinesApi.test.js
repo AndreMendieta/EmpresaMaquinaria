@@ -1,5 +1,5 @@
 import client from '../src/api/client';
-import {getMachines, createMachine} from '../src/api/machinesApi';
+import {getMachines, createMachine, updateMachine} from '../src/api/machinesApi';
 
 jest.mock('../src/api/client', () => ({
   __esModule: true,
@@ -39,6 +39,17 @@ describe('machinesApi', () => {
       numeroSerie: null,
       urlManual: null,
       descripcion: null,
+    });
+  });
+
+  test('updateMachine limpia los campos y conserva el código y empresa existentes', async () => {
+    await updateMachine('1', { nombre: ' Excavadora ', tipo: ' Pesada ', numeroSerie: ' ', urlManual: '', descripcion: ' nota ' });
+    expect(client.patch).toHaveBeenCalledWith('/machines/1', {
+      nombre: 'Excavadora',
+      tipo: 'Pesada',
+      numeroSerie: null,
+      urlManual: null,
+      descripcion: 'nota',
     });
   });
 });
