@@ -40,6 +40,14 @@ En los módulos, **Volver** regresa a la pantalla anterior y **Menú principal**
 
 ## 5. Tareas principales
 
+### Consulta básica
+
+1. Abre **Consulta Básica** en el panel principal.
+2. Escribe una pregunta o selecciona uno de los ejemplos y pulsa **Consultar**.
+3. Puedes consultar empresas clientes, maquinaria activa, piezas creadas recientemente y órdenes (todas, abiertas, en progreso, completadas o canceladas). Los administradores también pueden consultar personal.
+
+La herramienta reconoce preguntas y variantes previstas mediante reglas; no es una IA generativa. Si no entiende una pregunta, usa los ejemplos. Muestra hasta 10 resultados y el total encontrado, con los datos que la cuenta puede consultar. Necesita conexión al servidor de HydroTech, pero no usa un proveedor externo de IA.
+
 ### Consultar una máquina
 
 1. En el panel principal, abre **Maquinaria y Equipos**.

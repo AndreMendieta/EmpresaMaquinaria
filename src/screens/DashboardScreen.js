@@ -20,6 +20,13 @@ const DashboardScreen = ({ onNavigate }) => {
 
   const menuItems = [
     {
+      id: 'basic_consultation',
+      icon: 'reports',
+      title: 'Consulta Básica',
+      desc: 'Preguntas rápidas sobre empresas, maquinaria, piezas y órdenes.',
+      visible: true,
+    },
+    {
       id: 'machines',
       icon: 'machines',
       title: 'Maquinaria y Equipos',

@@ -10,6 +10,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import BasicConsultationScreen from '../screens/BasicConsultationScreen';
 import ClientCompaniesScreen from '../screens/ClientCompaniesScreen';
 import ClientCompanyDetailScreen from '../screens/ClientCompanyDetailScreen';
 import MachinesScreen from '../screens/MachinesScreen';
@@ -136,6 +137,9 @@ const AppNavigator = () => {
           onNavigate={(target) => navigate(target)}
         />
       );
+
+    case 'basic_consultation':
+      return <BasicConsultationScreen onBack={goBack} />;
 
     case 'client_companies':
       return (
