@@ -43,10 +43,12 @@ En los módulos, **Volver** regresa a la pantalla anterior y **Menú principal**
 ### Consulta básica
 
 1. Abre **Consulta Básica** en el panel principal.
-2. Escribe una pregunta o selecciona uno de los ejemplos y pulsa **Consultar**.
-3. Puedes consultar empresas clientes, maquinaria activa, piezas creadas recientemente y órdenes (todas, abiertas, en progreso, completadas o canceladas). Los administradores también pueden consultar personal.
+2. Escribe una pregunta o selecciona uno de los ejemplos y pulsa **Consultar**. La pregunta y la respuesta aparecerán en la conversación de esta pantalla.
+3. Puedes consultar y contar empresas clientes, maquinaria, piezas y órdenes. Los administradores también pueden consultar personal. Para máquinas, piezas y órdenes puedes indicar un estado; por ejemplo, «piezas pendientes» u «órdenes en progreso».
+4. Para buscar, escribe por ejemplo «mostrar piezas por código P-001» o «mostrar empresas por nombre Acme». Para limitar máquinas, piezas, órdenes o personal a un cliente, añade «de la empresa» y su nombre. Si hay varios clientes con nombres similares, escribe un nombre más específico.
+5. Para piezas, añade «hoy», «ayer», «últimos 7 días» o «desde 2026-11-01». Las fechas se interpretan según la zona horaria del dispositivo; los últimos 7 días incluyen hoy. Los resultados muestran los filtros aplicados.
 
-La herramienta reconoce preguntas y variantes previstas mediante reglas; no es una IA generativa. Si no entiende una pregunta, usa los ejemplos. Muestra hasta 10 resultados y el total encontrado, con los datos que la cuenta puede consultar. Necesita conexión al servidor de HydroTech, pero no usa un proveedor externo de IA.
+La herramienta reconoce preguntas y variantes previstas mediante reglas; no es una IA generativa. Si no entiende una pregunta, usa los ejemplos. Muestra hasta 10 resultados y el total encontrado, con los datos que la cuenta puede consultar. La conversación solo se conserva mientras la pantalla está abierta. Necesita conexión al servidor de HydroTech, pero no usa un proveedor externo de IA.
 
 ### Consultar una máquina
 

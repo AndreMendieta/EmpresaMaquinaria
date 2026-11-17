@@ -15,16 +15,28 @@ jest.mock('../src/api/usersApi', () => ({ getUsers: jest.fn() }));
 describe('consulta básica', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  test.each(CONSULTATION_EXAMPLES)('reconoce el ejemplo %s', question => {
+  test.each(CONSULTATION_EXAMPLES.map(item => item.question))('reconoce el ejemplo %s', question => {
     expect(recognizeQuestion(question)).not.toBeNull();
   });
 
   test.each([
-    '¿Qué maquinaria está inactiva?',
-    '¿Qué piezas se han creado últimamente para la empresa ACME?',
-    '¿Qué órdenes abiertas tiene Juan?',
+    'mostrar piezas por código P-001',
+    'máquinas activas de la empresa Nombre',
+    'piezas creadas hoy',
+    'piezas desde 2026-11-01',
+    '¿Qué órdenes están canceladas?',
     '¿Cuántas órdenes hay?',
-  ])('no responde con resultados engañosos a %s', async question => {
+    '¿Qué maquinaria está inactiva?',
+  ])('reconoce variante o filtro %s', question => {
+    expect(recognizeQuestion(question)).not.toBeNull();
+  });
+
+  test.each([
+    '¿Qué órdenes abiertas tiene Juan?',
+    '¿Qué piezas se han creado en marzo?',
+    '¿Qué máquinas activas no están disponibles?',
+    '¿Cuántas órdenes pendientes y completadas hay?',
+  ])('rechaza condiciones desconocidas de %s', async question => {
     await expect(runBasicConsultation(question, 'admin')).rejects.toThrow('No entendí');
     expect(getMachines).not.toHaveBeenCalled();
     expect(getParts).not.toHaveBeenCalled();
@@ -41,26 +53,38 @@ describe('consulta básica', () => {
     expect(result.results[0]).toBe('Empresa 0');
   });
 
-  test('solo incluye maquinaria activa', async () => {
+  test('filtra maquinaria por estado y permite contar', async () => {
     getMachines.mockResolvedValue({ maquinas: [
       { codigo: 'M1', nombre: 'Activa', estado: 'activa' },
       { codigo: 'M2', nombre: 'Inactiva', estado: 'inactiva' },
     ] });
-    const result = await runBasicConsultation('¿Qué maquinaria está activa?', 'tecnico');
+    const result = await runBasicConsultation('¿Cuántas máquinas están activas?', 'tecnico');
     expect(result.total).toBe(1);
-    expect(result.results).toEqual(['[M1] Activa']);
+    expect(result.results).toEqual(['[M1] Activa — activa']);
+    expect(getMachines).toHaveBeenCalledWith({ strict: true });
   });
 
-  test('muestra las piezas más recientes en el orden entregado por el servidor', async () => {
+  test('filtra piezas por estado y conserva el orden del servidor', async () => {
     getParts.mockResolvedValue({ piezas: [
       { codigo: 'P2', nombre: 'Nueva', estado_validacion: 'pendiente' },
       { codigo: 'P1', nombre: 'Anterior', estado_validacion: 'validada' },
     ] });
-    const result = await runBasicConsultation('¿Qué piezas se han creado últimamente?', 'supervisor');
-    expect(result.results).toEqual(['[P2] Nueva — pendiente', '[P1] Anterior — validada']);
+    const result = await runBasicConsultation('¿Qué piezas están pendientes?', 'supervisor');
+    expect(result.results).toEqual(['[P2] Nueva — pendiente']);
   });
 
-  test('filtra órdenes por estado sin incluir las otras', async () => {
+  test('busca en el campo solicitado y no en otros', async () => {
+    getParts.mockResolvedValue({ piezas: [
+      { codigo: 'P-001', nombre: 'Manguera', estado_validacion: 'pendiente' },
+      { codigo: 'P-002', nombre: 'P-001', estado_validacion: 'validada' },
+    ] });
+    expect((await runBasicConsultation('mostrar piezas por código P-001', 'admin')).results)
+      .toEqual(['[P-001] Manguera — pendiente']);
+    expect((await runBasicConsultation('buscar piezas por nombre P-001', 'admin')).results)
+      .toEqual(['[P-002] P-001 — validada']);
+  });
+
+  test('filtra órdenes por estado', async () => {
     getOrders.mockResolvedValue({ ordenes: [
       { numero_orden: 'OT1', titulo: 'Servicio', estado: 'en_progreso' },
       { numero_orden: 'OT2', titulo: 'Otro', estado: 'completada' },
@@ -68,6 +92,63 @@ describe('consulta básica', () => {
     const result = await runBasicConsultation('¿Qué órdenes están en progreso?', 'admin');
     expect(result.total).toBe(1);
     expect(result.results).toEqual(['OT1 — Servicio — en progreso']);
+  });
+
+  test('asocia piezas a la empresa mediante la máquina', async () => {
+    getClientCompanies.mockResolvedValue({ empresas_clientes: [
+      { id: 'c1', razon_social: 'Acme' }, { id: 'c2', razon_social: 'Otra' },
+    ] });
+    getMachines.mockResolvedValue({ maquinas: [
+      { id: 'm1', empresa_cliente_id: 'c1' }, { id: 'm2', empresa_cliente_id: 'c2' },
+    ] });
+    getParts.mockResolvedValue({ piezas: [
+      { codigo: 'P1', nombre: 'Una', maquinaria_id: 'm1' },
+      { codigo: 'P2', nombre: 'Otra', maquinaria_id: 'm2' },
+    ] });
+    const result = await runBasicConsultation('piezas de la empresa Acme', 'tecnico');
+    expect(result.results).toEqual(['[P1] Una — Sin estado']);
+    expect(result.filters).toContain('Empresa: Acme');
+  });
+
+  test('rechaza nombres de empresa ambiguos o inexistentes', async () => {
+    getClientCompanies.mockResolvedValue({ empresas_clientes: [
+      { id: 'c1', razon_social: 'Acme Norte' }, { id: 'c2', razon_social: 'Acme Sur' },
+    ] });
+    await expect(runBasicConsultation('órdenes de la empresa Acme', 'admin')).rejects.toThrow('varias empresas');
+    await expect(runBasicConsultation('órdenes de la empresa Nadie', 'admin')).rejects.toThrow('No encontré');
+    expect(getOrders).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['máquinas de la empresa Acme', 'maquinas', getMachines],
+    ['órdenes de la empresa Acme', 'ordenes', getOrders],
+    ['personal de la empresa Acme', 'usuarios', getUsers],
+  ])('filtra %s por cliente', async (question, key, getData) => {
+    getClientCompanies.mockResolvedValue({ empresas_clientes: [{ id: 'c1', razon_social: 'Acme' }] });
+    getData.mockResolvedValue({ [key]: [
+      { nombre: 'Uno', titulo: 'Uno', nombre_completo: 'Uno', empresa_cliente_id: 'c1' },
+      { nombre: 'Dos', titulo: 'Dos', nombre_completo: 'Dos', empresa_cliente_id: 'c2' },
+    ] });
+    expect((await runBasicConsultation(question, 'admin')).total).toBe(1);
+  });
+
+  test('filtra fechas de piezas en hora local y valida los límites', async () => {
+    jest.useFakeTimers().setSystemTime(new Date(2026, 10, 16, 12));
+    try {
+      getParts.mockResolvedValue({ piezas: [
+        { codigo: 'P1', nombre: 'Hoy', creado_en: new Date(2026, 10, 16, 0).toISOString() },
+        { codigo: 'P2', nombre: 'Ayer', creado_en: new Date(2026, 10, 15, 23).toISOString() },
+        { codigo: 'P3', nombre: 'Antigua', creado_en: new Date(2026, 10, 9, 23).toISOString() },
+      ] });
+      expect((await runBasicConsultation('piezas creadas hoy', 'admin')).total).toBe(1);
+      expect((await runBasicConsultation('piezas creadas ayer', 'admin')).total).toBe(1);
+      expect((await runBasicConsultation('piezas en los últimos 7 días', 'admin')).total).toBe(2);
+      expect((await runBasicConsultation('piezas desde 2026-11-15', 'admin')).total).toBe(2);
+      await expect(runBasicConsultation('piezas desde 2026-02-30', 'admin')).rejects.toThrow('fecha no es válida');
+      await expect(runBasicConsultation('piezas últimos 0 días', 'admin')).rejects.toThrow('entre 1 y 3650');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test('restringe personal al administrador antes de llamar la API', async () => {

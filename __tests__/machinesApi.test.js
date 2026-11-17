@@ -26,6 +26,13 @@ describe('machinesApi', () => {
     expect(res.maquinas).toEqual([]);
   });
 
+  test('getMachines estricto rechaza respuestas inválidas y usa la lista válida', async () => {
+    client.get.mockResolvedValueOnce({ok: true});
+    await expect(getMachines({strict: true})).rejects.toThrow('datos de maquinaria inválidos');
+    client.get.mockResolvedValueOnce({maquinas: 'inválido', maquinarias: [{id: '1'}]});
+    expect((await getMachines({strict: true})).maquinas).toEqual([{id: '1'}]);
+  });
+
   test('createMachine normaliza el código y limpia los campos', async () => {
     client.post.mockResolvedValue({ok: true, maquinaria: {id: '1'}});
 

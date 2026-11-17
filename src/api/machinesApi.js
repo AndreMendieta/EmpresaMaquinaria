@@ -1,7 +1,13 @@
 import client from './client';
 
-export async function getMachines() {
+export async function getMachines({ strict = false } = {}) {
   const res = await client.get('/machines');
+  if (strict && !Array.isArray(res?.maquinas) && !Array.isArray(res?.maquinarias)) {
+    throw new Error('El servidor devolvió datos de maquinaria inválidos.');
+  }
+  if (strict) {
+    return {...res, maquinas: Array.isArray(res.maquinas) ? res.maquinas : res.maquinarias};
+  }
   return {...res, maquinas: res?.maquinas || res?.maquinarias || []};
 }
 
